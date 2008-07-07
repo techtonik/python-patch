@@ -1,5 +1,9 @@
 """ Patch utility to apply unified diffs written in Python """
-""" Brute-force line-by-line parsing """
+""" Brute-force line-by-line parsing 
+
+    Feedback is welcome at
+    techtonik.rainforce.org
+"""
 
 import logging
 import re
@@ -203,17 +207,20 @@ def apply_patch(patch):
       if lineno+1 < hunk["startsrc"]:
         continue
       elif lineno+1 == hunk["startsrc"]:
-        hunkfind = [x[1:].rstrip() for x in hunk["text"] if x[0] in " -"]
+        hunkfind = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " -"]
         #pprint(hunkfind)
-        hunkreplace = [x[1:].rstrip() for x in hunk["text"] if x[0] in " +"]
+        hunkreplace = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " +"]
         #pprint(hunkreplace)
-        # todo No newline at end of file
+        hunklineno = 0
 
+        # todo \ No newline at end of file
+      # compare source hunk
+      if lineno+1 < hunk["startsrc"] + len(hunkfind):
+        if line.rstrip("\n") != hunkfind[hunklineno]:
+          print line.rstrip("\n") == hunkfind[hunklineno]
+        hunklineno+=1
+      # todo: check if already patched
 
-      if line.rstrip() == hunk["text"][0][1:].rstrip():
-        print "+", line
-        print "+", hunk["text"][0]
-      #print hunk["startsrc"], lineno
 
 
 patch = read_patch("fix_devpak_install.patch")
