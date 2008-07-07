@@ -1,7 +1,7 @@
-Index: src/plugins/contrib/devpak_plugin/updatedlg.cpp
+Index: updatedlg.cpp
 ===================================================================
---- src/plugins/contrib/devpak_plugin/updatedlg.cpp	(revision 5106)
-+++ src/plugins/contrib/devpak_plugin/updatedlg.cpp	(working copy)
+--- updatedlg.cpp	(revision 5095)
++++ updatedlg.cpp	(working copy)
 @@ -94,11 +94,13 @@
      lst->InsertColumn(1, _("Version"));
      lst->InsertColumn(2, _("Installed"));
@@ -49,10 +49,10 @@ Index: src/plugins/contrib/devpak_plugin/updatedlg.cpp
  }
  
  void UpdateDlg::DownloadFile(bool dontInstall)
-Index: src/plugins/contrib/devpak_plugin/updatedlg.h
+Index: updatedlg.h
 ===================================================================
---- src/plugins/contrib/devpak_plugin/updatedlg.h	(revision 5106)
-+++ src/plugins/contrib/devpak_plugin/updatedlg.h	(working copy)
+--- updatedlg.h	(revision 5095)
++++ updatedlg.h	(working copy)
 @@ -49,6 +49,7 @@
          UpdateRec* GetRecFromListView();
          void CreateListColumns();
@@ -61,10 +61,10 @@ Index: src/plugins/contrib/devpak_plugin/updatedlg.h
          void SetListColumnText(int idx, int col, const wxString& text);
  
          wxString GetConfFilename();
-Index: src/plugins/contrib/devpak_plugin/manifest.xml
+Index: manifest.xml
 ===================================================================
---- src/plugins/contrib/devpak_plugin/manifest.xml	(revision 5106)
-+++ src/plugins/contrib/devpak_plugin/manifest.xml	(working copy)
+--- manifest.xml	(revision 5095)
++++ manifest.xml	(working copy)
 @@ -2,18 +2,19 @@
  <CodeBlocks_plugin_manifest_file>
      <SdkVersion major="1" minor="10" release="0" />
@@ -92,10 +92,10 @@ Index: src/plugins/contrib/devpak_plugin/manifest.xml
          <Value license="GPL" />
      </Plugin>
  </CodeBlocks_plugin_manifest_file>
-Index: src/plugins/contrib/devpak_plugin/conf.cpp
+Index: conf.cpp
 ===================================================================
---- src/plugins/contrib/devpak_plugin/conf.cpp	(revision 5106)
-+++ src/plugins/contrib/devpak_plugin/conf.cpp	(working copy)
+--- conf.cpp	(revision 5095)
++++ conf.cpp	(working copy)
 @@ -46,10 +46,16 @@
      	// fix title
      	// devpaks.org has changed the title to contain some extra info
@@ -145,10 +145,10 @@ Index: src/plugins/contrib/devpak_plugin/conf.cpp
      }
      return 0;
  }
-Index: src/plugins/contrib/devpak_plugin/conf.h
+Index: conf.h
 ===================================================================
---- src/plugins/contrib/devpak_plugin/conf.h	(revision 5106)
-+++ src/plugins/contrib/devpak_plugin/conf.h	(working copy)
+--- conf.h	(revision 5095)
++++ conf.h	(working copy)
 @@ -7,7 +7,7 @@
  
  struct UpdateRec
