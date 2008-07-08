@@ -24,7 +24,7 @@ def read_patch(filename):
   header = True
   files = dict(source=[], target=[], hunks=[])
   nextfileno = 0
-  nexthunkno = 0
+  nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
   lineends = dict(lf=0, crlf=0, cr=0)
 
   # hunkinfo holds parsed values, hunkactual - calculated
@@ -39,7 +39,6 @@ def read_patch(filename):
       header = False
       # switch to filenames state
       filenames = True
-
     #: skip hunkskip and hunkbody code until you read definition of hunkhead
     if hunkbody:
       if hunkinfo["linessrc"] == hunkactual["linessrc"] and hunkinfo["linestgt"] == hunkactual["linestgt"]:
@@ -47,23 +46,21 @@ def read_patch(filename):
           # switch to hunkskip state
           hunkbody = False
           hunkskip = True
-          nexthunkno += 1
 
           debuglines = dict(lineends)
-          debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno-1)
+          debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno)
           debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
           if ((lineends["cr"]!=0) + (lineends["crlf"]!=0) + (lineends["lf"]!=0)) > 1:
             warning("inconsistent line endings")
 
       elif not re.match(r"^[- \+\\]", line) or hunkinfo["linessrc"] < hunkactual["linessrc"]:
-          warning("invalid hunk no.%d for target file %s" % (nexthunkno-1, files["target"][nextfileno-1]))
+          warning("invalid hunk no.%d for target file %s" % (nexthunkno, files["target"][nextfileno-1]))
           # add hunk status node
           files["hunks"][nextfileno-1].append(hunkinfo.copy())
           files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
           # switch to hunkskip state
           hunkbody = False
           hunkskip = True
-          nexthunkno += 1
       else:
           # gather stats about line endings
           if line.endswith("\r\n"):
@@ -203,6 +200,7 @@ def apply_patch(patch):
     hunk = patch["hunks"][fileno][hunkno]
     hunkfind = []
     hunkreplace = []
+    validhunks = 0
     for lineno, line in enumerate(f2fp):
       if lineno+1 < hunk["startsrc"]:
         continue
@@ -212,14 +210,32 @@ def apply_patch(patch):
         hunkreplace = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " +"]
         #pprint(hunkreplace)
         hunklineno = 0
+        hunkvalid = True
 
         # todo \ No newline at end of file
-      # compare source hunk
-      if lineno+1 < hunk["startsrc"] + len(hunkfind):
+
+      # check source file for hunks
+      if lineno+1 < hunk["startsrc"]+len(hunkfind):
         if line.rstrip("\n") != hunkfind[hunklineno]:
-          print line.rstrip("\n") == hunkfind[hunklineno]
+          hunkvalid = False
+          warning("hunk no.%d for file %s is invalid" % (hunkno+1, filename))
         hunklineno+=1
+
+      if lineno+1 == hunk["startsrc"]+len(hunkfind):
+        debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
+        hunkno += 1
+        if hunkno < len(patch["hunks"][fileno]):
+          hunk = patch["hunks"][fileno][hunkno]
+        else:
+          #if hunkvalid:
+          pass
+        
+
+
+
+
       # todo: check if already patched
+  # todo: check for premature eof
 
 
 
