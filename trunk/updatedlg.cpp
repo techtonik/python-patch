@@ -94,13 +94,11 @@ void UpdateDlg::CreateListColumns()
     lst->InsertColumn(1, _("Version"));
     lst->InsertColumn(2, _("Installed"));
     lst->InsertColumn(3, _("Size"), wxLIST_FORMAT_RIGHT);
-    lst->InsertColumn(4, _("Rev"));
 
-    lst->SetColumnWidth(0, lst->GetSize().x - (64 * 3 + 40) - 6 ); // 1st column takes all remaining space
+    lst->SetColumnWidth(0, lst->GetSize().x - (64 * 3) - 2); // 1st column takes all remaining space
     lst->SetColumnWidth(1, 64);
     lst->SetColumnWidth(2, 64);
     lst->SetColumnWidth(3, 64);
-    lst->SetColumnWidth(4, 40);
 }
 
 void UpdateDlg::AddRecordToList(UpdateRec* rec)
