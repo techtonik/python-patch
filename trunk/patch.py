@@ -220,6 +220,38 @@ def check_patched(filename, hunks):
   return matched
 
 
+
+def patch_hunks(srcname, tgtname, hunks):
+  src = open(srcname)
+  tgt = open(tgtname, "w")
+
+  srclineno = 1
+  for hno, h in enumerate(hunks):
+    print "hunk no",hno+1
+    # skip to line just before hunk starts
+    while srclineno < h["startsrc"]:
+      tgt.write(src.readline())
+      srclineno += 1
+
+    print "srcline ",srclineno
+    for hline in h["text"]:
+      # todo: \ No newline at the end of file
+      if hline.startswith("-") or hline.startswith("\\"):
+        src.readline()
+        srclineno += 1
+        continue
+      else:
+        if not hline.startswith("+"):
+          src.readline()
+          srclineno += 1
+        tgt.write(hline[1:])
+  tgt.writelines(src.readlines())
+  tgt.close()
+  src.close()
+  return True
+  
+
+
 from os.path import exists, isfile
 from pprint import pprint
 
@@ -242,6 +274,7 @@ def apply_patch(patch):
     hunkfind = []
     hunkreplace = []
     validhunks = 0
+    canpatch = False
     for lineno, line in enumerate(f2fp):
       if lineno+1 < hunk["startsrc"]:
         continue
@@ -277,24 +310,32 @@ def apply_patch(patch):
         else:
           if validhunks == len(patch["hunks"][fileno]):
             # patch file
-          
-            pass
+            canpatch = True
+            break
     else:
       if hunkno < len(patch["hunks"][fileno]):
         warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
 
-
     f2fp.close()
+
     if validhunks < len(patch["hunks"][fileno]):
       if check_patched(filename, patch["hunks"][fileno]):
         warning("file %s is already patched" % filename)
       else:
         warning("source file is different - %s" % filename)
-
-        
-
-
-
+    if canpatch:
+      backupname = filename+".orig"
+      if exists(backupname):
+        warning("can't backup original file to %s - aborting")
+      else:
+        import shutil
+        shutil.move(filename, backupname)
+        if patch_hunks(backupname, filename, patch["hunks"][fileno]):
+          warning("success patching file %s" % filename)
+        else:
+          warning("error patching file %s" % filename)
+          shutil.copy(filename, filename+".invalid")
+          shutil.move(backupname, filename)
 
   # todo: check for premature eof
 
