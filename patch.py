@@ -175,8 +175,49 @@ def read_patch(filename):
         continue
 
   # todo detect invalid last chunk
+  # - patch hunkbody to fall into hunkskip condition before eof
+
   fp.close()
   return files
+
+
+def check_patched(filename, hunks):
+  matched = True
+  fp = open(filename)
+
+  class NoMatch(Exception):
+    pass
+
+  try:
+    lineno = 1
+    line = fp.readline()
+    if not line:
+      raise NoMatch
+    for hno, h in enumerate(hunks):
+      # skip to line just before hunk starts
+      while lineno < h["starttgt"]-1:
+        line = fp.readline()
+        lineno += 1
+        if not line:
+          raise NoMatch
+      for hline in h["text"]:
+        # todo: \ No newline at the end of file
+        if not hline.startswith("-") and not hline.startswith("\\"):
+          line = fp.readline()
+          lineno += 1
+          if not line:
+            raise NoMatch
+          if line.rstrip("\n") != hline[1:].rstrip("\n"):
+            print hno
+            print line
+            print hline
+            warning("file is not patched - failed hunk: %d" % (hno+1))
+            raise NoMatch
+  except NoMatch:
+    matched = False
+
+  fp.close()
+  return matched
 
 
 from os.path import exists, isfile
@@ -188,7 +229,7 @@ def apply_patch(patch):
     if not exists(f2patch):
       f2patch = patch["target"][fileno]
       if not exists(f2patch):
-        warning("source/target file does not exist\n--- %s\n+++ %s" % (filename, f2patch))
+        warning("source/target file does not exist\n\t--- %s\n\t+++ %s" % (filename, f2patch))
         continue
     if not isfile(f2patch):
       warning("not a file - %s" % f2patch)
@@ -210,31 +251,51 @@ def apply_patch(patch):
         hunkreplace = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " +"]
         #pprint(hunkreplace)
         hunklineno = 0
-        hunkvalid = True
 
         # todo \ No newline at end of file
 
-      # check source file for hunks
+      # check hunks in source file
       if lineno+1 < hunk["startsrc"]+len(hunkfind):
-        if line.rstrip("\n") != hunkfind[hunklineno]:
-          hunkvalid = False
-          warning("hunk no.%d for file %s is invalid" % (hunkno+1, filename))
-        hunklineno+=1
+        if line.rstrip("\n") == hunkfind[hunklineno]:
+          hunklineno+=1
+        else:
+          warning("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
+          # file may be already patched, but we will chech other hunks anyway
+          hunkno += 1
+          if hunkno < len(patch["hunks"][fileno]):
+            hunk = patch["hunks"][fileno][hunkno]
+            continue
+          else:
+            break
 
       if lineno+1 == hunk["startsrc"]+len(hunkfind):
         debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
-        hunkno += 1
+        hunkno+=1
+        validhunks+=1
         if hunkno < len(patch["hunks"][fileno]):
           hunk = patch["hunks"][fileno][hunkno]
         else:
-          #if hunkvalid:
-          pass
+          if validhunks == len(patch["hunks"][fileno]):
+            # patch file
+          
+            pass
+    else:
+      if hunkno < len(patch["hunks"][fileno]):
+        warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
+
+
+    f2fp.close()
+    if validhunks < len(patch["hunks"][fileno]):
+      if check_patched(filename, patch["hunks"][fileno]):
+        warning("file %s is already patched" % filename)
+      else:
+        warning("source file is different - %s" % filename)
+
         
 
 
 
 
-      # todo: check if already patched
   # todo: check for premature eof
 
 
