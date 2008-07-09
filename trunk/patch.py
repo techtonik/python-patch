@@ -31,7 +31,7 @@ def read_patch(filename):
   hunkinfo = dict(startsrc=None, linessrc=None, starttgt=None, linestgt=None, invalid=False, text=[])
   hunkactual = dict(linessrc=None, linestgt=None)
 
-  fp = open(filename, "rb")
+  fp = open(filename, "r")
   for lineno, line in enumerate(fp):
 
     # analyze state
@@ -208,9 +208,8 @@ def check_patched(filename, hunks):
           if not line:
             raise NoMatch
           if line.rstrip("\n") != hline[1:].rstrip("\n"):
-            print hno
-            print line
-            print hline
+            print len(line), "\t", line.rstrip("\n"), "_"
+            print len(hline[1:]), "\t", hline[1:].rstrip("\n"), "_" 
             warning("file is not patched - failed hunk: %d" % (hno+1))
             raise NoMatch
   except NoMatch:
