@@ -43,8 +43,8 @@ def read_patch(filename):
       filenames = True
     #: skip hunkskip and hunkbody code until you read definition of hunkhead
     if hunkbody:
-      if re.match(r"^[- \+\\]", line) \
-         and (hunkactual["linessrc"] < hunkinfo["linessrc"] or hunkactual["linestgt"] < hunkinfo["linestgt"]):
+      # process line first
+      if re.match(r"^[- \+\\]", line):
           # gather stats about line endings
           if line.endswith("\r\n"):
             lineends["crlf"] += 1
@@ -62,13 +62,33 @@ def read_patch(filename):
             hunkactual["linestgt"] += 1
           hunkinfo["text"].append(line)
           # todo: handle \ No newline cases
+      else:
+          warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, files["target"][nextfileno-1]))
+          # add hunk status node
+          files["hunks"][nextfileno-1].append(hunkinfo.copy())
+          files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
+          # switch to hunkskip state
+          hunkbody = False
+          hunkskip = True
+
+      # check exit conditions
+      if hunkactual["linessrc"] > hunkinfo["linessrc"] or hunkactual["linestgt"] > hunkinfo["linestgt"]:
+          warning("extra hunk no.%d lines at %d for target %s" % (nexthunkno, lineno+1, files["target"][nextfileno-1]))
+          # add hunk status node
+          files["hunks"][nextfileno-1].append(hunkinfo.copy())
+          files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
+          # switch to hunkskip state
+          hunkbody = False
+          hunkskip = True
       elif hunkinfo["linessrc"] == hunkactual["linessrc"] and hunkinfo["linestgt"] == hunkactual["linestgt"]:
           files["hunks"][nextfileno-1].append(hunkinfo.copy())
           # switch to hunkskip state
           hunkbody = False
           hunkskip = True
 
-          # crlf todo
+          # todo: newlines handling
+          # - file.newlines
+          # - rU universal file mode
           #if debugmode:
           #  debuglines = dict(lineends)
           #  debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno)
@@ -76,15 +96,6 @@ def read_patch(filename):
 
           if ((lineends["cr"]!=0) + (lineends["crlf"]!=0) + (lineends["lf"]!=0)) > 1:
             warning("inconsistent line endings")
-      else:
-          warning("invalid hunk no.%d for target file %s" % (nexthunkno, files["target"][nextfileno-1]))
-          # add hunk status node
-          files["hunks"][nextfileno-1].append(hunkinfo.copy())
-          files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
-
-          # switch to hunkskip state
-          hunkbody = False
-          hunkskip = True
 
     if hunkskip:
       match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
@@ -181,9 +192,13 @@ def read_patch(filename):
         hunkbody = True
         nexthunkno += 1
         continue
-
-  # todo detect invalid last chunk
-  # - patch hunkbody to fall into hunkskip condition before eof
+  else:
+    if not hunkskip:
+      warning("patch file incomplete - %s" % filename)
+      # sys.exit(?)
+    else:
+      if debugmode and len(files["source"]) > 0:
+          debug("parsing patch - file: %s hunks: %d" % (files["source"][nextfileno-1], len(files["hunks"][nextfileno-1])))
 
   fp.close()
   return files
