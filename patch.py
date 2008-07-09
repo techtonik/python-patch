@@ -108,7 +108,7 @@ def read_patch(filename):
         hunkskip = False
         filenames = True
         if debugmode and len(files["source"]) > 0:
-          debug("parsing patch - file: %s hunks: %d" % (files["source"][nextfileno-1], len(files["hunks"][nextfileno-1])))
+          debug("parsing patch - hunks: %d\tfile: %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
 
     if filenames:
       if line.startswith("--- "):
@@ -198,7 +198,7 @@ def read_patch(filename):
       # sys.exit(?)
     else:
       if debugmode and len(files["source"]) > 0:
-          debug("parsing patch - file: %s hunks: %d" % (files["source"][nextfileno-1], len(files["hunks"][nextfileno-1])))
+          debug("parsing patch - hunks: %d\tfile: %s " % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
 
   fp.close()
   return files
@@ -302,7 +302,6 @@ def apply_patch(patch):
         continue
       elif lineno+1 == hunk["startsrc"]:
         hunkfind = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " -"]
-        #pprint(hunkfind)
         hunkreplace = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " +"]
         #pprint(hunkreplace)
         hunklineno = 0
@@ -310,7 +309,7 @@ def apply_patch(patch):
         # todo \ No newline at end of file
 
       # check hunks in source file
-      if lineno+1 < hunk["startsrc"]+len(hunkfind):
+      if lineno+1 < hunk["startsrc"]+len(hunkfind)-1:
         if line.rstrip("\n") == hunkfind[hunklineno]:
           hunklineno+=1
         else:
@@ -323,7 +322,8 @@ def apply_patch(patch):
           else:
             break
 
-      if lineno+1 == hunk["startsrc"]+len(hunkfind):
+      # check if processed line is the last line
+      if lineno+1 == hunk["startsrc"]+len(hunkfind)-1:
         debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
         hunkno+=1
         validhunks+=1
