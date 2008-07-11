@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_plugin_manifest_file>
+    <SdkVersion major="1" minor="10" release="0" />
+    <Plugin name="DevPakUpdater">
+        <Value title="Dev-C++ DevPak updater/installer" />
+        <Value version="0.1" />
+        <Value description="Installs selected DevPaks from the Internet" />
+        <Value author="Yiannis Mandravellos" />
+        <Value authorEmail="info@codeblocks.org" />
+        <Value authorWebsite="http://www.codeblocks.org/" />
+        <Value thanksTo="Dev-C++ community.
+                         Julian R Seward for libbzip2.
+                         libbzip2 copyright notice:
+                         bzip2 and associated library libbzip2, are
+                         copyright (C) 1996-2000 Julian R Seward.
+                         All rights reserved." />
+        <Value license="GPL" />
+    </Plugin>
+</CodeBlocks_plugin_manifest_file>

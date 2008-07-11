@@ -268,7 +268,6 @@ def patch_hunks(srcname, tgtname, hunks):
       tgt.write(src.readline())
       srclineno += 1
 
-    print "srcline ",srclineno
     for hline in h["text"]:
       # todo: \ No newline at the end of file
       if hline.startswith("-") or hline.startswith("\\"):
