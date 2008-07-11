@@ -287,6 +287,7 @@ def patch_hunks(srcname, tgtname, hunks):
 
 
 from os.path import exists, isfile
+from os import unlink
 from pprint import pprint
 
 def apply_patch(patch):
@@ -363,14 +364,15 @@ def apply_patch(patch):
       else:
         warning("source file is different - %s" % filename)
     if canpatch:
-      backupname = filename+".bak"
+      backupname = filename+".orig"
       if exists(backupname):
         warning("can't backup original file to %s - aborting" % backupname)
       else:
         import shutil
         shutil.move(filename, backupname)
         if patch_hunks(backupname, filename, patch["hunks"][fileno]):
-          warning("success patching file %s" % filename)
+          warning("successfully patched %s" % filename)
+          unlink(backupname)
         else:
           warning("error patching file %s" % filename)
           shutil.copy(filename, filename+".invalid")
@@ -402,3 +404,7 @@ if __name__ == "__main__":
   #pprint(patch)
   apply_patch(patch)
 
+  # todo: check, document and test patching with different lineendings in patch and source file
+  #       so far all linefeed in patched file are converted to the native for running platfrom
+  #       patch.py should detect the proper line-endings for inserted hunks or give a warning
+  #       if target file is mix cased
