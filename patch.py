@@ -294,8 +294,6 @@ def apply_patch(patch):
   total = len(patch["source"])
   for fileno, filename in enumerate(patch["source"]):
 
-    info("processing %d/%d:\t %s" % (fileno+1, total, filename))
-
     f2patch = filename
     if not exists(f2patch):
       f2patch = patch["target"][fileno]
@@ -305,9 +303,12 @@ def apply_patch(patch):
     if not isfile(f2patch):
       warning("not a file - %s" % f2patch)
       continue
+    filename = f2patch
+
+    info("processing %d/%d:\t %s" % (fileno+1, total, filename))
 
     # validate before patching
-    f2fp = open(f2patch)
+    f2fp = open(filename)
     hunkno = 0
     hunk = patch["hunks"][fileno][hunkno]
     hunkfind = []
@@ -359,11 +360,11 @@ def apply_patch(patch):
 
     if validhunks < len(patch["hunks"][fileno]):
       if check_patched(filename, patch["hunks"][fileno]):
-        warning("file %s is already patched" % filename)
+        warning("already patched  %s" % filename)
       else:
         warning("source file is different - %s" % filename)
     if canpatch:
-      backupname = filename+".orig"
+      backupname = filename+".bak"
       if exists(backupname):
         warning("can't backup original file to %s - aborting" % backupname)
       else:
@@ -374,6 +375,8 @@ def apply_patch(patch):
         else:
           warning("error patching file %s" % filename)
           shutil.copy(filename, filename+".invalid")
+          warning("invalid version is saved to %s" % filename+".invalid")
+          # todo: proper rejects
           shutil.move(backupname, filename)
 
   # todo: check for premature eof
