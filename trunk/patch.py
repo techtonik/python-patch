@@ -12,9 +12,13 @@ import logging
 import re
 from logging import debug, info, warning
 
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
-
 debugmode = True
+debugmode = False
+if debugmode:
+  logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
+else:
+  logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 
 
 def read_patch(filename):
@@ -218,9 +222,10 @@ def check_patched(filename, hunks):
   class NoMatch(Exception):
     pass
 
+  lineno = 1
+  line = fp.readline()
+  hno = None
   try:
-    lineno = 1
-    line = fp.readline()
     if not line:
       raise NoMatch
     for hno, h in enumerate(hunks):
@@ -244,6 +249,7 @@ def check_patched(filename, hunks):
             raise NoMatch
   except NoMatch:
     matched = False
+    # todo: display failed hunk, i.e. expected/found
 
   fp.close()
   return matched
@@ -285,12 +291,16 @@ from os.path import exists, isfile
 from pprint import pprint
 
 def apply_patch(patch):
+  total = len(patch["source"])
   for fileno, filename in enumerate(patch["source"]):
+
+    info("processing %d/%d:\t %s" % (fileno+1, total, filename))
+
     f2patch = filename
     if not exists(f2patch):
       f2patch = patch["target"][fileno]
       if not exists(f2patch):
-        warning("source/target file does not exist\n\t--- %s\n\t+++ %s" % (filename, f2patch))
+        warning("source/target file does not exist\n--- %s\n+++ %s" % (filename, f2patch))
         continue
     if not isfile(f2patch):
       warning("not a file - %s" % f2patch)
@@ -320,8 +330,8 @@ def apply_patch(patch):
         if line.rstrip("\n") == hunkfind[hunklineno]:
           hunklineno+=1
         else:
-          warning("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
-          # file may be already patched, but we will chech other hunks anyway
+          debug("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
+          # file may be already patched, but we will check other hunks anyway
           hunkno += 1
           if hunkno < len(patch["hunks"][fileno]):
             hunk = patch["hunks"][fileno][hunkno]
