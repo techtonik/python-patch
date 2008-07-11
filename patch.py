@@ -1,13 +1,16 @@
-""" Patch utility to apply unified diffs written in Python """
+""" Patch utility to apply unified diffs """
 """ Brute-force line-by-line parsing 
 
-    Feedback is welcome at
-    techtonik.rainforce.org
+    Project home: http://code.google.com/p/python-patch/
+
 """
+
+__author__ = "techtonik.rainforce.org"
+__version__ = "1.0"
 
 import logging
 import re
-from logging import debug, warning
+from logging import debug, info, warning
 
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
 
@@ -32,6 +35,8 @@ def read_patch(filename):
   # hunkinfo holds parsed values, hunkactual - calculated
   hunkinfo = dict(startsrc=None, linessrc=None, starttgt=None, linestgt=None, invalid=False, text=[])
   hunkactual = dict(linessrc=None, linestgt=None)
+
+  info("reading patch %s" % filename)
 
   fp = open(filename, "r")
   for lineno, line in enumerate(fp):
@@ -108,7 +113,7 @@ def read_patch(filename):
         hunkskip = False
         filenames = True
         if debugmode and len(files["source"]) > 0:
-          debug("parsing patch - hunks: %d\tfile: %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
+          debug("- %2d hunks for %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
 
     if filenames:
       if line.startswith("--- "):
@@ -197,9 +202,11 @@ def read_patch(filename):
       warning("patch file incomplete - %s" % filename)
       # sys.exit(?)
     else:
+      # duplicated message when an eof is reached
       if debugmode and len(files["source"]) > 0:
-          debug("parsing patch - hunks: %d\tfile: %s " % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
+          debug("- %2d hunks for %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
 
+  info("total files: %d  total hunks: %d" % (len(files["source"]), sum(len(hset) for hset in files["hunks"])))
   fp.close()
   return files
 
@@ -249,7 +256,7 @@ def patch_hunks(srcname, tgtname, hunks):
 
   srclineno = 1
   for hno, h in enumerate(hunks):
-    print "hunk no",hno+1
+    debug("processing hunk %d for file %s" % (hno+1, tgtname))
     # skip to line just before hunk starts
     while srclineno < h["startsrc"]:
       tgt.write(src.readline())
@@ -363,9 +370,23 @@ def apply_patch(patch):
 
 
 
-patch = read_patch("fix_devpak_install.patch")
-apply_patch(patch)
+from optparse import OptionParser
+from os.path import exists
+import sys
 
-#pprint(patch)
+if __name__ == "__main__":
+  opt = OptionParser(usage="%prog [options] patch-file", version="python-patch %s" % __version__)
+  (options, args) = opt.parse_args()
 
+  if not args:
+    opt.print_help()
+    sys.exit()
+  patchfile = args[0]
+  if not exists(patchfile) or not isfile(patchfile):
+    sys.exit("patch file does not exist - %s" % patchfile)
+
+  #patch = read_patch("fix_devpak_install.patch")
+  patch = read_patch(patchfile)
+  #pprint(patch)
+  apply_patch(patch)
 
