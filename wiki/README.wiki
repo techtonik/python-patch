@@ -3,7 +3,7 @@
 
 This project started because windows platform lacks native tool to apply patches. There are plenty of tools on my PC to produce diffs - from scripts bundled with python to several version control systems, but none of them is able to apply these diffs back.
 
-Usually patches are applied with a *patch* tool - a UNIX utility that continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of] GNU tools. There is [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of *patch*, but it's [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c so buggy] that this version was born. And I've always wanted to have a *diff.py* [http://bugs.python.org/issue2057 counterpart bundled] with Python.
+Usually patches are applied with a *patch* tool - a UNIX utility that continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of] GNU tools. There is [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of *patch*, but it's [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c so buggy] (and potentially insecure if run on a web server) that this version was born. And I've always wanted to have a *diff.py* [http://bugs.python.org/issue2057 counterpart bundled] with Python.
 
 = Status =
 
@@ -18,4 +18,4 @@ The problem with lineends converted to native is being worked on. I hope that so
 
 Patch utility in Python makes it possible to implement online "submit, review and apply" module site content that uses unified diffs as an interchange format between users, site, and version control system. With this system patches can be applied after onsite review automatically storing the names of patch contributors in SVN history logs without requiring a write access for these contributors. This system is not the scope of this project though.
 
-Additional unified diff parsers may be added in future to compare different parsing techniques (with pyparsing module, for example).
+Additional unified diff parsers may be added in future to compare different parsing techniques (with [http://pyparsing.wikispaces.com/ pyparsing], [http://www.ibm.com/developerworks/library/l-spark.html SPARK] or [http://www.google.com/Top/Computers/Programming/Languages/Python/Modules/Text_Processing/ others] as example).
