@@ -12,12 +12,8 @@ import logging
 import re
 from logging import debug, info, warning
 
-debugmode = True
+
 debugmode = False
-if debugmode:
-  logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
-else:
-  logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 
@@ -243,8 +239,6 @@ def check_patched(filename, hunks):
           if not line:
             raise NoMatch
           if line.rstrip("\n") != hline[1:].rstrip("\n"):
-            print len(line), "\t", line.rstrip("\n"), "_"
-            print len(hline[1:]), "\t", hline[1:].rstrip("\n"), "_" 
             warning("file is not patched - failed hunk: %d" % (hno+1))
             raise NoMatch
   except NoMatch:
@@ -390,14 +384,24 @@ import sys
 
 if __name__ == "__main__":
   opt = OptionParser(usage="%prog [options] patch-file", version="python-patch %s" % __version__)
+  opt.add_option("-d", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
   if not args:
     opt.print_help()
     sys.exit()
+  debugmode = options.debugmode
   patchfile = args[0]
   if not exists(patchfile) or not isfile(patchfile):
     sys.exit("patch file does not exist - %s" % patchfile)
+
+
+  if debugmode:
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
+  else:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+
 
   #patch = read_patch("fix_devpak_install.patch")
   patch = read_patch(patchfile)
