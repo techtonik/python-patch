@@ -164,8 +164,8 @@ def read_patch(filename):
             hunkhead = True
             nexthunkno = 0
             files["hunks"].append([])
-            files["hunkends"].append(lineends)
-            files["fileends"].append(lineends)
+            files["hunkends"].append(lineends.copy())
+            files["fileends"].append(lineends.copy())
             continue
 
     if hunkhead:
