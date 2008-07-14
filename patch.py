@@ -27,10 +27,10 @@ def read_patch(filename):
   hunkskip = False  # skipping invalid hunk mode
 
   header = True
-  files = dict(source=[], target=[], hunks=[])
+  lineends = dict(lf=0, crlf=0, cr=0)
+  files = dict(source=[], target=[], hunks=[], fileends=[], hunkends=[])
   nextfileno = 0
   nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
-  lineends = dict(lf=0, crlf=0, cr=0)
 
   # hunkinfo holds parsed values, hunkactual - calculated
   hunkinfo = dict(startsrc=None, linessrc=None, starttgt=None, linestgt=None, invalid=False, text=[])
@@ -38,7 +38,7 @@ def read_patch(filename):
 
   info("reading patch %s" % filename)
 
-  fp = open(filename, "r")
+  fp = open(filename, "rb")
   for lineno, line in enumerate(fp):
 
     # analyze state
@@ -52,11 +52,11 @@ def read_patch(filename):
       if re.match(r"^[- \+\\]", line):
           # gather stats about line endings
           if line.endswith("\r\n"):
-            lineends["crlf"] += 1
+            files["hunkends"][nextfileno-1]["crlf"] += 1
           elif line.endswith("\n"):
-            lineends["lf"] += 1
+            files["hunkends"][nextfileno-1]["lf"] += 1
           elif line.endswith("\r"):
-            lineends["cr"] += 1
+            files["hunkends"][nextfileno-1]["cr"] += 1
             
           if line.startswith("-"):
             hunkactual["linessrc"] += 1
@@ -91,16 +91,14 @@ def read_patch(filename):
           hunkbody = False
           hunkskip = True
 
-          # todo: newlines handling
-          # - file.newlines
-          # - rU universal file mode
-          #if debugmode:
-          #  debuglines = dict(lineends)
-          #  debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno)
-          #  debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
-
-          if ((lineends["cr"]!=0) + (lineends["crlf"]!=0) + (lineends["lf"]!=0)) > 1:
-            warning("inconsistent line endings")
+          # detect mixed window/unix line ends
+          ends = files["hunkends"][nextfileno-1]
+          if ((ends["cr"]!=0) + (ends["crlf"]!=0) + (ends["lf"]!=0)) > 1:
+            warning("inconsistent line ends in patch hunks for %s" % files["source"][nextfileno-1])
+          if debugmode:
+            debuglines = dict(ends)
+            debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno)
+            debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
 
     if hunkskip:
       match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
@@ -166,7 +164,8 @@ def read_patch(filename):
             hunkhead = True
             nexthunkno = 0
             files["hunks"].append([])
-            lineends = dict(lf=0, crlf=0, cr=0)
+            files["hunkends"].append(lineends)
+            files["fileends"].append(lineends)
             continue
 
     if hunkhead:
@@ -222,23 +221,23 @@ def check_patched(filename, hunks):
   line = fp.readline()
   hno = None
   try:
-    if not line:
+    if not len(line):
       raise NoMatch
     for hno, h in enumerate(hunks):
       # skip to line just before hunk starts
       while lineno < h["starttgt"]-1:
         line = fp.readline()
         lineno += 1
-        if not line:
+        if not len(line):
           raise NoMatch
       for hline in h["text"]:
         # todo: \ No newline at the end of file
         if not hline.startswith("-") and not hline.startswith("\\"):
           line = fp.readline()
           lineno += 1
-          if not line:
+          if not len(line):
             raise NoMatch
-          if line.rstrip("\n") != hline[1:].rstrip("\n"):
+          if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
             warning("file is not patched - failed hunk: %d" % (hno+1))
             raise NoMatch
   except NoMatch:
@@ -251,8 +250,14 @@ def check_patched(filename, hunks):
 
 
 def patch_hunks(srcname, tgtname, hunks):
-  src = open(srcname)
-  tgt = open(tgtname, "w")
+  src = open(srcname, "rU")
+  tgt = open(tgtname, "wb")
+
+  # todo: detect linefeeds early - in apply_files routine
+  #       to handle cases when patch starts right from the first
+  #       line and no lines are processed. At the moment substituted
+  #       lineends may not be the same at the start and at the end
+  #       of patching. Also issue a warning about mixed lineends
 
   srclineno = 1
   for hno, h in enumerate(hunks):
@@ -263,7 +268,7 @@ def patch_hunks(srcname, tgtname, hunks):
       srclineno += 1
 
     for hline in h["text"]:
-      # todo: \ No newline at the end of file
+      # todo: check \ No newline at the end of file
       if hline.startswith("-") or hline.startswith("\\"):
         src.readline()
         srclineno += 1
@@ -272,6 +277,12 @@ def patch_hunks(srcname, tgtname, hunks):
         if not hline.startswith("+"):
           src.readline()
           srclineno += 1
+        line2write = hline[1:]
+        if type(src.newlines) == str:
+          tgt.write(line2write.rstrip("\r\n")+src.newlines)
+        else: #: type(src.newlines) == tuple or src.newlines == None
+          tgt.write(line2write)
+
         tgt.write(hline[1:])
   tgt.writelines(src.readlines())
   tgt.close()
@@ -313,8 +324,8 @@ def apply_patch(patch):
       if lineno+1 < hunk["startsrc"]:
         continue
       elif lineno+1 == hunk["startsrc"]:
-        hunkfind = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " -"]
-        hunkreplace = [x[1:].rstrip("\n") for x in hunk["text"] if x[0] in " +"]
+        hunkfind = [x[1:].rstrip("\r\n") for x in hunk["text"] if x[0] in " -"]
+        hunkreplace = [x[1:].rstrip("\r\n") for x in hunk["text"] if x[0] in " +"]
         #pprint(hunkreplace)
         hunklineno = 0
 
@@ -322,7 +333,7 @@ def apply_patch(patch):
 
       # check hunks in source file
       if lineno+1 < hunk["startsrc"]+len(hunkfind)-1:
-        if line.rstrip("\n") == hunkfind[hunklineno]:
+        if line.rstrip("\r\n") == hunkfind[hunklineno]:
           hunklineno+=1
         else:
           debug("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
@@ -408,7 +419,5 @@ if __name__ == "__main__":
   #pprint(patch)
   apply_patch(patch)
 
-  # todo: check, document and test patching with different lineendings in patch and source file
-  #       so far all linefeed in patched file are converted to the native for running platfrom
-  #       patch.py should detect the proper line-endings for inserted hunks or give a warning
-  #       if target file is mix cased
+  # todo: document and test line ends handling logic - patch.py detects proper line-endings
+  #       for inserted hunks and issues a warning if patched file has incosistent line ends
