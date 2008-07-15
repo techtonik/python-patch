@@ -8,7 +8,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "1.0"
+__version__ = "8.06-1"
 
 import logging
 import re
