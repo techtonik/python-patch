@@ -1,21 +1,19 @@
 #labels Phase-Design
-= History =
+== History ==
 
 This project started because windows platform lacks native tool to apply patches. There are plenty of tools on my PC to produce diffs - from scripts bundled with python to several version control systems, but none of them is able to apply these diffs back.
 
 Usually patches are applied with a *patch* tool - a UNIX utility that continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of] GNU tools. There is [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of *patch*, but it's [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c so buggy] (and potentially insecure if run on a web server) that this version was born. And I've always wanted to have a *diff.py* [http://bugs.python.org/issue2057 counterpart bundled] with Python.
 
-= Status =
+== Status ==
 
 *patch.py* is capable to apply _unified diffs only_. Parsing of diff is done in a in very straightforward manner as an excercise to approach the problem of parsing on my own before learning the 'proper ways'. Thanks creators, _the format of unified diff_ is rather simple (an illustration is included in [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
 
-The utility is not complete in the sense that it doesn't handle "\ No newline at end of file" cases and lacks a test suite. It also *converts file lineends to the native format* of current operating system while patching.
+Note about line end differences. patch.py tries to convert patch lines into best suitable format for patched file. While scanning lines patch.py notices line endings in source file and if they are consistent - patch lines are applied with the same ending. If they are not - lines are applied "as is" (as in patch).
 
-And the last thing - this script is not interactive. 
+The utility is not complete in the sense that it doesn't handle "\ No newline at end of file" cases and lacks a test suite. And the last thing - this script is not interactive. 
 
 = Future =
-The problem with lineends converted to native is being worked on. I hope that soon patch.py will be capable to make best guess about file lineends and patch it appropriately. Files with mixed lineends will be patched with strings exactly the same as contained in a patch file (with a warning, though).
-
 Patch utility in Python makes it possible to implement online "submit, review and apply" module site content that uses unified diffs as an interchange format between users, site, and version control system. With this system patches can be applied after onsite review automatically storing the names of patch contributors in SVN history logs without requiring a write access for these contributors. This system is not the scope of this project though.
 
 Additional unified diff parsers may be added in future to compare different parsing techniques (with [http://pyparsing.wikispaces.com/ pyparsing], [http://www.ibm.com/developerworks/library/l-spark.html SPARK] or [http://www.google.com/Top/Computers/Programming/Languages/Python/Modules/Text_Processing/ others] as example).
