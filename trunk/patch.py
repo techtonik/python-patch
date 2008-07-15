@@ -2,6 +2,8 @@
 """ Brute-force line-by-line parsing 
 
     Project home: http://code.google.com/p/python-patch/
+    $Id$
+    $HeadURL$
 
 """
 
@@ -250,7 +252,7 @@ def check_patched(filename, hunks):
 
 
 def patch_hunks(srcname, tgtname, hunks):
-  src = open(srcname, "rU")
+  src = open(srcname, "rb")
   tgt = open(tgtname, "wb")
 
   # todo: detect linefeeds early - in apply_files routine
@@ -260,11 +262,20 @@ def patch_hunks(srcname, tgtname, hunks):
   #       of patching. Also issue a warning about mixed lineends
 
   srclineno = 1
+  lineends = {'\n':0, '\r\n':0, '\r':0}
   for hno, h in enumerate(hunks):
     debug("processing hunk %d for file %s" % (hno+1, tgtname))
     # skip to line just before hunk starts
     while srclineno < h["startsrc"]:
-      tgt.write(src.readline())
+      line = src.readline()
+      # 'U' mode works only with text files
+      if line.endswith("\r\n"):
+        lineends["\r\n"] += 1
+      elif line.endswith("\n"):
+        lineends["\n"] += 1
+      elif line.endswith("\r"):
+        lineends["\r"] += 1
+      tgt.write(line)
       srclineno += 1
 
     for hline in h["text"]:
@@ -278,12 +289,12 @@ def patch_hunks(srcname, tgtname, hunks):
           src.readline()
           srclineno += 1
         line2write = hline[1:]
-        if type(src.newlines) == str:
-          tgt.write(line2write.rstrip("\r\n")+src.newlines)
-        else: #: type(src.newlines) == tuple or src.newlines == None
+        # detect if line ends are consistent in source file
+        if sum([bool(lineends[x]) for x in lineends]) == 1:
+          newline = [x for x in lineends if lineends[x] != 0][0]
+          tgt.write(line2write.rstrip("\r\n")+newline)
+        else: # newlines are mixed or unknown
           tgt.write(line2write)
-
-        tgt.write(hline[1:])
   tgt.writelines(src.readlines())
   tgt.close()
   src.close()
