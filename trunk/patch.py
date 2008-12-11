@@ -20,6 +20,22 @@ debugmode = False
 
 
 def read_patch(filename):
+  """
+  read and parse patch file into python structure ordered by file
+
+  {
+    source, # list of source filenames
+    target, # list of target filenames (not used)
+    hunks,  # list of lists of hunks
+    fileends, # file ending statistics in source files
+    hunkends, # file endings statistics in hunks
+  }
+
+  this structure is essentialy a table with a row for every source file
+  """
+
+  files = dict(source=[], target=[], hunks=[], fileends=[], hunkends=[])
+
   # define possible file regions that will direct the parser flow
   header = False    # comments before the patch body
   filenames = False # lines starting with --- and +++
@@ -30,7 +46,6 @@ def read_patch(filename):
 
   header = True
   lineends = dict(lf=0, crlf=0, cr=0)
-  files = dict(source=[], target=[], hunks=[], fileends=[], hunkends=[])
   nextfileno = 0
   nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
 
@@ -405,11 +420,13 @@ from os.path import exists
 import sys
 
 if __name__ == "__main__":
-  opt = OptionParser(usage="%prog [options] patch-file", version="python-patch %s" % __version__)
+  opt = OptionParser(usage="%prog [options] unipatch-file", version="python-patch %s" % __version__)
   opt.add_option("-d", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
   if not args:
+    opt.print_version()
+    print("")
     opt.print_help()
     sys.exit()
   debugmode = options.debugmode
