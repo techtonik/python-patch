@@ -267,22 +267,28 @@ def check_patched(filename, hunks):
 
 
 
-def patch_hunks(srcname, tgtname, hunks):
-  src = open(srcname, "rb")
-  tgt = open(tgtname, "wb")
+def patch_stream(instream, hunks):
+  """ given a source stream and hunks iterable, yield patched stream
+  
+      converts lineends in hunk lines to the best suitable format
+      autodetected from input
+  """
 
   # todo: At the moment substituted lineends may not be the same
   #       at the start and at the end of patching. Also issue a
-  #       warning about mixed lineends
+  #       warning/throw about mixed lineends (is it really needed?)
+
+  hunks = iter(hunks)
 
   srclineno = 1
 
   lineends = {'\n':0, '\r\n':0, '\r':0}
   def get_line():
-    """ local utility function - return line from source stream
-        collecting line end statistics in lineends on the way
     """
-    line = src.readline()
+    local utility function - return line from source stream
+    collecting line end statistics on the way
+    """
+    line = instream.readline()
       # 'U' mode works only with text files
     if line.endswith("\r\n"):
       lineends["\r\n"] += 1
@@ -293,10 +299,10 @@ def patch_hunks(srcname, tgtname, hunks):
     return line
 
   for hno, h in enumerate(hunks):
-    debug("processing hunk %d for file %s" % (hno+1, tgtname))
+    debug("hunk %d" % (hno+1))
     # skip to line just before hunk starts
     while srclineno < h["startsrc"]:
-      tgt.write(get_line())
+      yield get_line()
       srclineno += 1
 
     for hline in h["text"]:
@@ -313,10 +319,23 @@ def patch_hunks(srcname, tgtname, hunks):
         # detect if line ends are consistent in source file
         if sum([bool(lineends[x]) for x in lineends]) == 1:
           newline = [x for x in lineends if lineends[x] != 0][0]
-          tgt.write(line2write.rstrip("\r\n")+newline)
+          yield line2write.rstrip("\r\n")+newline
         else: # newlines are mixed
-          tgt.write(line2write)
-  tgt.writelines(src.readlines())
+          yield line2write
+   
+  for line in instream:
+    yield line
+
+
+
+def patch_hunks(srcname, tgtname, hunks):
+  src = open(srcname, "rb")
+  tgt = open(tgtname, "wb")
+
+  debug("processing target file %s" % tgtname)
+
+  tgt.writelines(patch_stream(src, hunks))
+
   tgt.close()
   src.close()
   return True
