@@ -271,13 +271,12 @@ def patch_hunks(srcname, tgtname, hunks):
   src = open(srcname, "rb")
   tgt = open(tgtname, "wb")
 
-  # todo: detect linefeeds early - in apply_files routine
-  #       to handle cases when patch starts right from the first
-  #       line and no lines are processed. At the moment substituted
-  #       lineends may not be the same at the start and at the end
-  #       of patching. Also issue a warning about mixed lineends
+  # todo: At the moment substituted lineends may not be the same
+  #       at the start and at the end of patching. Also issue a
+  #       warning about mixed lineends
 
   srclineno = 1
+
   lineends = {'\n':0, '\r\n':0, '\r':0}
   def get_line():
     """ local utility function - return line from source stream
@@ -315,7 +314,7 @@ def patch_hunks(srcname, tgtname, hunks):
         if sum([bool(lineends[x]) for x in lineends]) == 1:
           newline = [x for x in lineends if lineends[x] != 0][0]
           tgt.write(line2write.rstrip("\r\n")+newline)
-        else: # newlines are mixed or unknown
+        else: # newlines are mixed
           tgt.write(line2write)
   tgt.writelines(src.readlines())
   tgt.close()
