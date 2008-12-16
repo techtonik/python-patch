@@ -8,7 +8,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "8.06-1"
+__version__ = "8.12-1"
 
 import logging
 import re
@@ -19,9 +19,10 @@ debugmode = False
 
 
 
-def read_patch(filename):
+def patch_from_file(filename):
   """
-  read and parse patch file into python structure ordered by file
+  read and parse unified diff file into python structure - dict table
+  where entries are columns and each row corresponds to one source file
 
   {
     source, # list of source filenames
@@ -278,30 +279,36 @@ def patch_hunks(srcname, tgtname, hunks):
 
   srclineno = 1
   lineends = {'\n':0, '\r\n':0, '\r':0}
+  def get_line():
+    """ local utility function - return line from source stream
+        collecting line end statistics in lineends on the way
+    """
+    line = src.readline()
+      # 'U' mode works only with text files
+    if line.endswith("\r\n"):
+      lineends["\r\n"] += 1
+    elif line.endswith("\n"):
+      lineends["\n"] += 1
+    elif line.endswith("\r"):
+      lineends["\r"] += 1
+    return line
+
   for hno, h in enumerate(hunks):
     debug("processing hunk %d for file %s" % (hno+1, tgtname))
     # skip to line just before hunk starts
     while srclineno < h["startsrc"]:
-      line = src.readline()
-      # 'U' mode works only with text files
-      if line.endswith("\r\n"):
-        lineends["\r\n"] += 1
-      elif line.endswith("\n"):
-        lineends["\n"] += 1
-      elif line.endswith("\r"):
-        lineends["\r"] += 1
-      tgt.write(line)
+      tgt.write(get_line())
       srclineno += 1
 
     for hline in h["text"]:
       # todo: check \ No newline at the end of file
       if hline.startswith("-") or hline.startswith("\\"):
-        src.readline()
+        get_line()
         srclineno += 1
         continue
       else:
         if not hline.startswith("+"):
-          src.readline()
+          get_line()
           srclineno += 1
         line2write = hline[1:]
         # detect if line ends are consistent in source file
@@ -442,8 +449,7 @@ if __name__ == "__main__":
 
 
 
-  #patch = read_patch("fix_devpak_install.patch")
-  patch = read_patch(patchfile)
+  patch = patch_from_file(patchfile)
   #pprint(patch)
   apply_patch(patch)
 
