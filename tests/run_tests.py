@@ -58,20 +58,31 @@ class TestPatches(unittest.TestCase):
         if f1:
           f1.close()
   
-  def _assert_dirs_equal(self, dir1, dir2):
+  def _assert_dirs_equal(self, dir1, dir2, ignore=[]):
+      """ compare dir1 with reference dir2
+          .svn dirs are ignored
+
+      """
       # recursion here
-      for e in listdir(dir1):
-        if e == ".svn":
+      e2list = listdir(dir2)
+      for e1 in listdir(dir1):
+        if e1 == ".svn":
           continue
-        e1path = join(dir1, e)
-        e2path = join(dir2, e)
+        e1path = join(dir1, e1)
+        e2path = join(dir2, e1)
         self.assert_(exists(e1path))
-        self.assert_(exists(e2path), "%s doesn't exist" % e2path)
+        self.assert_(exists(e2path), "%s does not exist" % e2path)
         self.assert_(isdir(e1path) == isdir(e2path))
         if not isdir(e1path):
           self._assert_files_equal(e1path, e2path)
         else:
           self._assert_dirs_equal(e1path, e2path)
+        e2list.remove(e1)
+      for e2 in e2list:
+        if e2 == ".svn" or e2 in ignore:
+          continue
+        self.fail("extra file or directory: %s" % e2)
+
   
   def _run_test(self, testname):
       """
@@ -121,7 +132,7 @@ class TestPatches(unittest.TestCase):
         self._assert_files_equal(join(tests_dir, "%s.to" % testname), from_tgt)
       else:
         # need recursive compare
-        self._assert_dirs_equal(join(tests_dir, "%s.to" % testname), tmpdir)
+        self._assert_dirs_equal(join(tests_dir, "%s.to" % testname), tmpdir, "%s.patch" % testname)
 
         
 
