@@ -13,11 +13,33 @@ __version__ = "8.12-1"
 import copy
 import logging
 import re
+# cStringIO doesn't support unicode in 2.5
 from StringIO import StringIO
 from logging import debug, info, warning
 
+from os.path import exists, isfile
+from os import unlink
 
 debugmode = False
+
+
+def from_file(filename):
+  """ read and parse patch file
+      return PatchInfo() object
+  """
+
+  info("reading patch from file %s" % filename)
+  fp = open(filename, "rb")
+  patch = PatchInfo(fp)
+  fp.close()
+  return patch
+
+
+def from_string(s):
+  """ parse text string and return PatchInfo() object """
+  return PatchInfo(
+           StringIO.StringIO(s)    
+         )
 
 
 class HunkInfo(object):
@@ -35,212 +57,328 @@ class HunkInfo(object):
   def copy(self):
     return copy.copy(self)
 
+#  def apply(self, estream):
+#    """ write hunk data into enumerable stream
+#        return strings one by one until hunk is
+#        over
+#
+#        enumerable stream are tuples (lineno, line)
+#        where lineno starts with 0
+#    """
+#    pass
 
-def patch_from_file(filename):
-  """
-  read and parse unified diff file into python structure - dict table
-  where entries are columns and each row corresponds to one source file
 
-  {
-    source, # list of source filenames
-    target, # list of target filenames (not used)
-    hunks,  # list of lists of hunks
-    hunkends, # file endings statistics in hunks
-  }
 
-  this structure is essentialy a table with a row for every source file
-  """
 
-  files = dict(source=[], target=[], hunks=[], hunkends=[])
+class PatchInfo(object):
+  """ patch information container """
 
-  # define possible file regions that will direct the parser flow
-  header = False    # comments before the patch body
-  filenames = False # lines starting with --- and +++
+  def __init__(self, stream=None):
+    """ parse incoming stream """
 
-  hunkhead = False  # @@ -R +R @@ sequence
-  hunkbody = False  #
-  hunkskip = False  # skipping invalid hunk mode
+    # define PatchInfo data members
+    # table with a row for every source file
 
-  header = True
-  lineends = dict(lf=0, crlf=0, cr=0)
-  nextfileno = 0
-  nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
+    #: list of source filenames
+    self.source=None
+    self.target=None
+    #: list of lists of hunks
+    self.hunks=None
+    #: file endings statistics for every hunk
+    self.hunkends=None
 
-  # hunkinfo holds parsed values, hunkactual - calculated
-  hunkinfo = HunkInfo()
-  hunkactual = dict(linessrc=None, linestgt=None)
+    if stream:
+      self.parse_stream(stream)
 
-  info("reading patch %s" % filename)
+  def copy(self):
+    return copy.copy(self)
 
-  fp = open(filename, "rb")
-  for lineno, line in enumerate(fp):
+  def parse_stream(self, stream):
+    """ parse unified diff """
+    self.source = []
+    self.target = []
+    self.hunks = []
+    self.hunkends = []
 
-    # analyze state
-    if header and line.startswith("--- "):
-      header = False
-      # switch to filenames state
-      filenames = True
-    #: skip hunkskip and hunkbody code until you read definition of hunkhead
-    if hunkbody:
-      # process line first
-      if re.match(r"^[- \+\\]", line):
-          # gather stats about line endings
-          if line.endswith("\r\n"):
-            files["hunkends"][nextfileno-1]["crlf"] += 1
-          elif line.endswith("\n"):
-            files["hunkends"][nextfileno-1]["lf"] += 1
-          elif line.endswith("\r"):
-            files["hunkends"][nextfileno-1]["cr"] += 1
-            
-          if line.startswith("-"):
-            hunkactual["linessrc"] += 1
-          elif line.startswith("+"):
-            hunkactual["linestgt"] += 1
-          elif not line.startswith("\\"):
-            hunkactual["linessrc"] += 1
-            hunkactual["linestgt"] += 1
-          hunkinfo.text.append(line)
-          # todo: handle \ No newline cases
-      else:
-          warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, files["target"][nextfileno-1]))
-          # add hunk status node
-          files["hunks"][nextfileno-1].append(hunkinfo.copy())
-          files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
-          # switch to hunkskip state
-          hunkbody = False
-          hunkskip = True
+    # define possible file regions that will direct the parser flow
+    header = False    # comments before the patch body
+    filenames = False # lines starting with --- and +++
 
-      # check exit conditions
-      if hunkactual["linessrc"] > hunkinfo.linessrc or hunkactual["linestgt"] > hunkinfo.linestgt:
-          warning("extra hunk no.%d lines at %d for target %s" % (nexthunkno, lineno+1, files["target"][nextfileno-1]))
-          # add hunk status node
-          files["hunks"][nextfileno-1].append(hunkinfo.copy())
-          files["hunks"][nextfileno-1][nexthunkno-1]["invalid"] = True
-          # switch to hunkskip state
-          hunkbody = False
-          hunkskip = True
-      elif hunkinfo.linessrc == hunkactual["linessrc"] and hunkinfo.linestgt == hunkactual["linestgt"]:
-          files["hunks"][nextfileno-1].append(hunkinfo.copy())
-          # switch to hunkskip state
-          hunkbody = False
-          hunkskip = True
+    hunkhead = False  # @@ -R +R @@ sequence
+    hunkbody = False  #
+    hunkskip = False  # skipping invalid hunk mode
 
-          # detect mixed window/unix line ends
-          ends = files["hunkends"][nextfileno-1]
-          if ((ends["cr"]!=0) + (ends["crlf"]!=0) + (ends["lf"]!=0)) > 1:
-            warning("inconsistent line ends in patch hunks for %s" % files["source"][nextfileno-1])
-          if debugmode:
-            debuglines = dict(ends)
-            debuglines.update(file=files["target"][nextfileno-1], hunk=nexthunkno)
-            debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
+    header = True
+    lineends = dict(lf=0, crlf=0, cr=0)
+    nextfileno = 0
+    nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
 
-    if hunkskip:
-      match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
-      if match:
-        # switch to hunkhead state
-        hunkskip = False
-        hunkhead = True
-      elif line.startswith("--- "):
+    # hunkinfo holds parsed values, hunkactual - calculated
+    hunkinfo = HunkInfo()
+    hunkactual = dict(linessrc=None, linestgt=None)
+
+    fe = enumerate(stream)
+    for lineno, line in fe:
+
+      # analyze state
+      if header and line.startswith("--- "):
+        header = False
         # switch to filenames state
-        hunkskip = False
         filenames = True
-        if debugmode and len(files["source"]) > 0:
-          debug("- %2d hunks for %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
+      #: skip hunkskip and hunkbody code until you read definition of hunkhead
+      if hunkbody:
+        # process line first
+        if re.match(r"^[- \+\\]", line):
+            # gather stats about line endings
+            if line.endswith("\r\n"):
+              self.hunkends[nextfileno-1]["crlf"] += 1
+            elif line.endswith("\n"):
+              self.hunkends[nextfileno-1]["lf"] += 1
+            elif line.endswith("\r"):
+              self.hunkends[nextfileno-1]["cr"] += 1
+              
+            if line.startswith("-"):
+              hunkactual["linessrc"] += 1
+            elif line.startswith("+"):
+              hunkactual["linestgt"] += 1
+            elif not line.startswith("\\"):
+              hunkactual["linessrc"] += 1
+              hunkactual["linestgt"] += 1
+            hunkinfo.text.append(line)
+            # todo: handle \ No newline cases
+        else:
+            warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
+            # add hunk status node
+            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            self.hunks[nextfileno-1][nexthunkno-1]["invalid"] = True
+            # switch to hunkskip state
+            hunkbody = False
+            hunkskip = True
 
-    if filenames:
-      if line.startswith("--- "):
-        if nextfileno in files["source"]:
-          warning("skipping invalid patch for %s" % files["source"][nextfileno])
-          del files["source"][nextfileno]
-          # double source filename line is encountered
-          # attempt to restart from this second line
-        re_filename = "^--- ([^\t]+)"
-        match = re.match(re_filename, line)
-        if not match:
-          warning("skipping invalid filename at line %d" % lineno)
-          # switch back to header state
-          filenames = False
-          header = True
-        else:
-          files["source"].append(match.group(1))
-      elif not line.startswith("+++ "):
-        if nextfileno in files["source"]:
-          warning("skipping invalid patch with no target for %s" % files["source"][nextfileno])
-          del files["source"][nextfileno]
-        else:
-          # this should be unreachable
-          warning("skipping invalid target patch")
-        filenames = False
-        header = True
-      else:
-        if nextfileno in files["target"]:
-          warning("skipping invalid patch - double target at line %d" % lineno)
-          del files["source"][nextfileno]
-          del files["target"][nextfileno]
-          nextfileno -= 1
-          # double target filename line is encountered
-          # switch back to header state
-          filenames = False
-          header = True
-        else:
-          re_filename = "^\+\+\+ ([^\t]+)"
+        # check exit conditions
+        if hunkactual["linessrc"] > hunkinfo.linessrc or hunkactual["linestgt"] > hunkinfo.linestgt:
+            warning("extra hunk no.%d lines at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
+            # add hunk status node
+            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            self.hunks[nextfileno-1][nexthunkno-1]["invalid"] = True
+            # switch to hunkskip state
+            hunkbody = False
+            hunkskip = True
+        elif hunkinfo.linessrc == hunkactual["linessrc"] and hunkinfo.linestgt == hunkactual["linestgt"]:
+            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            # switch to hunkskip state
+            hunkbody = False
+            hunkskip = True
+
+            # detect mixed window/unix line ends
+            ends = self.hunkends[nextfileno-1]
+            if ((ends["cr"]!=0) + (ends["crlf"]!=0) + (ends["lf"]!=0)) > 1:
+              warning("inconsistent line ends in patch hunks for %s" % self.source[nextfileno-1])
+            if debugmode:
+              debuglines = dict(ends)
+              debuglines.update(file=self.target[nextfileno-1], hunk=nexthunkno)
+              debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
+
+      if hunkskip:
+        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
+        if match:
+          # switch to hunkhead state
+          hunkskip = False
+          hunkhead = True
+        elif line.startswith("--- "):
+          # switch to filenames state
+          hunkskip = False
+          filenames = True
+          if debugmode and len(self.source) > 0:
+            debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
+
+      if filenames:
+        if line.startswith("--- "):
+          if nextfileno in self.source:
+            warning("skipping invalid patch for %s" % self.source[nextfileno])
+            del self.source[nextfileno]
+            # double source filename line is encountered
+            # attempt to restart from this second line
+          re_filename = "^--- ([^\t]+)"
           match = re.match(re_filename, line)
           if not match:
-            warning("skipping invalid patch - no target filename at line %d" % lineno)
+            warning("skipping invalid filename at line %d" % lineno)
             # switch back to header state
             filenames = False
             header = True
           else:
-            files["target"].append(match.group(1))
-            nextfileno += 1
-            # switch to hunkhead state
-            filenames = False
-            hunkhead = True
-            nexthunkno = 0
-            files["hunks"].append([])
-            files["hunkends"].append(lineends.copy())
-            continue
-
-    if hunkhead:
-      match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
-      if not match:
-        if nextfileno-1 not in files["hunks"]:
-          warning("skipping invalid patch with no hunks for file %s" % files["target"][nextfileno-1])
-          # switch to header state
-          hunkhead = False
+            self.source.append(match.group(1))
+        elif not line.startswith("+++ "):
+          if nextfileno in self.source:
+            warning("skipping invalid patch with no target for %s" % self.source[nextfileno])
+            del self.source[nextfileno]
+          else:
+            # this should be unreachable
+            warning("skipping invalid target patch")
+          filenames = False
           header = True
-          continue
         else:
-          # switch to header state
+          if nextfileno in self.target:
+            warning("skipping invalid patch - double target at line %d" % lineno)
+            del self.source[nextfileno]
+            del self.target[nextfileno]
+            nextfileno -= 1
+            # double target filename line is encountered
+            # switch back to header state
+            filenames = False
+            header = True
+          else:
+            re_filename = "^\+\+\+ ([^\t]+)"
+            match = re.match(re_filename, line)
+            if not match:
+              warning("skipping invalid patch - no target filename at line %d" % lineno)
+              # switch back to header state
+              filenames = False
+              header = True
+            else:
+              self.target.append(match.group(1))
+              nextfileno += 1
+              # switch to hunkhead state
+              filenames = False
+              hunkhead = True
+              nexthunkno = 0
+              self.hunks.append([])
+              self.hunkends.append(lineends.copy())
+              continue
+
+      if hunkhead:
+        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
+        if not match:
+          if nextfileno-1 not in self.hunks:
+            warning("skipping invalid patch with no hunks for file %s" % self.target[nextfileno-1])
+            # switch to header state
+            hunkhead = False
+            header = True
+            continue
+          else:
+            # switch to header state
+            hunkhead = False
+            header = True
+        else:
+          hunkinfo.startsrc = int(match.group(1))
+          hunkinfo.linessrc = int(match.group(3) if match.group(3) else 1)
+          hunkinfo.starttgt = int(match.group(4))
+          hunkinfo.linestgt = int(match.group(6) if match.group(6) else 1)
+          hunkinfo.invalid = False
+          hunkinfo.text = []
+
+          hunkactual["linessrc"] = hunkactual["linestgt"] = 0
+
+          # switch to hunkbody state
           hunkhead = False
-          header = True
-      else:
-        hunkinfo.startsrc = int(match.group(1))
-        hunkinfo.linessrc = int(match.group(3) if match.group(3) else 1)
-        hunkinfo.starttgt = int(match.group(4))
-        hunkinfo.linestgt = int(match.group(6) if match.group(6) else 1)
-        hunkinfo.invalid = False
-        hunkinfo.text = []
-
-        hunkactual["linessrc"] = hunkactual["linestgt"] = 0
-
-        # switch to hunkbody state
-        hunkhead = False
-        hunkbody = True
-        nexthunkno += 1
-        continue
-  else:
-    if not hunkskip:
-      warning("patch file incomplete - %s" % filename)
-      # sys.exit(?)
+          hunkbody = True
+          nexthunkno += 1
+          continue
     else:
-      # duplicated message when an eof is reached
-      if debugmode and len(files["source"]) > 0:
-          debug("- %2d hunks for %s" % (len(files["hunks"][nextfileno-1]), files["source"][nextfileno-1]))
+      if not hunkskip:
+        warning("patch file incomplete - %s" % filename)
+        # sys.exit(?)
+      else:
+        # duplicated message when an eof is reached
+        if debugmode and len(self.source) > 0:
+            debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
-  info("total files: %d  total hunks: %d" % (len(files["source"]), sum(len(hset) for hset in files["hunks"])))
-  fp.close()
-  return files
+    info("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
+
+  def apply(self):
+    """ apply parsed patch """
+
+    total = len(self.source)
+    for fileno, filename in enumerate(self.source):
+
+      f2patch = filename
+      if not exists(f2patch):
+        f2patch = self.target[fileno]
+        if not exists(f2patch):
+          warning("source/target file does not exist\n--- %s\n+++ %s" % (filename, f2patch))
+          continue
+      if not isfile(f2patch):
+        warning("not a file - %s" % f2patch)
+        continue
+      filename = f2patch
+
+      info("processing %d/%d:\t %s" % (fileno+1, total, filename))
+
+      # validate before patching
+      f2fp = open(filename)
+      hunkno = 0
+      hunk = self.hunks[fileno][hunkno]
+      hunkfind = []
+      hunkreplace = []
+      validhunks = 0
+      canpatch = False
+      for lineno, line in enumerate(f2fp):
+        if lineno+1 < hunk.startsrc:
+          continue
+        elif lineno+1 == hunk.startsrc:
+          hunkfind = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " -"]
+          hunkreplace = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " +"]
+          #pprint(hunkreplace)
+          hunklineno = 0
+
+          # todo \ No newline at end of file
+
+        # check hunks in source file
+        if lineno+1 < hunk.startsrc+len(hunkfind)-1:
+          if line.rstrip("\r\n") == hunkfind[hunklineno]:
+            hunklineno+=1
+          else:
+            debug("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
+            # file may be already patched, but we will check other hunks anyway
+            hunkno += 1
+            if hunkno < len(self.hunks[fileno]):
+              hunk = self.hunks[fileno][hunkno]
+              continue
+            else:
+              break
+
+        # check if processed line is the last line
+        if lineno+1 == hunk.startsrc+len(hunkfind)-1:
+          debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
+          hunkno+=1
+          validhunks+=1
+          if hunkno < len(self.hunks[fileno]):
+            hunk = self.hunks[fileno][hunkno]
+          else:
+            if validhunks == len(self.hunks[fileno]):
+              # patch file
+              canpatch = True
+              break
+      else:
+        if hunkno < len(self.hunks[fileno]):
+          warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
+
+      f2fp.close()
+
+      if validhunks < len(self.hunks[fileno]):
+        if check_patched(filename, self.hunks[fileno]):
+          warning("already patched  %s" % filename)
+        else:
+          warning("source file is different - %s" % filename)
+      if canpatch:
+        backupname = filename+".orig"
+        if exists(backupname):
+          warning("can't backup original file to %s - aborting" % backupname)
+        else:
+          import shutil
+          shutil.move(filename, backupname)
+          if patch_hunks(backupname, filename, self.hunks[fileno]):
+            warning("successfully patched %s" % filename)
+            unlink(backupname)
+          else:
+            warning("error patching file %s" % filename)
+            shutil.copy(filename, filename+".invalid")
+            warning("invalid version is saved to %s" % filename+".invalid")
+            # todo: proper rejects
+            shutil.move(backupname, filename)
+
+    # todo: check for premature eof
+
 
 
 def check_patched(filename, hunks):
@@ -357,101 +495,6 @@ def patch_hunks(srcname, tgtname, hunks):
   
 
 
-from os.path import exists, isfile
-from os import unlink
-from pprint import pprint
-
-def apply_patch(patch):
-  total = len(patch["source"])
-  for fileno, filename in enumerate(patch["source"]):
-
-    f2patch = filename
-    if not exists(f2patch):
-      f2patch = patch["target"][fileno]
-      if not exists(f2patch):
-        warning("source/target file does not exist\n--- %s\n+++ %s" % (filename, f2patch))
-        continue
-    if not isfile(f2patch):
-      warning("not a file - %s" % f2patch)
-      continue
-    filename = f2patch
-
-    info("processing %d/%d:\t %s" % (fileno+1, total, filename))
-
-    # validate before patching
-    f2fp = open(filename)
-    hunkno = 0
-    hunk = patch["hunks"][fileno][hunkno]
-    hunkfind = []
-    hunkreplace = []
-    validhunks = 0
-    canpatch = False
-    for lineno, line in enumerate(f2fp):
-      if lineno+1 < hunk.startsrc:
-        continue
-      elif lineno+1 == hunk.startsrc:
-        hunkfind = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " -"]
-        hunkreplace = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " +"]
-        #pprint(hunkreplace)
-        hunklineno = 0
-
-        # todo \ No newline at end of file
-
-      # check hunks in source file
-      if lineno+1 < hunk.startsrc+len(hunkfind)-1:
-        if line.rstrip("\r\n") == hunkfind[hunklineno]:
-          hunklineno+=1
-        else:
-          debug("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
-          # file may be already patched, but we will check other hunks anyway
-          hunkno += 1
-          if hunkno < len(patch["hunks"][fileno]):
-            hunk = patch["hunks"][fileno][hunkno]
-            continue
-          else:
-            break
-
-      # check if processed line is the last line
-      if lineno+1 == hunk.startsrc+len(hunkfind)-1:
-        debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
-        hunkno+=1
-        validhunks+=1
-        if hunkno < len(patch["hunks"][fileno]):
-          hunk = patch["hunks"][fileno][hunkno]
-        else:
-          if validhunks == len(patch["hunks"][fileno]):
-            # patch file
-            canpatch = True
-            break
-    else:
-      if hunkno < len(patch["hunks"][fileno]):
-        warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
-
-    f2fp.close()
-
-    if validhunks < len(patch["hunks"][fileno]):
-      if check_patched(filename, patch["hunks"][fileno]):
-        warning("already patched  %s" % filename)
-      else:
-        warning("source file is different - %s" % filename)
-    if canpatch:
-      backupname = filename+".orig"
-      if exists(backupname):
-        warning("can't backup original file to %s - aborting" % backupname)
-      else:
-        import shutil
-        shutil.move(filename, backupname)
-        if patch_hunks(backupname, filename, patch["hunks"][fileno]):
-          warning("successfully patched %s" % filename)
-          unlink(backupname)
-        else:
-          warning("error patching file %s" % filename)
-          shutil.copy(filename, filename+".invalid")
-          warning("invalid version is saved to %s" % filename+".invalid")
-          # todo: proper rejects
-          shutil.move(backupname, filename)
-
-  # todo: check for premature eof
 
 
 
@@ -482,9 +525,9 @@ if __name__ == "__main__":
 
 
 
-  patch = patch_from_file(patchfile)
+  patch = from_file(patchfile)
   #pprint(patch)
-  apply_patch(patch)
+  patch.apply()
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
