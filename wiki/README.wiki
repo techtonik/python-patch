@@ -13,6 +13,14 @@ Note about line end differences. patch.py tries to convert patch lines into best
 
 The utility is not complete in the sense that it doesn't handle "\ No newline at end of file" cases and lacks a test suite. And the last thing - this script is not interactive. 
 
+== Changes ==
+{{{
+8.06-2
+    - compatibility fix for Python 2.4
+8.06-1
+    - initial release
+}}}
+
 = Future =
 Patch utility in Python makes it possible to implement online "submit, review and apply" module site content that uses unified diffs as an interchange format between users, site, and version control system. With this system patches can be applied after onsite review automatically storing the names of patch contributors in SVN history logs without requiring a write access for these contributors. This system is not the scope of this project though.
 
