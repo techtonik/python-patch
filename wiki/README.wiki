@@ -1,4 +1,4 @@
-#labels Phase-Design
+#labels Phase-Design,Deprecated
 == History ==
 
 This project started because windows platform lacks native tool to apply patches. There are plenty of tools on my PC to produce diffs - from scripts bundled with python to several version control systems, but none of them is able to apply these diffs back.
