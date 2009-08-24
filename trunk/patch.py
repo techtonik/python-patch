@@ -2,13 +2,13 @@
 """ Brute-force line-by-line parsing 
 
     Project home: http://code.google.com/p/python-patch/
+
     $Id$
     $HeadURL$
-
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "8.12-1"
+__version__ = "9.08-1"
 
 import copy
 import logging
@@ -201,13 +201,14 @@ class Patch(object):
             # attempt to restart from this second line
           re_filename = "^--- ([^\t]+)"
           match = re.match(re_filename, line)
-          if not match:
+          # todo: support spaces in filenames
+          if match:
+            self.source.append(match.group(1).strip())
+          else:
             warning("skipping invalid filename at line %d" % lineno)
             # switch back to header state
             filenames = False
             header = True
-          else:
-            self.source.append(match.group(1))
         elif not line.startswith("+++ "):
           if nextfileno in self.source:
             warning("skipping invalid patch with no target for %s" % self.source[nextfileno])
