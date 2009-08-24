@@ -23,21 +23,21 @@ from os import unlink
 debugmode = False
 
 
-def from_file(filename):
+def fromfile(filename):
   """ read and parse patch file
       return PatchInfo() object
   """
 
   info("reading patch from file %s" % filename)
   fp = open(filename, "rb")
-  patch = PatchInfo(fp)
+  patch = Patch(fp)
   fp.close()
   return patch
 
 
-def from_string(s):
+def fromstring(s):
   """ parse text string and return PatchInfo() object """
-  return PatchInfo(
+  return Patch(
            StringIO.StringIO(s)    
          )
 
@@ -70,7 +70,7 @@ class HunkInfo(object):
 
 
 
-class PatchInfo(object):
+class Patch(object):
   """ patch information container """
 
   def __init__(self, stream=None):
@@ -88,12 +88,12 @@ class PatchInfo(object):
     self.hunkends=None
 
     if stream:
-      self.parse_stream(stream)
+      self.parse(stream)
 
   def copy(self):
     return copy.copy(self)
 
-  def parse_stream(self, stream):
+  def parse(self, stream):
     """ parse unified diff """
     self.source = []
     self.target = []
@@ -525,7 +525,7 @@ if __name__ == "__main__":
 
 
 
-  patch = from_file(patchfile)
+  patch = fromfile(patchfile)
   #pprint(patch)
   patch.apply()
 
