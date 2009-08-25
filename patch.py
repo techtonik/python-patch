@@ -23,9 +23,9 @@ from os import unlink
 debugmode = False
 
 
+
 def fromfile(filename):
-  """ read and parse patch file
-      return PatchInfo() object
+  """ Parse patch file and return Patch() object
   """
 
   info("reading patch from file %s" % filename)
@@ -36,17 +36,19 @@ def fromfile(filename):
 
 
 def fromstring(s):
-  """ parse text string and return PatchInfo() object """
+  """ Parse text string and return Patch() object
+  """
+
   return Patch(
            StringIO.StringIO(s)    
          )
 
 
+
 class HunkInfo(object):
-  """ parsed hunk data (hunk starts with @@ -R +R @@) """
+  """ Parsed hunk data container (hunk starts with @@ -R +R @@) """
 
   def __init__(self):
-    # define HunkInfo data members
     self.startsrc=None
     self.linessrc=None
     self.starttgt=None
@@ -69,14 +71,11 @@ class HunkInfo(object):
 
 
 
-
 class Patch(object):
-  """ patch information container """
 
   def __init__(self, stream=None):
-    """ parse incoming stream """
 
-    # define PatchInfo data members
+    # define Patch data members
     # table with a row for every source file
 
     #: list of source filenames
@@ -285,6 +284,7 @@ class Patch(object):
             debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
     info("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
+
 
   def apply(self):
     """ apply parsed patch """
