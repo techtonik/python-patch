@@ -3,7 +3,7 @@
 
 This project started because windows platform lacks native tool to apply patches. There are plenty of tools on my PC to produce diffs - from scripts bundled with python to several version control systems, but none of them is able to apply these diffs back.
 
-Usually patches are applied with a *patch* tool - a UNIX utility that continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of] GNU tools. There is [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of *patch*, but it's [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c so buggy] (and potentially insecure if run on a web server) that this version was born. And I've always wanted to have a *diff.py* [http://bugs.python.org/issue2057 counterpart bundled] with Python.
+Usually patches are applied with a *patch* tool - a UNIX utility that continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of] GNU tools. There is [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of *patch*, but it's [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c rather buggy], insecure to be run on a web server and not customizable without a C compiler. That's why this version was born. And I've always wanted to have a *diff.py* [http://bugs.python.org/issue2057 counterpart bundled] with Python.
 
 == Status ==
 
@@ -11,10 +11,18 @@ Usually patches are applied with a *patch* tool - a UNIX utility that continues 
 
 Note about line end differences. patch.py tries to convert patch lines into best suitable format for patched file. While scanning lines patch.py notices line endings in source file and if they are consistent - patch lines are applied with the same ending. If they are not - lines are applied "as is" (as in patch).
 
-The utility is not complete in the sense that it doesn't handle "\ No newline at end of file" cases and lacks a test suite. And the last thing - this script is not interactive. 
+The utility is not complete in the sense that there is no support for creating/deleting files, "\ No newline at end of file" scenarios need some checks. Test suite should be expanded to cover more use cases. And the last thing - this script is not interactive. 
 
 == Changes ==
 {{{
+9.08-1
+    - fixed issue #2 - remove trailing whitespaces from filename
+    - API changes
+      + added Patch and HunkInfo classes
+      + moved utility methods into Patch
+      + build Patch object by specifying stream to constructor
+        or use top level functions fromfile() and fromstring()
+    - added test suite
 8.06-2
     - compatibility fix for Python 2.4
 8.06-1
