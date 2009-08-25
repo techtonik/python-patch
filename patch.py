@@ -357,7 +357,7 @@ class Patch(object):
       f2fp.close()
 
       if validhunks < len(self.hunks[fileno]):
-        if check_patched(filename, self.hunks[fileno]):
+        if self.checkfile(filename, self.hunks[fileno]):
           warning("already patched  %s" % filename)
         else:
           warning("source file is different - %s" % filename)
@@ -368,7 +368,7 @@ class Patch(object):
         else:
           import shutil
           shutil.move(filename, backupname)
-          if patch_hunks(backupname, filename, self.hunks[fileno]):
+          if self.writehunks(backupname, filename, self.hunks[fileno]):
             warning("successfully patched %s" % filename)
             unlink(backupname)
           else:
@@ -381,118 +381,116 @@ class Patch(object):
     # todo: check for premature eof
 
 
+  def checkfile(self, filename, hunks):
+    """ Check if file is alrady patched """
+    matched = True
+    fp = open(filename)
 
-def check_patched(filename, hunks):
-  matched = True
-  fp = open(filename)
+    class NoMatch(Exception):
+      pass
 
-  class NoMatch(Exception):
-    pass
-
-  lineno = 1
-  line = fp.readline()
-  hno = None
-  try:
-    if not len(line):
-      raise NoMatch
-    for hno, h in enumerate(hunks):
-      # skip to line just before hunk starts
-      while lineno < h.starttgt-1:
-        line = fp.readline()
-        lineno += 1
-        if not len(line):
-          raise NoMatch
-      for hline in h.text:
-        # todo: \ No newline at the end of file
-        if not hline.startswith("-") and not hline.startswith("\\"):
+    lineno = 1
+    line = fp.readline()
+    hno = None
+    try:
+      if not len(line):
+        raise NoMatch
+      for hno, h in enumerate(hunks):
+        # skip to line just before hunk starts
+        while lineno < h.starttgt-1:
           line = fp.readline()
           lineno += 1
           if not len(line):
             raise NoMatch
-          if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
-            warning("file is not patched - failed hunk: %d" % (hno+1))
-            raise NoMatch
-  except NoMatch:
-    matched = False
-    # todo: display failed hunk, i.e. expected/found
+        for hline in h.text:
+          # todo: \ No newline at the end of file
+          if not hline.startswith("-") and not hline.startswith("\\"):
+            line = fp.readline()
+            lineno += 1
+            if not len(line):
+              raise NoMatch
+            if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
+              warning("file is not patched - failed hunk: %d" % (hno+1))
+              raise NoMatch
+    except NoMatch:
+      matched = False
+      # todo: display failed hunk, i.e. expected/found
 
-  fp.close()
-  return matched
+    fp.close()
+    return matched
 
 
-
-def patch_stream(instream, hunks):
-  """ given a source stream and hunks iterable, yield patched stream
-  
-      converts lineends in hunk lines to the best suitable format
-      autodetected from input
-  """
-
-  # todo: At the moment substituted lineends may not be the same
-  #       at the start and at the end of patching. Also issue a
-  #       warning/throw about mixed lineends (is it really needed?)
-
-  hunks = iter(hunks)
-
-  srclineno = 1
-
-  lineends = {'\n':0, '\r\n':0, '\r':0}
-  def get_line():
+  def patchstream(self, instream, hunks):
+    """ Generator that yields stream patched with hunks iterable
+    
+        Converts lineends in hunk lines to the best suitable format
+        autodetected from input
     """
-    local utility function - return line from source stream
-    collecting line end statistics on the way
-    """
-    line = instream.readline()
-      # 'U' mode works only with text files
-    if line.endswith("\r\n"):
-      lineends["\r\n"] += 1
-    elif line.endswith("\n"):
-      lineends["\n"] += 1
-    elif line.endswith("\r"):
-      lineends["\r"] += 1
-    return line
 
-  for hno, h in enumerate(hunks):
-    debug("hunk %d" % (hno+1))
-    # skip to line just before hunk starts
-    while srclineno < h.startsrc:
-      yield get_line()
-      srclineno += 1
+    # todo: At the moment substituted lineends may not be the same
+    #       at the start and at the end of patching. Also issue a
+    #       warning/throw about mixed lineends (is it really needed?)
 
-    for hline in h.text:
-      # todo: check \ No newline at the end of file
-      if hline.startswith("-") or hline.startswith("\\"):
-        get_line()
+    hunks = iter(hunks)
+
+    srclineno = 1
+
+    lineends = {'\n':0, '\r\n':0, '\r':0}
+    def get_line():
+      """
+      local utility function - return line from source stream
+      collecting line end statistics on the way
+      """
+      line = instream.readline()
+        # 'U' mode works only with text files
+      if line.endswith("\r\n"):
+        lineends["\r\n"] += 1
+      elif line.endswith("\n"):
+        lineends["\n"] += 1
+      elif line.endswith("\r"):
+        lineends["\r"] += 1
+      return line
+
+    for hno, h in enumerate(hunks):
+      debug("hunk %d" % (hno+1))
+      # skip to line just before hunk starts
+      while srclineno < h.startsrc:
+        yield get_line()
         srclineno += 1
-        continue
-      else:
-        if not hline.startswith("+"):
+
+      for hline in h.text:
+        # todo: check \ No newline at the end of file
+        if hline.startswith("-") or hline.startswith("\\"):
           get_line()
           srclineno += 1
-        line2write = hline[1:]
-        # detect if line ends are consistent in source file
-        if sum([bool(lineends[x]) for x in lineends]) == 1:
-          newline = [x for x in lineends if lineends[x] != 0][0]
-          yield line2write.rstrip("\r\n")+newline
-        else: # newlines are mixed
-          yield line2write
-   
-  for line in instream:
-    yield line
+          continue
+        else:
+          if not hline.startswith("+"):
+            get_line()
+            srclineno += 1
+          line2write = hline[1:]
+          # detect if line ends are consistent in source file
+          if sum([bool(lineends[x]) for x in lineends]) == 1:
+            newline = [x for x in lineends if lineends[x] != 0][0]
+            yield line2write.rstrip("\r\n")+newline
+          else: # newlines are mixed
+            yield line2write
+     
+    for line in instream:
+      yield line
 
 
+  def writehunks(self, srcname, tgtname, hunks):
+    src = open(srcname, "rb")
+    tgt = open(tgtname, "wb")
 
-def patch_hunks(srcname, tgtname, hunks):
-  src = open(srcname, "rb")
-  tgt = open(tgtname, "wb")
+    debug("processing target file %s" % tgtname)
 
-  debug("processing target file %s" % tgtname)
+    tgt.writelines(self.patchstream(src, hunks))
 
-  tgt.writelines(patch_stream(src, hunks))
-
-  tgt.close()
-  src.close()
-  return True
+    tgt.close()
+    src.close()
+    return True
   
 
 
