@@ -17,6 +17,7 @@ The utility is not complete in the sense that there is no support for creating/d
 {{{
 9.08-1
     - fixed issue #2 - remove trailing whitespaces from filename
+      (thanks James from Twisted Fish)
     - API changes
       + added Patch and HunkInfo classes
       + moved utility methods into Patch
