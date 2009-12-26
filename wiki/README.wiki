@@ -7,14 +7,14 @@ Usually patches are applied with a *patch* tool - a UNIX utility that continues 
 
 == Status ==
 
-*patch.py* is capable to apply _unified diffs only_. Parsing of diff is done in a in very straightforward manner as an excercise to approach the problem of parsing on my own before learning the 'proper ways'. Thanks creators, _the format of unified diff_ is rather simple (an illustration is included in [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
+*patch.py* is capable to apply _unified diffs only_. Parsing of diff is done in a in very straightforward manner as an exercise to approach the problem of parsing on my own before learning the 'proper ways'. Thanks creators, _the format of unified diff_ is rather simple (an illustration is included in [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
 
 Note about line end differences. patch.py tries to convert patch lines into best suitable format for patched file. While scanning lines patch.py notices line endings in source file and if they are consistent - patch lines are applied with the same ending. If they are not - lines are applied "as is" (as in patch).
 
 The utility is not complete in the sense that there is no support for creating/deleting files, "\ No newline at end of file" scenarios need some checks. Test suite should be expanded to cover more use cases. And the last thing - this script is not interactive. 
 
 == Changes ==
-{{
+{{{
 9.08-2
     - compatibility fix for Python 2.4
 9.08-1
@@ -32,7 +32,7 @@ The utility is not complete in the sense that there is no support for creating/d
     - initial release
 }}}
 
-= Future =
-Patch utility in Python makes it possible to implement online "submit, review and apply" module site content that uses unified diffs as an interchange format between users, site, and version control system. With this system patches can be applied after onsite review automatically storing the names of patch contributors in SVN history logs without requiring a write access for these contributors. This system is not the scope of this project though.
+== Future ==
+Patch utility in Python makes it possible to implement online "submit, review and apply" module. Similar to [http://www.reviewboard.org/ Review Board] for code, but suitable for all kind of textual content that uses unified diffs as an interchange format between users, website, and version control system. With this system patches can be applied after on site review, automatically storing the names of patch contributors in SVN history logs without requiring write access for these contributors. This system is not the scope of this project though.
 
 Additional unified diff parsers may be added in future to compare different parsing techniques (with [http://pyparsing.wikispaces.com/ pyparsing], [http://www.ibm.com/developerworks/library/l-spark.html SPARK] or [http://www.google.com/Top/Computers/Programming/Languages/Python/Modules/Text_Processing/ others] as example).
