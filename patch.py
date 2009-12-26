@@ -20,8 +20,21 @@ from logging import debug, info, warning
 from os.path import exists, isfile, abspath
 from os import unlink
 
+
+#------------------------------------------------
+# Logging is controlled by "python-patch" logger
+
 debugmode = False
 
+logger = logging.getLogger("python-patch")
+loghandler = logging.StreamHandler()
+logger.addHandler(loghandler)
+
+debug = logger.debug
+info = logger.info
+warning = logger.warning
+
+#------------------------------------------------
 
 
 def fromfile(filename):
@@ -49,7 +62,7 @@ class HunkInfo(object):
   """ Parsed hunk data container (hunk starts with @@ -R +R @@) """
 
   def __init__(self):
-    self.startsrc=None
+    self.startsrc=None #: line count starts with 1
     self.linessrc=None
     self.starttgt=None
     self.linestgt=None
@@ -411,7 +424,7 @@ class Patch(object):
         while lineno < h.starttgt-1:
           line = fp.readline()
           lineno += 1
-          if not len(line):
+          if not len(line): # eof
             raise NoMatch
         for hline in h.text:
           # todo: \ No newline at the end of file
@@ -540,9 +553,13 @@ if __name__ == "__main__":
 
 
   if debugmode:
-    logging.basicConfig(level=logging.DEBUG, format="%(levelname)8s %(message)s")
+    loglevel = logging.DEBUG
+    logformat = "%(levelname)8s %(message)s"
   else:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    loglevel = logging.INFO
+    logformat = "%(message)s"
+  logger.setLevel(loglevel)
+  loghandler.setFormatter(logging.Formatter(logformat))
 
 
 
