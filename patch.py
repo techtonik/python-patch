@@ -249,7 +249,7 @@ class Patch(object):
               filenames = False
               header = True
             else:
-              self.target.append(match.group(1))
+              self.target.append(match.group(1).strip())
               nextfileno += 1
               # switch to hunkhead state
               filenames = False
