@@ -1,0 +1,86 @@
+Index: trac/versioncontrol/svn_fs.py
+===================================================================
+--- trac/versioncontrol/svn_fs.py	(revision 8986)
++++ trac/versioncontrol/svn_fs.py	(working copy)
+@@ -289,7 +289,7 @@
+             repos = fs_repos
+         else:
+             repos = CachedRepository(self.env.get_db_cnx, fs_repos, None,
+-                                     self.log)
++                                     self.log, self.env)
+             repos.has_linear_changesets = True
+         if authname:
+             authz = SubversionAuthorizer(self.env, weakref.proxy(repos),
+Index: trac/versioncontrol/cache.py
+===================================================================
+--- trac/versioncontrol/cache.py	(revision 8986)
++++ trac/versioncontrol/cache.py	(working copy)
+@@ -18,7 +18,7 @@
+ import os
+ import posixpath
+ 
+-from trac.core import TracError
++from trac.core import *
+ from trac.util.datefmt import utc, to_timestamp
+ from trac.util.translation import _
+ from trac.versioncontrol import Changeset, Node, Repository, Authorizer, \
+@@ -36,19 +36,42 @@
+ CACHE_METADATA_KEYS = (CACHE_REPOSITORY_DIR, CACHE_YOUNGEST_REV)
+ 
+ 
++class ICacheChangesetListener(Interface):                                  
++    """Cached changeset operations"""                                      
++                                                                           
++    def edit_changeset(cset):                                              
++        """Called when changeset is about to be cached.                    
++           Returns altered data to cache or None if unchanged. cset usually
++           contains cset.date, cset.author, cset.message and cset.rev      
++        """                                                                
++                                                                           
++class CacheManager(Component):                                             
++    """Provide interface to plug-in into cache operations"""               
++                                                                           
++    observers = ExtensionPoint(ICacheChangesetListener)                    
++                                                                           
++    def check_changeset(self, cset):                                       
++        for observer in self.observers:                                    
++            res = observer.edit_changeset(cset)                            
++            if res != None:                                                
++                cset = res                                                 
++        return cset                                                        
++
++
+ class CachedRepository(Repository):
+ 
+     has_linear_changesets = False
+ 
+     scope = property(lambda self: self.repos.scope)
+     
+-    def __init__(self, getdb, repos, authz, log):
++    def __init__(self, getdb, repos, authz, log, env):
+         Repository.__init__(self, repos.name, authz, log)
+         if callable(getdb):
+             self.getdb = getdb
+         else:
+             self.getdb = lambda: getdb
+         self.repos = repos
++        self.cache_mgr = CacheManager(env)
+ 
+     def close(self):
+         self.repos.close()
+@@ -77,6 +100,7 @@
+ 
+     def sync_changeset(self, rev):
+         cset = self.repos.get_changeset(rev)
++        cset = self.cache_mgr.check_changeset(cset)
+         db = self.getdb()
+         cursor = db.cursor()
+         cursor.execute("UPDATE revision SET time=%s, author=%s, message=%s "
+@@ -182,6 +206,7 @@
+                     self.log.info("Trying to sync revision [%s]" %
+                                   next_youngest)
+                     cset = self.repos.get_changeset(next_youngest)
++                    cset = self.cache_mgr.check_changeset(cset)
+                     try:
+                         cursor.execute("INSERT INTO revision "
+                                        " (rev,time,author,message) "
