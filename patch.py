@@ -8,7 +8,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "9.08-1"
+__version__ = "9.08-2"
 
 import copy
 import logging
@@ -261,9 +261,11 @@ class Patch(object):
             header = True
         else:
           hunkinfo.startsrc = int(match.group(1))
-          hunkinfo.linessrc = int(match.group(3) if match.group(3) else 1)
+          hunkinfo.linessrc = 1
+          if match.group(3): hunkinfo.linessrc = int(match.group(3))
           hunkinfo.starttgt = int(match.group(4))
-          hunkinfo.linestgt = int(match.group(6) if match.group(6) else 1)
+          hunkinfo.linestgt = 1
+          if match.group(6): hunkinfo.linestgt = int(match.group(6))
           hunkinfo.invalid = False
           hunkinfo.text = []
 
