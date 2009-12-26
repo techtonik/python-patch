@@ -14,7 +14,9 @@ Note about line end differences. patch.py tries to convert patch lines into best
 The utility is not complete in the sense that there is no support for creating/deleting files, "\ No newline at end of file" scenarios need some checks. Test suite should be expanded to cover more use cases. And the last thing - this script is not interactive. 
 
 == Changes ==
-{{{
+{{
+9.08-2
+    - compatibility fix for Python 2.4
 9.08-1
     - fixed issue #2 - remove trailing whitespaces from filename
       (thanks James from Twisted Fish)
