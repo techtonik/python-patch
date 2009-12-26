@@ -17,7 +17,7 @@ import re
 from StringIO import StringIO
 from logging import debug, info, warning
 
-from os.path import exists, isfile
+from os.path import exists, isfile, abspath
 from os import unlink
 
 debugmode = False
@@ -359,7 +359,7 @@ class Patch(object):
       f2fp.close()
 
       if validhunks < len(self.hunks[fileno]):
-        if self.check_file(filename, self.hunks[fileno]):
+        if self._check_file_hunks(filename, self.hunks[fileno]):
           warning("already patched  %s" % filename)
         else:
           warning("source file is different - %s" % filename)
@@ -383,8 +383,17 @@ class Patch(object):
     # todo: check for premature eof
 
 
-  def check_file(self, filename, hunks):
-    """ Check if file is alrady patched """
+  def check_patched(self, filename):
+    """ Check if file is already patched
+        @return: True, False or None
+    """
+    idx = self._get_file_idx(filename)
+    if idx == None:
+      return None
+    return self._check_file_hunks(filename, self.hunks[idx])
+    
+
+  def _check_file_hunks(self, filename, hunks):
     matched = True
     fp = open(filename)
 
@@ -412,7 +421,7 @@ class Patch(object):
             if not len(line):
               raise NoMatch
             if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
-              warning("file is not patched - failed hunk: %d" % (hno+1))
+              debug("file is not patched - failed hunk: %d" % (hno+1))
               raise NoMatch
     except NoMatch:
       matched = False
@@ -495,6 +504,17 @@ class Patch(object):
     return True
   
 
+  def _get_file_idx(self, filename):
+    """ Detect index of given filename within patch
+        @return: int or None
+    """
+    filename = abspath(filename)
+    for i,fnm in enumerate(self.source):
+      if filename == abspath(fnm):
+        return i  
+    for i,fnm in enumerate(self.target):
+      if filename == abspath(fnm):
+        return i  
 
 
 
