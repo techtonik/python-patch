@@ -8,7 +8,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "9.08-2"
+__version__ = "9.12"
 
 import copy
 import logging
@@ -359,7 +359,7 @@ class Patch(object):
       f2fp.close()
 
       if validhunks < len(self.hunks[fileno]):
-        if self.checkfile(filename, self.hunks[fileno]):
+        if self.check_file(filename, self.hunks[fileno]):
           warning("already patched  %s" % filename)
         else:
           warning("source file is different - %s" % filename)
@@ -370,7 +370,7 @@ class Patch(object):
         else:
           import shutil
           shutil.move(filename, backupname)
-          if self.writehunks(backupname, filename, self.hunks[fileno]):
+          if self.write_hunks(backupname, filename, self.hunks[fileno]):
             warning("successfully patched %s" % filename)
             unlink(backupname)
           else:
@@ -383,7 +383,7 @@ class Patch(object):
     # todo: check for premature eof
 
 
-  def checkfile(self, filename, hunks):
+  def check_file(self, filename, hunks):
     """ Check if file is alrady patched """
     matched = True
     fp = open(filename)
@@ -422,7 +422,7 @@ class Patch(object):
     return matched
 
 
-  def patchstream(self, instream, hunks):
+  def patch_stream(self, instream, hunks):
     """ Generator that yields stream patched with hunks iterable
     
         Converts lineends in hunk lines to the best suitable format
@@ -482,13 +482,13 @@ class Patch(object):
       yield line
 
 
-  def writehunks(self, srcname, tgtname, hunks):
+  def write_hunks(self, srcname, tgtname, hunks):
     src = open(srcname, "rb")
     tgt = open(tgtname, "wb")
 
     debug("processing target file %s" % tgtname)
 
-    tgt.writelines(self.patchstream(src, hunks))
+    tgt.writelines(self.patch_stream(src, hunks))
 
     tgt.close()
     src.close()
