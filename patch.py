@@ -397,7 +397,8 @@ class Patch(object):
 
 
   def check_patched(self, filename):
-    """ Check if file is already patched
+    """ Check if file is already patched. Not reliable, because it compares
+        target hunks and they could match source hunks, i.e. repeated lines.
         @return: True, False or None
     """
     idx = self._get_file_idx(filename)
@@ -417,25 +418,27 @@ class Patch(object):
     line = fp.readline()
     hno = None
     try:
-      if not len(line):
-        raise NoMatch
       for hno, h in enumerate(hunks):
-        # skip to line just before hunk starts
-        while lineno < h.starttgt-1:
+        # skip to first line of the hunk
+        while lineno < h.starttgt:
+          if not len(line): # eof
+            debug("check failed - premature eof before hunk: %d" % (hno+1))
+            raise NoMatch
           line = fp.readline()
           lineno += 1
-          if not len(line): # eof
-            raise NoMatch
         for hline in h.text:
-          # todo: \ No newline at the end of file
-          if not hline.startswith("-") and not hline.startswith("\\"):
-            line = fp.readline()
-            lineno += 1
-            if not len(line):
-              raise NoMatch
-            if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
-              debug("file is not patched - failed hunk: %d" % (hno+1))
-              raise NoMatch
+          if hline.startswith("-"):
+            continue
+          if not len(line):
+            debug("check failed - premature eof on hunk: %d" % (hno+1))
+            # todo: \ No newline at the end of file
+            raise NoMatch
+          if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
+            debug("file is not patched - failed hunk: %d" % (hno+1))
+            raise NoMatch
+          line = fp.readline()
+          lineno += 1
+
     except NoMatch:
       matched = False
       # todo: display failed hunk, i.e. expected/found
