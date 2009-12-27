@@ -155,20 +155,38 @@ add_test_methods(TestPatchFiles)
 
 # ----------------------------------------------------------------------------
 
-class TestPatchLibrary(unittest.TestCase):
-    def test_check_patched_detects_patched_file(self):
+class TestCheckPatched(unittest.TestCase):
+    def setUp(self):
+        self.save_cwd = os.getcwdu()
+        os.chdir(tests_dir)
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+
+    def test_patched_multiline(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        save_cwd = os.getcwdu()
         os.chdir(join(tests_dir, "01uni_multi.to"))
         self.assert_(pto.check_patched("updatedlg.cpp"))
-        os.chdir(save_cwd)
+
+    def test_patched_single(self):
+        pto2 = patch.fromfile(join(tests_dir, "02uni_newline.patch"))
+        pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
+        self.assert_(pto2.check_patched("02uni_newline.to"))
+        self.assert_(pto3.check_patched("03trail_fname.to"))
    
-    def test_check_patched_returns_false_on_other_file(self):
+    def test_multiline_false_on_other_file(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        save_cwd = os.getcwdu()
         os.chdir(join(tests_dir, "01uni_multi.from"))
         self.assertFalse(pto.check_patched("updatedlg.cpp"))
-        os.chdir(save_cwd)
+
+    def test_single_false_on_other_file(self):
+        pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
+        self.assertFalse(pto3.check_patched("03trail_fname.from"))
+
+    def test_check_patched_gives_false_positives(self):
+        """ check patched gives false positives on some files """
+        pto2 = patch.fromfile(join(tests_dir, "04check_patched.patch"))
+        self.assert_(pto2.check_patched("04check_patched.from"))
 
 # ----------------------------------------------------------------------------
 
