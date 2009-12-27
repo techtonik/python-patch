@@ -34,6 +34,9 @@ debug = logger.debug
 info = logger.info
 warning = logger.warning
 
+#: disable library logging by default
+logger.setLevel(logging.CRITICAL)
+
 #------------------------------------------------
 
 
