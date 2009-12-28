@@ -22,11 +22,11 @@ from os import unlink
 
 
 #------------------------------------------------
-# Logging is controlled by "python-patch" logger
+# Logging is controlled by "python_patch" logger
 
 debugmode = False
 
-logger = logging.getLogger("python-patch")
+logger = logging.getLogger("python_patch")
 loghandler = logging.StreamHandler()
 logger.addHandler(loghandler)
 
@@ -549,7 +549,6 @@ if __name__ == "__main__":
 
   if not args:
     opt.print_version()
-    print("")
     opt.print_help()
     sys.exit()
   debugmode = options.debugmode
