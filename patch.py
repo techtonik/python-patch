@@ -1,5 +1,5 @@
 """ Patch utility to apply unified diffs """
-""" Brute-force line-by-line parsing 
+""" Brute-force line-by-line non-recursive parsing 
 
     Project home: http://code.google.com/p/python-patch/
 
@@ -400,9 +400,11 @@ class Patch(object):
 
 
   def check_patched(self, filename):
-    """ Check if file is already patched. Not reliable, because it compares
-        target hunks and they could match source hunks, i.e. repeated lines.
-        @return: True, False or None
+    """Makes best guess if file is already patched. It's not 100% accurate,
+    because target hunks could match source hunks, for example, if all lines
+    in patched file are the same. Use file size or md5 for reliable checks.
+
+    :returns: True, False or None
     """
     idx = self._get_file_idx(filename)
     if idx == None:
@@ -544,7 +546,7 @@ import sys
 
 if __name__ == "__main__":
   opt = OptionParser(usage="%prog [options] unipatch-file", version="python-patch %s" % __version__)
-  opt.add_option("-d", action="store_true", dest="debugmode", help="debug mode")
+  opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
   if not args:
