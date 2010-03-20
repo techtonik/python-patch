@@ -1,7 +1,12 @@
-""" Patch utility to apply unified diffs """
-""" Brute-force line-by-line non-recursive parsing 
+""" Patch utility to apply unified diffs
+
+    Brute-force line-by-line non-recursive parsing 
+
+    Copyright (c) 2008-2010 anatoly techtonik
+    Available under the terms of MIT license
 
     Project home: http://code.google.com/p/python-patch/
+
 
     $Id$
     $HeadURL$
