@@ -166,27 +166,29 @@ class TestCheckPatched(unittest.TestCase):
     def test_patched_multiline(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
         os.chdir(join(tests_dir, "01uni_multi.to"))
-        self.assert_(pto.check_patched("updatedlg.cpp"))
+        self.assert_(pto.can_patch("updatedlg.cpp"))
 
-    def test_patched_single(self):
+    def test_can_patch_single_source(self):
         pto2 = patch.fromfile(join(tests_dir, "02uni_newline.patch"))
+        self.assert_(pto2.can_patch("02uni_newline.from"))
+
+    def test_can_patch_fails_on_target_file(self):
         pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
-        self.assert_(pto2.check_patched("02uni_newline.to"))
-        self.assert_(pto3.check_patched("03trail_fname.to"))
+        self.assertEqual(None, pto3.can_patch("03trail_fname.to"))
+        self.assertEqual(None, pto3.can_patch("not_in_source.also"))
    
     def test_multiline_false_on_other_file(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
         os.chdir(join(tests_dir, "01uni_multi.from"))
-        self.assertFalse(pto.check_patched("updatedlg.cpp"))
+        self.assertFalse(pto.can_patch("updatedlg.cpp"))
 
     def test_single_false_on_other_file(self):
         pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
-        self.assertFalse(pto3.check_patched("03trail_fname.from"))
+        self.assertFalse(pto3.can_patch("03trail_fname.from"))
 
-    def test_check_patched_gives_false_positives(self):
-        """ check patched gives false positives on some files """
+    def test_can_patch_fails_even_if_file_in_targets_can_be_patched(self):
         pto2 = patch.fromfile(join(tests_dir, "04check_patched.patch"))
-        self.assert_(pto2.check_patched("04check_patched.from"))
+        self.assert_(not pto2.can_patch("04check_patched.to"))
 
 # ----------------------------------------------------------------------------
 
