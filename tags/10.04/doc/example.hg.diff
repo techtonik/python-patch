@@ -1,0 +1,22 @@
+diff -r b2d9961ff1f5 TODO
+--- a/TODO	Sat Dec 26 16:36:37 2009 +0200
++++ b/TODO	Sun Dec 27 22:28:17 2009 +0200
+@@ -7,3 +7,7 @@
+ - remove files
+ - svn diff
+ - hg diff
++
++Source and target file conflicts:
++- two same source files in the same patch
++- one source and later one target file with the same name (that exists)
+diff -r b2d9961ff1f5 test commit/review system test
+--- a/test commit/review system test	Sat Dec 26 16:36:37 2009 +0200
++++ b/test commit/review system test	Sun Dec 27 22:28:17 2009 +0200
+@@ -1,4 +1,4 @@
+ something to 
+ change in 
+-this file
+-for review
+\ No newline at end of file
++this file <-- this should be removed!!! ARRGH! BASTARD, HOW DARE YOU TO MESS WITH PROJECT HISTORY!
++for review
