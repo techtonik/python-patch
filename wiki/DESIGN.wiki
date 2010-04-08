@@ -1,0 +1,81 @@
+== Design decisions ==
+
+==== Patch target file if source is not found ====
+
+If while patching the source file is not found, *patch.py* tries to patch
+target filename. This logic is used to process old style manual patches
+that were made by coparing backup file (with some fancy .old extension)
+with modified version that holds original name.
+
+==== "Already patched" detection ====
+
+_unified diff format_ doesn't allow to correctly validate if file is
+already patched, but only to check if it could be patched. It is because
+in some rare cases it is possible to apply the same patch several times
+(see 04check_patched example in tests).
+
+Checksum checks are almost 100% reliable, but in this case it will be
+impossible to patch files that are different in lines not covered by
+unified diff context. Actually, this "weakness" of unified format is
+actually a feature that allows to apply non-conlicting patches in different
+order. Version control systems do this during merges.
+
+
+== Parser no.0 - Brute Force ==
+
+Versions 8.06 up to 10.04.
+
+The logic is most straightforward. Read one line, detect to which part of
+Diff it belongs (free header, filename header, hunk) and parse it in the
+part responsible for this stuff.
+
+The parser code is one big `for` loop with a lot of `if`s that check
+current state (stored in local boolean variables `header` and `filenames`).
+If neither `header` nor `filenames` is set then we are in the state of
+parsing hunk.
+
+Every parsing part processes line and switches state by modifying shared
+variables, so that the next fetched line could be processed by different
+part is required. So, every parsing part knows when it finished processing
+and to which state it should switch.
+
+For Unified format is very simple and such parser fits it nicely. However,
+for other formats it may not be clear where a line should belong and `if`s
+should not only check state variables, but also the line itself (in this
+case line is called "context"). These `if`s should also be placed in
+specific order or they can lose the line.
+
+For example, `header` parsing block consumes lines until it encounters line
+that starts with `--- `. This line belongs to `filenames` block, which
+should process it. `headers` switches state to `filenames`, but if
+`filename` state check was already done for this line - this line will be
+lost.
+
+The biggest problem in this parser is that every line (context) and state
+are checked in one big for/if/if/if/.. cycle. While it is easy to write
+such parser, it is very hard to extend it. Blocks are not explicitly
+chained, and all `if` checks are run again and again for every line. It is
+very hard to trace current state and estimate how new modifications will
+affect parsing process.
+
+With growing number of state variables it is easy to overlook some
+combination. Context checks may also interfere. Designing recovery from
+invalid input would be a nightmare.
+
+
+== Parser no.1 ==
+
+Versions ___
+
+So the first thing to make parser code more clean, maintainable and as a
+result - extendable is to allow blocks request lines from input stream.
+Block reads as many lines as it wants from the input stream. When block
+finishes - it switches state and processing continues. The block still
+knows what is the next state and state is still detected in main `if`s
+cycle, but at least lines that belong to this block are not exposed to
+other checks.
+
+Blocks still should be positioned in specific order for more compicated
+formats than Unified Diff to be able to pass consumed line to next state
+parser. 
+
