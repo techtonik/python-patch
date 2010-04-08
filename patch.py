@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "9.12"
+__version__ = "10.04"
 
 import copy
 import logging
