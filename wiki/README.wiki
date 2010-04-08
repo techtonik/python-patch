@@ -7,14 +7,29 @@ Usually patches are applied with a *patch* tool - a UNIX utility that continues 
 
 == Status ==
 
-*patch.py* is capable to apply _unified diffs only_. Parsing of diff is done in a in very straightforward manner as an exercise to approach the problem of parsing on my own before learning the 'proper ways'. Thanks creators, _the format of unified diff_ is rather simple (an illustration is included in [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
+NOTE: API is very unstable, so use strict dependencies when using this
+tool as a library.
+
+*patch.py* is meant to be semi-automatic tool with intuitive defaults.
+Currently it is capable to apply only _unified diffs_. It also doesn't
+support file renames.
+
+Parsing of diff is done in a in very straightforward manner as an exercise to approach the problem of parsing on my own before learning the 'proper ways'. Thanks creators, _the format of unified diff_ is rather simple (an illustration is included in [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
 
 Note about line end differences. patch.py tries to convert patch lines into best suitable format for patched file. While scanning lines patch.py notices line endings in source file and if they are consistent - patch lines are applied with the same ending. If they are not - lines are applied "as is" (as in patch).
 
 The utility is not complete in the sense that there is no support for creating/deleting files, "\ No newline at end of file" scenarios need some checks. Test suite should be expanded to cover more use cases. And the last thing - this script is not interactive. 
 
+
 == Changes ==
 {{{
+10.04
+    - renamed debug option to --debug
+    - API changes
+      * method names are now underscored for consistency with difflib
+      + addded Patch.can_patch(filename) to test if source file is in list
+        of source filenames and can be patched
+      * use designated logger "python_patch" instead of default
 9.08-2
     - compatibility fix for Python 2.4
 9.08-1
@@ -22,7 +37,7 @@ The utility is not complete in the sense that there is no support for creating/d
       (thanks James from Twisted Fish)
     - API changes
       + added Patch and HunkInfo classes
-      + moved utility methods into Patch
+      * moved utility methods into Patch
       + build Patch object by specifying stream to constructor
         or use top level functions fromfile() and fromstring()
     - added test suite
