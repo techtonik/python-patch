@@ -404,22 +404,22 @@ class Patch(object):
     # todo: check for premature eof
 
 
-  def check_patched(self, filename):
-    """Makes best guess if file is already patched. It's not 100% accurate,
-    because target hunks could match source hunks, for example, if all lines
-    in patched file are the same. Use file size or md5 for reliable checks.
+  def can_patch(self, filename):
+    """ Check if specified filename can be patched. Returns None if file can
+    not be found among source filenames. False if patch can not be applied
+    clearly. True otherwise.
 
     :returns: True, False or None
     """
-    idx = self._get_file_idx(filename)
+    idx = self._get_file_idx(filename, source=True)
     if idx == None:
       return None
     return self._match_file_hunks(filename, self.hunks[idx])
     
 
-  def _match_file_hunks(self, filename, hunks):
+  def _match_file_hunks(self, filepath, hunks):
     matched = True
-    fp = open(filename)
+    fp = open(abspath(filepath))
 
     class NoMatch(Exception):
       pass
@@ -530,18 +530,23 @@ class Patch(object):
     return True
   
 
-  def _get_file_idx(self, filename):
-    """ Detect index of given filename within patch
+  def _get_file_idx(self, filename, source=None):
+    """ Detect index of given filename within patch.
 
+        :param filename:
+        :param source: search filename among sources (True),
+                       targets (False), or both (None)
         :returns: int or None
     """
     filename = abspath(filename)
-    for i,fnm in enumerate(self.source):
-      if filename == abspath(fnm):
-        return i  
-    for i,fnm in enumerate(self.target):
-      if filename == abspath(fnm):
-        return i  
+    if source == True or source == None:
+      for i,fnm in enumerate(self.source):
+        if filename == abspath(fnm):
+          return i  
+    if source == False or source == None:
+      for i,fnm in enumerate(self.target):
+        if filename == abspath(fnm):
+          return i  
 
 
 
