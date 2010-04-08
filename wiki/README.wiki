@@ -11,8 +11,8 @@ continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of]
 GNU tools. There is
 [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of
 *patch*, but was
-[http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c
-rather buggy], insecure to be run on a web server and not customizable
+[http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c rather buggy],
+insecure to be run on a web server and not customizable
 without a C compiler. That's why this version was born. And I've always
 wanted to have a *diff.py* counterpart [http://bugs.python.org/issue2057 bundled]
 with Python.
