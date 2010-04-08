@@ -380,7 +380,7 @@ class Patch(object):
       f2fp.close()
 
       if validhunks < len(self.hunks[fileno]):
-        if self._check_file_hunks(filename, self.hunks[fileno]):
+        if self._match_file_hunks(filename, self.hunks[fileno]):
           warning("already patched  %s" % filename)
         else:
           warning("source file is different - %s" % filename)
@@ -414,10 +414,10 @@ class Patch(object):
     idx = self._get_file_idx(filename)
     if idx == None:
       return None
-    return self._check_file_hunks(filename, self.hunks[idx])
+    return self._match_file_hunks(filename, self.hunks[idx])
     
 
-  def _check_file_hunks(self, filename, hunks):
+  def _match_file_hunks(self, filename, hunks):
     matched = True
     fp = open(filename)
 
@@ -532,7 +532,8 @@ class Patch(object):
 
   def _get_file_idx(self, filename):
     """ Detect index of given filename within patch
-        @return: int or None
+
+        :returns: int or None
     """
     filename = abspath(filename)
     for i,fnm in enumerate(self.source):
