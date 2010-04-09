@@ -63,19 +63,65 @@ combination. Context checks may also interfere. Designing recovery from
 invalid input would be a nightmare.
 
 
-== Parser no.1 ==
+== Parser no.1 - Block Context ==
 
 Versions ___
 
-So the first thing to make parser code more clean, maintainable and as a
-result - extendable is to allow blocks request lines from input stream.
-Block reads as many lines as it wants from the input stream. When block
-finishes - it switches state and processing continues. The block still
-knows what is the next state and state is still detected in main `if`s
-cycle, but at least lines that belong to this block are not exposed to
-other checks.
+So the first thing to make parser code more clean and maintainable is to
+allow parser blocks fetch lines from input stream directly without waiting
+the main cycle to complete. Block reads as many lines as it wants, and
+switches state when finished. All lines that belong to this block could be
+called "block context" and are not exposed to main `if` cycle. So there are
+less chances that line that should be processed in this part of the parser
+is intercepted by some other rule.
 
-Blocks still should be positioned in specific order for more compicated
-formats than Unified Diff to be able to pass consumed line to next state
-parser. 
+Let's call this feature of Parser no.1 "isolation of block context".
+
+However, block context can not be fully separated. Sometimes decision about
+switching state depends on the read line itself, and this line may already
+belong other "block context". Current block should switch state to give
+this line to its owner. For example, when header parser reads line that
+starts with "--- " - it should switch state and pass this line to filename
+parser. The filename parser is the owner block that should be called before
+the end of the cycle to avoid line being overwritten. In case of `if`s
+structure that means owner's block check should be located under part of
+the code that switched state.
+
+So each block still knows about the next state or states. It should make a
+decision where to switch next. Hence it should know about "block contexts"
+of its successors. This bloats and complicates code.
+
+To simplify the code, it is possible to prevent blocks from analysing
+each other's context for making switch. The block should only check that
+line doesn't belong to its context and switch state to pass control
+further.
+
+"block context separation" is another feature of Parser no.2.
+
+It not a complete separation in the sence that header parser still knows
+that line starting with "--- " doesn't belong to it. It switches state by
+setting `headscan` to False and `filescan` to True and that's all. No
+parsing block makes assumptions or decisions where to pass the processing.
+There is only one way to switch from parsing block. If there should be a
+decision what is to be parsed next, then this decision should be made by
+a piece of code that doesn't parse, but just analyzes context to make a
+switch. The problem with arranging pieces in correct order still persists.
+
+To solve rearrangement problem it is necessary to either reinvent GOTO or
+to be able to reinsert analyzed string back into stream for fetching in
+the next cycle after state has already been switched.
+
+It is possible to illustrate chicken and egg problem when two blocks
+analyze each others context to pass control from one to other and could
+not be rearranged, because at the end of processing the current block
+should always be higher than the other, because it needs to pass the line.
+
+The solution can be in:
+- skip fetching line on the next cycle
+- reinsert line into the stream
+- wrapper switch that judges who gets the next line, this requires one more
+  state variable, and that blocks process lines one by one
+  
+Reinserting lines can provide some performance overhead, wrapper switch
+complites parser, so skip line fetching may be a good solution.
 
