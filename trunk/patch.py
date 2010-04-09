@@ -165,7 +165,6 @@ class Patch(object):
             # this is actually a loop exit
             continue
         self.header.append(header)
-        print header
 
         headscan = False
         # switch to filenames state
