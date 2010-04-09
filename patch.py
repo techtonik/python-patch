@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "10.04"
+__version__ = "10.04-1"
 
 import copy
 import logging
@@ -43,6 +43,12 @@ warning = logger.warning
 logger.setLevel(logging.CRITICAL)
 
 #------------------------------------------------
+
+# constants for patch types
+
+DIFF = PLAIN = "plain"
+HG = MERCURIAL = "mercurial"
+SVN = SUBVERSION = "svn"
 
 
 def fromfile(filename):
@@ -106,6 +112,11 @@ class Patch(object):
     self.hunks=None
     #: file endings statistics for every hunk
     self.hunkends=None
+    #: headers for each file
+    self.header=None
+
+    #: patch type - one of constants
+    self.type = None
 
     if stream:
       self.parse(stream)
@@ -115,20 +126,22 @@ class Patch(object):
 
   def parse(self, stream):
     """ parse unified diff """
+    self.header = []
+
     self.source = []
     self.target = []
     self.hunks = []
     self.hunkends = []
 
     # define possible file regions that will direct the parser flow
-    header = False    # comments before the patch body
+    headscan  = False # scanning header before the patch body
     filenames = False # lines starting with --- and +++
 
     hunkhead = False  # @@ -R +R @@ sequence
     hunkbody = False  #
     hunkskip = False  # skipping invalid hunk mode
 
-    header = True
+    headscan = True
     lineends = dict(lf=0, crlf=0, cr=0)
     nextfileno = 0
     nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
@@ -137,15 +150,28 @@ class Patch(object):
     hunkinfo = HunkInfo()
     hunkactual = dict(linessrc=None, linestgt=None)
 
+
     fe = enumerate(stream)
     for lineno, line in fe:
 
-      # analyze state
-      if header and line.startswith("--- "):
-        header = False
+      # read out header
+      if headscan:
+        header = ''
+        try:
+          while not line.startswith("--- "):
+            header += line
+            lineno, line = fe.next()
+        except StopIteration:
+            # this is actually a loop exit
+            continue
+        self.header.append(header)
+        print header
+
+        headscan = False
         # switch to filenames state
         filenames = True
-      #: skip hunkskip and hunkbody code until you read definition of hunkhead
+
+      # hunkskip and hunkbody code skipped until definition of hunkhead is parsed
       if hunkbody:
         # process line first
         if re.match(r"^[- \+\\]", line):
@@ -226,9 +252,9 @@ class Patch(object):
             self.source.append(match.group(1).strip())
           else:
             warning("skipping invalid filename at line %d" % lineno)
-            # switch back to header state
+            # switch back to headscan state
             filenames = False
-            header = True
+            headscan = True
         elif not line.startswith("+++ "):
           if nextfileno in self.source:
             warning("skipping invalid patch with no target for %s" % self.source[nextfileno])
@@ -237,7 +263,7 @@ class Patch(object):
             # this should be unreachable
             warning("skipping invalid target patch")
           filenames = False
-          header = True
+          headscan = True
         else:
           if nextfileno in self.target:
             warning("skipping invalid patch - double target at line %d" % lineno)
@@ -245,17 +271,17 @@ class Patch(object):
             del self.target[nextfileno]
             nextfileno -= 1
             # double target filename line is encountered
-            # switch back to header state
+            # switch back to headscan state
             filenames = False
-            header = True
+            headscan = True
           else:
             re_filename = "^\+\+\+ ([^\t]+)"
             match = re.match(re_filename, line)
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % lineno)
-              # switch back to header state
+              # switch back to headscan state
               filenames = False
-              header = True
+              headscan = True
             else:
               self.target.append(match.group(1).strip())
               nextfileno += 1
@@ -272,14 +298,14 @@ class Patch(object):
         if not match:
           if nextfileno-1 not in self.hunks:
             warning("skipping invalid patch with no hunks for file %s" % self.target[nextfileno-1])
-            # switch to header state
+            # switch to headscan state
             hunkhead = False
-            header = True
+            headscan = True
             continue
           else:
-            # switch to header state
+            # switch to headscan state
             hunkhead = False
-            header = True
+            headscan = True
         else:
           hunkinfo.startsrc = int(match.group(1))
           hunkinfo.linessrc = 1
@@ -297,6 +323,7 @@ class Patch(object):
           hunkbody = True
           nexthunkno += 1
           continue
+
     else:
       if not hunkskip:
         warning("patch file incomplete - %s" % filename)
