@@ -1,3 +1,5 @@
+#summary Parser design and evolution
+
 == Design decisions ==
 
 ==== Patch target file if source is not found ====
@@ -25,42 +27,69 @@ order. Version control systems do this during merges.
 
 Versions 8.06 up to 10.04.
 
-The logic is most straightforward. Read one line, detect to which part of
-Diff it belongs (free header, filename header, hunk) and parse it in the
-part responsible for this stuff.
+The process is very straightforward. Main cycle reads one line at a time
+from the input stream. Detects to which part of Diff it belongs (free
+header, filename header, hunk) and parses it.
 
-The parser code is one big `for` loop with a lot of `if`s that check
-current state (stored in local boolean variables `header` and `filenames`).
-If neither `header` nor `filenames` is set then we are in the state of
-parsing hunk.
+The parser code is one big `for` loop with a lot of `if`s checks for
+branching execution into one or another "parsing block". Parsing block does
+the actual job of extracting text into Python structures. Local boolean
+variables are used for tracking current parser state. Initially named
+`header`, `filenames`, `hunkhead`, `hunkbody` after the regions in unified
+diff format they showed where parser is located at any current moment. For
+recovery from corrupted or invalid data a new `hunkskip` was added.
 
-Every parsing part processes line and switches state by modifying shared
-variables, so that the next fetched line could be processed by different
-part is required. So, every parsing part knows when it finished processing
-and to which state it should switch.
+However, sometimes parser doesn't know where it is located. For example,
+when hunk ends, there can be start of another hunk, another file, end of
+stream or just garbage. This is where things become complicated.
 
-For Unified format is very simple and such parser fits it nicely. However,
-for other formats it may not be clear where a line should belong and `if`s
-should not only check state variables, but also the line itself (in this
-case line is called "context"). These `if`s should also be placed in
-specific order or they can lose the line.
+At the start of new `for` cycle a new line is read and it should be
+processed until the end of cycle. `if`s in main cycle check state variables
+to dispatch the line into their parsing block. They do not analyze the line
+itself (i.e. "context").  When block finishes processing, it switches state
+to the next one. So, if there are could be one of several states, this
+parsing block should decide which one to choose based on line context.
 
-For example, `header` parsing block consumes lines until it encounters line
-that starts with `--- `. This line belongs to `filenames` block, which
-should process it. `headers` switches state to `filenames`, but if
-`filename` state check was already done for this line - this line will be
-lost.
+Checks in the main cycle are simple, but checks in parsing blocks can
+become sophisticated if there are more than one state to choose. Not only
+such block should know that the line doesn't belong to it, but it also
+should be able to analyze it to decide to which successor block it should
+be passed.
 
-The biggest problem in this parser is that every line (context) and state
-are checked in one big for/if/if/if/.. cycle. While it is easy to write
-such parser, it is very hard to extend it. Blocks are not explicitly
-chained, and all `if` checks are run again and again for every line. It is
-very hard to trace current state and estimate how new modifications will
-affect parsing process.
+More than that - the line is disposed at the end of the cycle, so if the
+block decides to switch state, because line doesn't belong to it, this
+block should be located before the owner of this line. Only then the owner
+has a chance to get it when control is returned in the main cycle. That's
+why `hunkskip` block used for error recovery is located after `hunkbody`
+parser and before `filenames` and `hunkhead` parsing blocks.
 
-With growing number of state variables it is easy to overlook some
-combination. Context checks may also interfere. Designing recovery from
-invalid input would be a nightmare.
+Such parser with lines that "fall through" arranged parsing blocks may be
+the fastest possible implementation. There are no calls, no repeated checks
+after state switching. But the code is hard to read, it is not easily
+extensible due to these implicit connections. But unified diff format is
+simple and such optimization stil lcould be the way to go in the future.
+
+
+To summarize:
+- state checks are run for every line of the input stream;
+- blocks are not explicitly chained 
+- every parsing block knows to which state it should switch after
+  processing;
+- state switching checks can become complicated if there is choice;
+- line should be processed until the end of the cycle;
+- blocks should be arranged in specific order to intercept the line before
+  the end of cycle;
+- if it is impossible to rearrange blocks in the appropriate order then a
+  "decider" block that doesn't do any parsing is needed (e.g `hunkskip`).
+
+Absence of function calls should speed up things a little. They probably
+could make block chaining explicit, but this exposes parser to stack
+depletion problem. It is not actual for this specific parser, where amount
+of parsed data in memory is bigger anyway, but it is still worthy to keep
+this non-recursive and stackless.
+
+Development of parser is complicated, because it is hard to trace state
+transformations and estimate how new modifications affect parsing.
 
 
 == Parser no.1 - Block Context ==
@@ -111,7 +140,7 @@ To solve rearrangement problem it is necessary to either reinvent GOTO or
 to be able to reinsert analyzed string back into stream for fetching in
 the next cycle after state has already been switched.
 
-It is possible to illustrate chicken and egg problem when two blocks
+It is possible to illustrate "chicken and egg" problem when two blocks
 analyze each others context to pass control from one to other and could
 not be rearranged, because at the end of processing the current block
 should always be higher than the other, because it needs to pass the line.
@@ -123,5 +152,15 @@ The solution can be in:
   state variable, and that blocks process lines one by one
   
 Reinserting lines can provide some performance overhead, wrapper switch
-complites parser, so skip line fetching may be a good solution.
+complicates parser, so skip line fetching may be a good solution.
 
+
+So, this parser doesn't use "pass-down-this-line" schemes and hence is not
+vulnerable to "chicken and egg" when line should processed in the same
+cycle to avoid being overwritten. Every block requests as many lines as it
+needs, switches state to "finished" and returns control to the beginning of
+the main cycle. Main cycle analyzes state and passes control to the next
+appropriate block. 
+
+"pass-down-this-line" problem can be alleviated by a global flag `skipline`
+that instructs parser not to.
