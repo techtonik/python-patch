@@ -1,0 +1,20 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 30_default_charset_utf8.dpatch by  <debacle@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Use UTF-8 as default charset
+
+@DPATCH@
+
+diff -uraN trac-0.11.5.orig/trac/mimeview/api.py trac-0.11.5/trac/mimeview/api.py
+--- trac-0.11.5.orig/trac/mimeview/api.py	2009-06-30 21:18:58.000000000 +0200
++++ trac-0.11.5/trac/mimeview/api.py	2009-09-28 22:02:35.000000000 +0200
+@@ -579,7 +579,7 @@
+     annotators = ExtensionPoint(IHTMLPreviewAnnotator)
+     converters = ExtensionPoint(IContentConverter)
+ 
+-    default_charset = Option('trac', 'default_charset', 'iso-8859-15',
++    default_charset = Option('trac', 'default_charset', 'utf-8',
+         """Charset to be used when in doubt.""")
+ 
+     tab_width = IntOption('mimeviewer', 'tab_width', 8,
