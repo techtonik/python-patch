@@ -323,14 +323,13 @@ class Patch(object):
           nexthunkno += 1
           continue
 
+    if not hunkskip:
+      warning("patch file incomplete - %s" % filename)
+      # sys.exit(?)
     else:
-      if not hunkskip:
-        warning("patch file incomplete - %s" % filename)
-        # sys.exit(?)
-      else:
-        # duplicated message when an eof is reached
-        if debugmode and len(self.source) > 0:
-            debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
+      # duplicated message when an eof is reached
+      if debugmode and len(self.source) > 0:
+          debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
     info("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
 
