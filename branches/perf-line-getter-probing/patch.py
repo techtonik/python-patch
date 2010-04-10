@@ -151,7 +151,42 @@ class Patch(object):
     hunkactual = dict(linessrc=None, linestgt=None)
 
 
-    fe = enumerate(stream)
+    class wrapumerate(enumerate):
+      # it also returns tuple in its next() method, but also allows to
+      # explicitly query status with empty() function. It buffers one extra
+      # line of input immediately to detect the end of stream.
+
+      exhausted = False
+      lineno = False
+      line = False
+
+      def __init__(self, *args, **kwargs):
+        # we don't call parent, it is magically created by __new__ method
+        # and arguments are also processed there
+
+        # read one line immediately to see if stream is empty
+        try:
+          self.lineno, self.line = super(wrapumerate, self).next()
+        except StopIteration:
+          self.exhausted = True
+
+      def next(self):
+        if self.exhausted:
+          raise StopIteration
+
+        retres = self.lineno, self.line
+        try:
+          self.lineno, self.line = super(wrapumerate, self).next()
+        except StopIteration:
+          self.exhausted = True
+          self.lineno = self.line = False
+        return retres
+
+      def empty(self):
+        return self.exhausted
+
+
+    fe = wrapumerate(stream)
     for lineno, line in fe:
 
       # read out header
