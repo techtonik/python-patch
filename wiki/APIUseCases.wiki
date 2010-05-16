@@ -3,7 +3,18 @@
 
 = 01. Patch application environment on upgrade =
 
-*Storyline:* I want my application (Trac 0.11) patch files in my environment (README) to a new version. I want to detect that files are not patched, ensure that patch applies clearly before processing.
+*Storyline:* I want my application (Trac 0.11) patch files in my
+environment (README) to a new version. I want to detect that
+files are not patched, ensure that patch applies clearly before
+processing.
+
+*Proposed API:*
+
+*Example:*
+
+= 02. diffstat on Windows =
+
+*Storyline:* I want to see diffstat-like statistics on Windows.
 
 *Proposed API:*
 
