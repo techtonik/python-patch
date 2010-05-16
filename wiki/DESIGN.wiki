@@ -1,12 +1,26 @@
 #summary Parser design and evolution
 
+The initial goal was to make cross-platform alternative to unix patch
+utility. This utility should not require compiling, must be easy to 
+extend and should be run as standalone tool or as server process. That's
+why Python was chosen.
+
+Another goal was to make a library for automation of patching tasks as
+part of rainforce project to encourage development of tools that will
+make "patchwork" intuitive and easy.
+
+And the last goal was to reinvert line parser theory from scratch, because
+you need to reinvent things to prove that there are no better ways to do
+something (or to understand what do you need to look for).
+
+
 == Design decisions ==
 
 ==== Patch target file if source is not found ====
 
-If while patching the source file is not found, *patch.py* tries to patch
+If the source file is not found while patching, *patch.py* tries to patch
 target filename. This logic is used to process old style manual patches
-that were made by coparing backup file (with some fancy .old extension)
+that were made by comparing backup file (with some fancy .old extension)
 with modified version that holds original name.
 
 ==== "Already patched" detection ====
@@ -16,11 +30,16 @@ already patched, but only to check if it could be patched. It is because
 in some rare cases it is possible to apply the same patch several times
 (see 04check_patched example in tests).
 
-Checksum checks are almost 100% reliable, but in this case it will be
-impossible to patch files that are different in lines not covered by
-unified diff context. Actually, this "weakness" of unified format is
-actually a feature that allows to apply non-conlicting patches in different
-order. Version control systems do this during merges.
+Only checksum can reliably detect if file is not patched, but in this case
+linefeed differences or minor changes in file will mark file as
+non-patchable, while in fact it could be possible if these minor changes
+do not intersect with unified diff contents.  This is the feature of
+unified format is that non-conlicting patches can be applied in different
+order. Some conflicts can even be resolved automatically (not by this lib
+so far). Version control systems actually do this during merges.
+
+
+== Parsers overview ==
 
 
 == Parser no.0 - Brute Force ==
@@ -29,11 +48,15 @@ Versions 8.06 up to 10.04.
 
 The process is very straightforward. Main cycle reads one line at a time
 from the input stream. Detects to which part of Diff it belongs (free
-header, filename header, hunk) and parses it.
+header, filename header, hunk) and parses it into corresponding data
+structure. The line is either processed of discarded at the end of each
+cycle. This guarantees no endless loops or resursions as long as input
+stream is finite.
 
-The parser code is one big `for` loop with a lot of `if`s checks for
-branching execution into one or another "parsing block". Parsing block does
-the actual job of extracting text into Python structures. Local boolean
+The parser code is one big `for` loop with a series of "parsing blocks"
+at the root level. Each parsing block use `if` check if it should process
+the current line. Parsing block then does the actual job of extracting text
+into Python structures. Local boolean
 variables are used for tracking current parser state. Initially named
 `header`, `filenames`, `hunkhead`, `hunkbody` after the regions in unified
 diff format they showed where parser is located at any current moment. For
