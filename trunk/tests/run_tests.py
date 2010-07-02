@@ -192,6 +192,18 @@ class TestCheckPatched(unittest.TestCase):
 
 # ----------------------------------------------------------------------------
 
+class TestPatchParse(unittest.TestCase):
+    def test_fromstring(self):
+        try:
+          f = open(join(tests_dir, "01uni_multi.patch"), "rb")
+          readstr = f.read()
+        finally:
+          f.close()
+        pto = patch.fromstring(readstr)
+        self.assertEqual(len(pto.source), 5)
+
+# ----------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     unittest.main()
