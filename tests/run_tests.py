@@ -22,6 +22,9 @@ from os import listdir
 from os.path import abspath, dirname, exists, join, isdir
 from tempfile import mkdtemp
 
+verbose = False
+if "-v" in sys.argv or "--verbose" in sys.argv:
+  verbose = True
 
 
 #: full path for directory with tests
@@ -119,7 +122,7 @@ class TestPatchFiles(unittest.TestCase):
       patch_tool = join(dirname(tests_dir), "patch.py")
       save_cwd = os.getcwdu()
       os.chdir(tmpdir)
-      ret = os.system("%s %s %s" % (sys.executable, patch_tool, patch_file))
+      ret = os.system('%s %s "%s"' % (sys.executable, patch_tool, patch_file))
       assert ret == 0, "Error %d running test %s" % (ret, testname)
       os.chdir(save_cwd)
 
@@ -149,8 +152,14 @@ def add_test_methods(cls):
     testptn = re.compile(r"^(?P<name>\d{2,}.+)\.(?P<ext>[^\.]+)")
     testset = sorted( set([testptn.match(e).group('name') for e in listdir(tests_dir) if testptn.match(e)]) )
 
-    for testname in testset:
-      setattr(cls, "test%s" % testname, lambda self, name=testname: self._run_test(name))
+    for filename in testset:
+      methname = filename.replace(" ", "_")
+      def create_closure():
+        name = filename
+        return lambda self: self._run_test(name)
+      setattr(cls, "test%s" % methname, create_closure())
+      if verbose:
+        print "added test method %s to %s" % (methname, cls)
 add_test_methods(TestPatchFiles)
 
 # ----------------------------------------------------------------------------
