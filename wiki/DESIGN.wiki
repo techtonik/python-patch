@@ -132,31 +132,34 @@ TODO: describe "missing line" problem in state recovery with two
 This line by line parser with lines that "fall through" arranged parsing
 blocks may be the fastest possible implementation. There are no calls, no
 repeated checks after state switching. But the code is still hard to read
-and extend due to these implicit arrangements. But unified diff format is
-simple and such optimization still could be the way to go in the future.
+and extend due to these implicit arrangements. This can be a minor issue
+though as unified diff format is simple and such optimizations could be
+the way to go in the future.
 
 
 To summarize:
-- static analysis made easier by using states instead of regexps for
-  branching;
-- state checks are run for every line of the input stream;
+- static code analysis is easier thanks to states instead of regexps for
+  branching execution;
+- state checks are run for every line of the input stream (blocks can't
+  request more lines);
 - blocks are not explicitly chained;
+- but still arranged in specific order;
 - every parsing block knows to which state it should switch after
   processing;
-- line should be processed until the end of the cycle;
-- blocks should be arranged in specific order;
-- state switching can become complicated when there is choice;
+- this makes state switching complicated when there is choice;
+- because block should fetch the next line to make a decision;
+- line should be processed by the right block until the end of the cycle;
 - if it is impossible to rearrange blocks in the appropriate order then a
-  "decider" block that doesn't do any parsing is needed (e.g `hunkskip`).
+  "decider block" is needed (e.g `hunkskip`).
 
-Absence of function calls should speed up things a little. They probably
+Absence of function calls should speed up things a little. Function calls
 could make block chaining explicit, but this exposes parser to stack
 depletion problem. It is not actual for this specific parser, where amount
 of parsed data in memory is bigger anyway, but it is still worthy to keep
 this non-recursive and stackless.
 
 Development of parser is still complicated, because you need to keep in
-mind the correct order of blocks while making modifications, know about
+mind the correct order of blocks while making modifications, and know about
 interleaving blocks corner case to be able to manually detect them before
 they hack your mind.
 
@@ -165,25 +168,28 @@ they hack your mind.
 
 Versions ___
 
-So the first thing to make parser code more clean and maintainable is to
-allow parser blocks fetch lines from input stream directly without waiting
-the main cycle to complete. Block reads as many lines as it wants, and
-switches state when finished. All lines that belong to this block could be
-called "block context" and are not exposed to main `if` cycle. So there are
-less chances that line that should be processed in this part of the parser
-is intercepted by some other rule.
+The need to extend patch parser for processing Mercurial and Git formats
+required changes to allow easy extension without sacrificing non-recursive
+non-looping behavior. The first enhancement was to allow parser blocks
+fetch lines from input stream directly without waiting for the line in the
+main cycle. Block reads as many lines as it needs, and after that switches
+state. All lines that belong to this block are called "block context" and
+are not exposed to main `if` cycle. This way there are less chances that
+line could be intercepted by the wrong block.
 
-Let's call this feature of Parser no.1 "isolation of block context".
+This feature can be called "isolation of block context".
 
-However, block context can not be fully separated. Sometimes decision about
-switching state depends on the read line itself, and this line may already
-belong other "block context". Current block should switch state to give
-this line to its owner. For example, when header parser reads line that
-starts with "--- " - it should switch state and pass this line to filename
-parser. The filename parser is the owner block that should be called before
-the end of the cycle to avoid line being overwritten. In case of `if`s
-structure that means owner's block check should be located under part of
-the code that switched state.
+While it sounds good, block context can not be fully separated. When block
+doesn't know how many lines it needs it just reads the input until a line
+out of context is encountered. This line already belongs to another "block
+context". Current block switches state to pass control to owner, but the
+owner need to catch the line before it is discarded at the end of cycle.
+
+For example, when header parser reads line that starts with "--- " - it
+should switch state and pass this line to the owner - filename parser.
+The filename parser should be called before the end of the cycle to avoid
+line being overwritten. In case of `if`s structure that means owner's
+block check should be located under part of the code that switched state.
 
 So each block still knows about the next state or states. It should make a
 decision where to switch next. Hence it should know about "block contexts"
@@ -192,45 +198,43 @@ of its successors. This bloats and complicates code.
 To simplify the code, it is possible to prevent blocks from analysing
 each other's context for making switch. The block should only check that
 line doesn't belong to its context and switch state to pass control
-further.
+further to "decider's block", which in turn make the proper state switch.
 
 "block context separation" is another feature of Parser no.2.
 
-It not a complete separation in the sence that header parser still knows
+It's not a complete separation in a sense that header parser still knows
 that line starting with "--- " doesn't belong to it. It switches state by
 setting `headscan` to False and `filescan` to True and that's all. No
 parsing block makes assumptions or decisions where to pass the processing.
 There is only one way to switch from parsing block. If there should be a
 decision what is to be parsed next, then this decision should be made by
-a piece of code that doesn't parse, but just analyzes context to make a
+"decider's block" that doesn't parse, but just analyzes context to make a
 switch. The problem with arranging pieces in correct order still persists.
 
 To solve rearrangement problem it is necessary to either reinvent GOTO or
-to be able to reinsert analyzed string back into stream for fetching in
-the next cycle after state has already been switched.
+to be able to reinsert analyzed line back into stream for fetching in
+the next cycle after state had already been switched.
 
-It is possible to illustrate "chicken and egg" problem when two blocks
-analyze each others context to pass control from one to other and could
-not be rearranged, because at the end of processing the current block
-should always be higher than the other, because it needs to pass the line.
+Rearrangement problem can be illustrated with two blocks that analyze each
+others context to pass control to each other. It is impossible to place
+them in the correct order in main cycle, because at the end of processing
+the current block should always be higher than the other to pass the line.
 
 The solution can be in:
 - skip fetching line on the next cycle
+- add buffer for discarded lines
 - reinsert line into the stream
-- wrapper switch that judges who gets the next line, this requires one more
-  state variable, and that blocks process lines one by one
+- wrapper switch that judges who gets the next line, this requires one
+  more state variable, and processing lines one by one from the main cycle
   
 Reinserting lines can provide some performance overhead, wrapper switch
 complicates parser, so skip line fetching may be a good solution.
 
 
-So, this parser doesn't use "pass-down-this-line" schemes and hence is not
-vulnerable to "chicken and egg" when line should processed in the same
-cycle to avoid being overwritten. Every block requests as many lines as it
-needs, switches state to "finished" and returns control to the beginning of
-the main cycle. Main cycle analyzes state and passes control to the next
-appropriate block. 
-
-"pass-down-this-line" problem can be alleviated by a global flag `skipline`
-that instructs parser not to.
+So, this parser overcomes strict requirement when line should processed in
+the same cycle to avoid being overwritten. Every block requests as many
+lines as it needs, switches state to "finished" and returns control to the
+beginning of the main cycle. Main cycle analyzes state and passes control
+to the next appropriate block. As a side effect there is now a line number
+that can be used for error messages and debugging.
 
