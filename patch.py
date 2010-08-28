@@ -20,7 +20,6 @@ import logging
 import re
 # cStringIO doesn't support unicode in 2.5
 from StringIO import StringIO
-from logging import debug, info, warning
 
 from os.path import exists, isfile, abspath
 from os import unlink
@@ -129,7 +128,7 @@ class Patch(object):
     self.hunks = []
     self.hunkends = []
 
-    # define possible file regions that will direct the parser flow
+    # define states (possible file regions) that will direct the parser flow
     headscan  = False # scanning header before the patch body
     filenames = False # lines starting with --- and +++
 
@@ -147,24 +146,69 @@ class Patch(object):
     hunkactual = dict(linessrc=None, linestgt=None)
 
 
-    fe = enumerate(stream)
-    for lineno, line in fe:
+    class wrapumerate(enumerate):
+      """Enumerate wrapper that uses boolean end of stream status instead of
+      StopIteration exception, and properties to access line information.
+      """
+
+      def __init__(self, *args, **kwargs):
+        # we don't call parent, it is magically created by __new__ method
+
+        self._exhausted = False
+        self._lineno = False     # after end of stream equal to the num of lines
+        self._line = False       # will be reset to False after end of stream
+
+      def next(self):
+        """Try to read the next line and return True if it is available,
+           False if end of stream is reached."""
+        if self._exhausted:
+          return False
+
+        try:
+          self._lineno, self._line = super(wrapumerate, self).next()
+        except StopIteration:
+          self._exhausted = True
+          self._line = False
+          return False
+        return True
+
+      @property
+      def is_empty(self):
+        return self._exhausted
+
+      @property
+      def line(self):
+        return self._line
+
+      @property
+      def lineno(self):
+        return self._lineno
+
+
+    # start of main cycle
+    # each parsing block already has line available in fe.line
+    fe = wrapumerate(stream)
+    while fe.next():
 
       # read out header
       if headscan:
         header = ''
-        try:
-          while not line.startswith("--- "):
-            header += line
-            lineno, line = fe.next()
-        except StopIteration:
+        while not fe.is_empty and not fe.line.startswith("--- "):
+            header += fe.line
+            fe.next()
+        if fe.is_empty:
             # this is actually a loop exit
+            warning("stream ended while scanning patch header at line %d" % fe.lineno)
             continue
         self.header.append(header)
 
         headscan = False
         # switch to filenames state
         filenames = True
+
+      line = fe.line
+      lineno = fe.lineno
+
 
       # hunkskip and hunkbody code skipped until definition of hunkhead is parsed
       if hunkbody:
@@ -320,7 +364,7 @@ class Patch(object):
           continue
 
     if not hunkskip:
-      warning("patch file incomplete - %s" % filename)
+      warning("patch stream incomplete")
       # sys.exit(?)
     else:
       # duplicated message when an eof is reached
