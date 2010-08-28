@@ -45,7 +45,7 @@ so far). Version control systems actually do this during merges.
 
 == Parser no.0 - Brute Force Line By Line Regexp ==
 
-Versions before 8.06 up to 10.04.
+Versions before 8.06.
 
 Initially the process was very straightforward. Main cycle reads one line
 at a time from the input stream. Detects to which part of Diff it belongs
@@ -55,8 +55,8 @@ no endless loops or recursions as long as input stream is finite.
 
 The parser code is one big `for` loop with a series of "parsing blocks"
 at the root level. After a line is read at the loop start, each parsing
-block then was testing it with `if` condition to see if it should process
-it. When `if` matched - corresponding block extracted text into Python
+block then tested it with an `if` condition to see if it should process
+the line. If condition matched the block then extracted text into Python
 structure. Blocks can't request more lines, but they can use `continue`
 command to start new cycle without waiting until the end of cycle (this
 also prevented the line from being accidentally processed by blocks below).
@@ -82,20 +82,16 @@ diff format. Only one variable is set to true at any given time, so parser
 is said to be in one given state at any moment. This made debug process
 significantly easier.
 
-After this change `if` in main cycle began testing state variables to
-dispatch the line into their parsing block. `if's do not analyze the line
-itself (i.e. "context"). When block finishes processing, it is responsible
-for switching state to the next one. If there are several possible
-states, this parsing block should choose one based on the context of
-following line. As the line is discarded at the end of cycle - blocks are
-still required to be placed in proper order.
+After this change `if`s at the top level of main cycle started to check
+state variables instead of probing line content to delegate line processing
+into their parsing block. When block finishes processing, it is responsible
+for switching state to the next one. Sometime the next state should be
+chosen from several possible alternatives, and parsing block needs content
+of the following line to make the decision. As the line is discarded at the
+end of cycle - blocks are still required to be placed in proper order.
 
-Checks in the main cycle become simple, but checks at the end of parsing
-blocks become slighly more sophisticated. Some blocks know how many lines
-they need, but those that don't actually should analyze 
-
-multiple checks on the line context as there could be multiple possible
-states to switch. Sometimes this code was repeated at the end of blocks.
+Main cycle turned to be more readable, but checks at the end of parsing
+blocks become more sophisticated.
 
 So, while state machine isolated parsing blocks from stealing lines from
 eash other, it still has drawbacks:
@@ -105,7 +101,7 @@ eash other, it still has drawbacks:
 3. state checks are made for every input line, because block can't request
    more lines in the middle of input cycle
 
-Let's not forget the advantages:
+Let's not forget benefits:
 1. debug is easier, code is more readable
 2. parser is still non-recursive
 3. no risk of endless loops
@@ -117,20 +113,20 @@ the next hunk or filenames section. It appeared that the same check is done
 when hunk ends as usual, so the state check after hunk was delegated to
 `hunkskip` block as well.
 
-This block in the main cycle that is called for handling `hunkskip` state
-doesn't parse any data - it exists solely for making branching decision.
-Before that there were only "parsing blocks" with the primary purpose of
-extracting required data, but 'hunkskip' introduced new class of "decider
-blocks".
+The parsing block for `hunkskip` state doesn't actually parse any data - it
+exists solely for making branching decision. Until 'hunkskip' state primary
+purpose of blocks in main cycle was extracting data, that's why they were
+named "parsing blocks", but 'hunkskip' introduced new class of blocks that
+can be named "decider blocks".
 
-`hunkskip` block is located after `hunkbody` parser and before `filenames`
+The order of `hunkskip` is after `hunkbody` parser and before `filenames`
 and `hunkhead` parsing blocks. This guarantees that these blocks get their
-line after the state switch before this line is discarded.
+line after the state switch and before the line is discarded.
 
 
-TODO: describe "missing line" problem in state recovery and parser miss
-      problem with two interleaving blocks, when it is impossible to put
-      one block ahead of the other
+TODO: describe "missing line" problem in state recovery with two
+      interleaving blocks, when it is impossible to choose which block
+      should be placed ahead of the other
 
 
 This line by line parser with lines that "fall through" arranged parsing
