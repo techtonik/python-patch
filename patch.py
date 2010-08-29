@@ -457,7 +457,7 @@ class Patch(object):
           import shutil
           shutil.move(filename, backupname)
           if self.write_hunks(backupname, filename, self.hunks[fileno]):
-            warning("successfully patched %s" % filename)
+            info("successfully patched %s" % filename)
             unlink(backupname)
           else:
             warning("error patching file %s" % filename)
