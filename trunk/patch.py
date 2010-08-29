@@ -616,11 +616,11 @@ class Patch(object):
 
 
 
-from optparse import OptionParser
-from os.path import exists
-import sys
-
 if __name__ == "__main__":
+  from optparse import OptionParser
+  from os.path import exists
+  import sys
+
   opt = OptionParser(usage="%prog [options] unipatch-file", version="python-patch %s" % __version__)
   opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
