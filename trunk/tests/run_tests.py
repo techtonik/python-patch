@@ -122,7 +122,10 @@ class TestPatchFiles(unittest.TestCase):
       patch_tool = join(dirname(tests_dir), "patch.py")
       save_cwd = os.getcwdu()
       os.chdir(tmpdir)
-      ret = os.system('%s %s "%s"' % (sys.executable, patch_tool, patch_file))
+      if verbose:
+        ret = os.system('%s %s "%s"' % (sys.executable, patch_tool, patch_file))
+      else:
+        ret = os.system('%s %s -q "%s"' % (sys.executable, patch_tool, patch_file))
       assert ret == 0, "Error %d running test %s" % (ret, testname)
       os.chdir(save_cwd)
 

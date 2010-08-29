@@ -53,7 +53,7 @@ SVN = SUBVERSION = "svn"
 def fromfile(filename):
   """ Parse patch file and return Patch() object
   """
-  info("reading patch from file %s" % filename)
+  debug("reading %s" % filename)
   fp = open(filename, "rb")
   patch = Patch(fp)
   fp.close()
@@ -371,7 +371,7 @@ class Patch(object):
       if debugmode and len(self.source) > 0:
           debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
-    info("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
+    debug("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
 
 
   def apply(self):
@@ -391,7 +391,7 @@ class Patch(object):
         continue
       filename = f2patch
 
-      info("processing %d/%d:\t %s" % (fileno+1, total, filename))
+      debug("processing %d/%d:\t %s" % (fileno+1, total, filename))
 
       # validate before patching
       f2fp = open(filename)
@@ -457,7 +457,7 @@ class Patch(object):
           import shutil
           shutil.move(filename, backupname)
           if self.write_hunks(backupname, filename, self.hunks[fileno]):
-            info("successfully patched %s" % filename)
+            info("successfully patched %d/%d:\t %s" % (fileno+1, total, filename))
             unlink(backupname)
           else:
             warning("error patching file %s" % filename)
@@ -622,6 +622,10 @@ if __name__ == "__main__":
   import sys
 
   opt = OptionParser(usage="%prog [options] unipatch-file", version="python-patch %s" % __version__)
+  opt.add_option("-q", "--quiet", action="store_const", dest="verbosity",
+                                  const=0, help="print only warnings and errors", default=1)
+  opt.add_option("-v", "--verbose", action="store_const", dest="verbosity",
+                                  const=2, help="be verbose")
   opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
@@ -635,12 +639,12 @@ if __name__ == "__main__":
     sys.exit("patch file does not exist - %s" % patchfile)
 
 
+  verbosity_levels = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
+  loglevel = verbosity_levels[options.verbosity]
+  logformat = "%(message)s"
   if debugmode:
     loglevel = logging.DEBUG
     logformat = "%(levelname)8s %(message)s"
-  else:
-    loglevel = logging.INFO
-    logformat = "%(message)s"
   logger.setLevel(loglevel)
   loghandler.setFormatter(logging.Formatter(logformat))
 
