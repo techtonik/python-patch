@@ -51,16 +51,23 @@ and try to make script more interactive.
 
 == Changes ==
 {{{
-XX.XX
+10.11
    - fixed fromstring() failure due to invalid StringIO import (issue #9)
-     (thanks john.stumpo for reporting) 
+     (thanks john.stumpo for reporting)
+   - added --verbose and --quiet options
+   - improved message logging
+   - change "successfully patched..." message to INFO instead of WARN
+     (thanks Alex Stewart for reporting and patch)
+   - skip __main__ imports when used as a library (patch by Alex Stewart)
    - API changes
-      + constants for patch types DIFF/PLAIN, HG/MERCURIAL, SVN/SUBVERSION
+      * renamed class HunkInfo to Hunk
       + Patch.type placeholder (no detection yet - parser is not ready)
+      + constants for patch types DIFF/PLAIN, HG/MERCURIAL, SVN/SUBVERSION
       + Patch.header for saving headers which can be used later to extract
         additional meta information such as commit message
    - internal: improving parser speed by allowing blocks fetch lines on
                demand
+   - test suite improvements
 10.04
     - renamed debug option to --debug
     - API changes
