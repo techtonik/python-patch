@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "10.08"
+__version__ = "10.11"
 
 import copy
 import logging
@@ -66,8 +66,7 @@ def fromstring(s):
   return Patch( StringIO(s) )
 
 
-
-class HunkInfo(object):
+class Hunk(object):
   """ Parsed hunk data container (hunk starts with @@ -R +R @@) """
 
   def __init__(self):
@@ -141,8 +140,8 @@ class Patch(object):
     nextfileno = 0
     nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
 
-    # hunkinfo holds parsed values, hunkactual - calculated
-    hunkinfo = HunkInfo()
+    # hunkinfo variable holds parsed values, hunkactual - calculated
+    hunkinfo = Hunk()
     hunkactual = dict(linessrc=None, linestgt=None)
 
 
