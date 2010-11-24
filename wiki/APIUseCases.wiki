@@ -1,4 +1,4 @@
-#summary Example driven API.
+#summary Example driven API
 #labels Phase-Design
 
 = 01. Patch application environment on upgrade =

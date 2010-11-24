@@ -10,15 +10,16 @@ Usually patches are applied with a *patch* tool - a UNIX utility that
 continues to be UNIX only as [http://www.gnu.org/software/patch/ a part of]
 GNU tools. There is
 [http://gnuwin32.sourceforge.net/packages/patch.htm windows port] of
-*patch*, but was
+*patch*, but it was
 [http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c rather buggy],
-insecure to be run on a web server and not customizable
+is insecure to be run on a web server and is not customizable
 without a C compiler. That's why this version was born. And I've always
 wanted to have a *diff.py* counterpart [http://bugs.python.org/issue2057 bundled]
 with Python.
 
 *patch.py* is meant to be semi-automatic tool with intuitive defaults,
 that also takes care of line end differences automatically.
+
 
 == Status ==
 
@@ -28,24 +29,24 @@ tool as a library.
 Currently it is capable to apply only _unified diffs_. It also doesn't
 support file renames, creation and removals.
 
-*patch.py* is designed to transparently handle line end differences. It
-tries to convert patch lines into 
-best suitable format for patched file. While scanning lines patch.py
-notices line endings in source file and if they are consistent - patch
-lines are applied with the same ending. If they are not - lines are applied
-"as is" (as in patch).
+*patch.py* is designed to transparently handle line end differences. Line
+endings from patch are converted into 
+best suitable format for patched file. patch.py scans line endings in source
+file, and if they are consistent - lines from patch are applied with the
+same ending. If linefeed in source are inconsistend - lines from patch are
+applied "as is".
 
 
 Parsing of diff is done in a in very straightforward manner as an exercise
 to approach the problem of parsing on my own before learning the 'proper
 ways'. Thanks creators, _the format of unified diff_ is rather simple (an
-illustration is included in
+illustration of Subversion style unified diff is included in
 [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
 
 Current focus is to simplify parser, make it more modular to allow easy
-customization and extension. Some care should be given to
-"\ No newline at end of file" cases. Test suite should be expanded. And the
-last thing - this script is not interactive.
+customization and extension. Separate TODO stands to check behavior of
+"\ No newline at end of file" cases. Other goals is to expand test coverage,
+and try to make script more interactive.
 
 
 == Changes ==
@@ -83,6 +84,7 @@ XX.XX
 8.06-1
     - initial release
 }}}
+
 
 == Future ==
 
