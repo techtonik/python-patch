@@ -391,7 +391,7 @@ class Patch(object):
         continue
       filename = f2patch
 
-      debug("processing %d/%d:\t %s" % (fileno+1, total, filename))
+      info("processing %d/%d:\t %s" % (fileno+1, total, filename))
 
       # validate before patching
       f2fp = open(filename)
@@ -417,7 +417,9 @@ class Patch(object):
           if line.rstrip("\r\n") == hunkfind[hunklineno]:
             hunklineno+=1
           else:
-            debug("hunk no.%d doesn't match source file %s" % (hunkno+1, filename))
+            info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno))
+            info("  expected: %s" % hunkfind[hunklineno])
+            info("  actual  : %s" % line.rstrip("\r\n"))
             # file may be already patched, but we will check other hunks anyway
             hunkno += 1
             if hunkno < len(self.hunks[fileno]):
@@ -428,7 +430,7 @@ class Patch(object):
 
         # check if processed line is the last line
         if lineno+1 == hunk.startsrc+len(hunkfind)-1:
-          debug("file %s hunk no.%d -- is ready to be patched" % (filename, hunkno+1))
+          debug(" hunk no.%d for file %s  -- is ready to be patched" % (hunkno+1, filename))
           hunkno+=1
           validhunks+=1
           if hunkno < len(self.hunks[fileno]):
