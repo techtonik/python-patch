@@ -1,0 +1,12 @@
+--- 03trail_fname.from     
++++ 03trail_fname.to     
+@@ -1,7 +1,8 @@
+ Tests:
+ - file not found
+-- trailing spaces in patch filenames
+ - already patched
++
++Features:
+ - create new files
+ - remove files
+ - svn diff

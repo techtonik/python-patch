@@ -1,0 +1,8 @@
+Tests:
+- file not found
+- trailing spaces in patch filenames
+- already patched
+- create new files
+- remove files
+- svn diff
+- hg diff
