@@ -198,9 +198,9 @@ class TestCheckPatched(unittest.TestCase):
         pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
         self.assertFalse(pto3.can_patch("03trail_fname.from"))
 
-    def test_can_patch_checks_source_filename_even_if_target_can_be_patched(self):
+    def test_can_patch_fails_even_if_file_in_targets_can_be_patched(self):
         pto2 = patch.fromfile(join(tests_dir, "04can_patch.patch"))
-        self.assertFalse(pto2.can_patch("04can_patch.to"))
+        self.assert_(not pto2.can_patch("04can_patch.to"))
 
 # ----------------------------------------------------------------------------
 
@@ -213,14 +213,6 @@ class TestPatchParse(unittest.TestCase):
           f.close()
         pto = patch.fromstring(readstr)
         self.assertEqual(len(pto.source), 5)
-
-    def test_no_header_for_plain_diff_with_single_file(self):
-        pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
-        self.assertEqual(pto.header[0], '')
-
-    def test_header_for_second_file_in_svn_diff(self):
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        self.assertEqual(pto.header[1][:25], 'Index: updatedlg.h\r\n=====')
 
 # ----------------------------------------------------------------------------
 
