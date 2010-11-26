@@ -212,8 +212,11 @@ class Patch(object):
             header += fe.line
             fe.next()
         if fe.is_empty:
+            if len(self.source) == 0:
+              warning("warning: no patch data is found")
+            else:
+              info("%d unparsed bytes left at the end of stream" % len(header))
             # this is actually a loop exit
-            warning("stream ended while scanning patch header at line %d" % fe.lineno)
             continue
         self.header.append(header)
 
@@ -380,13 +383,21 @@ class Patch(object):
           nexthunkno += 1
           continue
 
-    if not hunkskip:
-      warning("patch stream incomplete")
-      # sys.exit(?)
-    else:
-      # duplicated message when an eof is reached
-      if debugmode and len(self.source) > 0:
-          debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
+
+    if not hunkparsed:
+      if hunkskip:
+        warning("warning: finished with warnings, some hunks may be invalid")
+      elif headscan:
+        if len(self.source) == 0:
+          warning("error: no patch data found!")
+          # ? sys.exit(-1)
+        else: # extra data at the end of file
+          pass 
+      else:
+        warning("error: patch stream is incomplete!")
+
+    if debugmode and len(self.source) > 0:
+        debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
     debug("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
 
