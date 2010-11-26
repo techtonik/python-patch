@@ -51,6 +51,9 @@ and try to make script more interactive.
 
 == Changes ==
 {{{
+xx.xx
+   - store patch headers (necessary for future DIFF/SVN/HG/GIT detection)
+   - report about extra bytes at the end after patch is parsed
 10.11
    - fixed fromstring() failure due to invalid StringIO import (issue #9)
      (thanks john.stumpo for reporting)
