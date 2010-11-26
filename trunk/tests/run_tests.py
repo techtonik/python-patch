@@ -198,9 +198,9 @@ class TestCheckPatched(unittest.TestCase):
         pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
         self.assertFalse(pto3.can_patch("03trail_fname.from"))
 
-    def test_can_patch_fails_even_if_file_in_targets_can_be_patched(self):
+    def test_can_patch_checks_source_filename_even_if_target_can_be_patched(self):
         pto2 = patch.fromfile(join(tests_dir, "04can_patch.patch"))
-        self.assert_(not pto2.can_patch("04can_patch.to"))
+        self.assertFalse(pto2.can_patch("04can_patch.to"))
 
 # ----------------------------------------------------------------------------
 

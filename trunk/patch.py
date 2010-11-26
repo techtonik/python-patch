@@ -127,15 +127,6 @@ class Patch(object):
     self.hunks = []
     self.hunkends = []
 
-    # define states (possible file regions) that will direct the parser flow
-    headscan  = False # scanning header before the patch body
-    filenames = False # lines starting with --- and +++
-
-    hunkhead = False  # @@ -R +R @@ sequence
-    hunkbody = False  #
-    hunkskip = False  # skipping invalid hunk mode
-
-    headscan = True
     lineends = dict(lf=0, crlf=0, cr=0)
     nextfileno = 0
     nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
@@ -183,6 +174,13 @@ class Patch(object):
       def lineno(self):
         return self._lineno
 
+    # define states (possible file regions) that direct parse flow
+    headscan  = True  # start with scanning header
+    filenames = False # lines starting with --- and +++
+
+    hunkhead = False  # @@ -R +R @@ sequence
+    hunkbody = False  #
+    hunkskip = False  # skipping invalid hunk mode
 
     # start of main cycle
     # each parsing block already has line available in fe.line
@@ -249,6 +247,7 @@ class Patch(object):
             hunkbody = False
             hunkskip = True
         elif hunkinfo.linessrc == hunkactual["linessrc"] and hunkinfo.linestgt == hunkactual["linestgt"]:
+            # hunk parsed successfully
             self.hunks[nextfileno-1].append(hunkinfo.copy())
             # switch to hunkskip state
             hunkbody = False
