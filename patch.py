@@ -260,7 +260,7 @@ class Patch(object):
 
         # check exit conditions
         if hunkactual["linessrc"] > hunkinfo.linessrc or hunkactual["linestgt"] > hunkinfo.linestgt:
-            warning("extra hunk no.%d lines at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
+            warning("extra lines for hunk no.%d at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
             self.hunks[nextfileno-1].append(hunkinfo.copy())
             self.hunks[nextfileno-1][nexthunkno-1]["invalid"] = True
