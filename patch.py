@@ -182,10 +182,28 @@ class Patch(object):
     hunkbody = False  #
     hunkskip = False  # skipping invalid hunk mode
 
+    hunkparsed = False # state after successfully parsed hunk
+
+    # regexp to match start of hunk, used groups - 1,3,4,6
+    re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?")
+    
+
     # start of main cycle
     # each parsing block already has line available in fe.line
     fe = wrapumerate(stream)
     while fe.next():
+
+      # -- deciders: these only switch state to decide who should process
+      # --           line fetched at the start of this cycle
+      if hunkparsed:
+        hunkparsed = False
+        if re_hunk_start.match(fe.line):
+            hunkhead = True
+        elif fe.line.startswith("--- "):
+            filenames = True
+        else:
+            headscan = True
+      # -- ------------------------------------
 
       # read out header
       if headscan:
@@ -249,9 +267,9 @@ class Patch(object):
         elif hunkinfo.linessrc == hunkactual["linessrc"] and hunkinfo.linestgt == hunkactual["linestgt"]:
             # hunk parsed successfully
             self.hunks[nextfileno-1].append(hunkinfo.copy())
-            # switch to hunkskip state
+            # switch to hunkparsed state
             hunkbody = False
-            hunkskip = True
+            hunkparsed = True
 
             # detect mixed window/unix line ends
             ends = self.hunkends[nextfileno-1]
@@ -261,10 +279,11 @@ class Patch(object):
               debuglines = dict(ends)
               debuglines.update(file=self.target[nextfileno-1], hunk=nexthunkno)
               debug("crlf: %(crlf)d  lf: %(lf)d  cr: %(cr)d\t - file: %(file)s hunk: %(hunk)d" % debuglines)
+            # fetch next line
+            continue
 
       if hunkskip:
-        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
-        if match:
+        if re_hunk_start.match(line):
           # switch to hunkhead state
           hunkskip = False
           hunkhead = True

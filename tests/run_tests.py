@@ -214,6 +214,14 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromstring(readstr)
         self.assertEqual(len(pto.source), 5)
 
+    def test_no_header_for_plain_diff_with_single_file(self):
+        pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
+        self.assertEqual(pto.header[0], '')
+
+    def test_header_for_second_file_in_svn_diff(self):
+        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        self.assertEqual(pto.header[1][:25], 'Index: updatedlg.h\r\n=====')
+
 # ----------------------------------------------------------------------------
 
 
