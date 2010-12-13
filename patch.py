@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "10.11"
+__version__ = "10.12"
 
 import copy
 import logging
@@ -403,9 +403,12 @@ class Patch(object):
 
 
   def apply(self):
-    """ apply parsed patch """
+    """ apply parsed patch
+        return True on success
+    """
 
     total = len(self.source)
+    errors = 0
     for fileno, filename in enumerate(self.source):
 
       f2patch = filename
@@ -413,9 +416,11 @@ class Patch(object):
         f2patch = self.target[fileno]
         if not exists(f2patch):
           warning("source/target file does not exist\n--- %s\n+++ %s" % (filename, f2patch))
+          errors += 1
           continue
       if not isfile(f2patch):
         warning("not a file - %s" % f2patch)
+        errors += 1
         continue
       filename = f2patch
 
@@ -448,7 +453,14 @@ class Patch(object):
             info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno))
             info("  expected: %s" % hunkfind[hunklineno])
             info("  actual  : %s" % line.rstrip("\r\n"))
-            # file may be already patched, but we will check other hunks anyway
+            # not counting this as error, because file may already be patched.
+            # check if file is already patched is done after the number of
+            # invalid hunks if found
+            # TODO: check hunks against source/target file in one pass
+            #   API - check(stream, srchunks, tgthunks)
+            #           return tuple (srcerrs, tgterrs)
+
+            # continue to check other hunks for completeness
             hunkno += 1
             if hunkno < len(self.hunks[fileno]):
               hunk = self.hunks[fileno][hunkno]
@@ -471,6 +483,7 @@ class Patch(object):
       else:
         if hunkno < len(self.hunks[fileno]):
           warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
+          errors += 1
 
       f2fp.close()
 
@@ -479,6 +492,7 @@ class Patch(object):
           warning("already patched  %s" % filename)
         else:
           warning("source file is different - %s" % filename)
+          errors += 1
       if canpatch:
         backupname = filename+".orig"
         if exists(backupname):
@@ -490,6 +504,7 @@ class Patch(object):
             info("successfully patched %d/%d:\t %s" % (fileno+1, total, filename))
             unlink(backupname)
           else:
+            errors += 1
             warning("error patching file %s" % filename)
             shutil.copy(filename, filename+".invalid")
             warning("invalid version is saved to %s" % filename+".invalid")
@@ -497,6 +512,7 @@ class Patch(object):
             shutil.move(backupname, filename)
 
     # todo: check for premature eof
+    return (errors == 0)
 
 
   def can_patch(self, filename):
@@ -682,7 +698,7 @@ if __name__ == "__main__":
 
   patch = fromfile(patchfile)
   #pprint(patch)
-  patch.apply()
+  patch.apply() or sys.exit(-1)
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends

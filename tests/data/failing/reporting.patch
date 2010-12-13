@@ -1,0 +1,14 @@
+Index: upload.py
+===================================================================
+--- upload.py	(revision 623)
++++ upload.py	(working copy)
+@@ -393,6 +393,9 @@
+ ##           elif e.code >= 500 and e.code < 600:
+ ##             # Server Error - try again.
+ ##             continue
++          elif e.code == 404:
++            ErrorExit("Error: RPC call to %s failed with status 404\n"
++              "Check upload server is valid - %s" % (request_path, self.host))
+           else:
+             raise
+     finally:

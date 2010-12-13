@@ -176,30 +176,30 @@ class TestCheckPatched(unittest.TestCase):
         os.chdir(self.save_cwd)
 
     def test_patched_multiline(self):
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pto = patch.fromfile("01uni_multi.patch")
         os.chdir(join(tests_dir, "01uni_multi.to"))
         self.assert_(pto.can_patch("updatedlg.cpp"))
 
     def test_can_patch_single_source(self):
-        pto2 = patch.fromfile(join(tests_dir, "02uni_newline.patch"))
+        pto2 = patch.fromfile("02uni_newline.patch")
         self.assert_(pto2.can_patch("02uni_newline.from"))
 
     def test_can_patch_fails_on_target_file(self):
-        pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
+        pto3 = patch.fromfile("03trail_fname.patch")
         self.assertEqual(None, pto3.can_patch("03trail_fname.to"))
         self.assertEqual(None, pto3.can_patch("not_in_source.also"))
    
     def test_multiline_false_on_other_file(self):
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pto = patch.fromfile("01uni_multi.patch")
         os.chdir(join(tests_dir, "01uni_multi.from"))
         self.assertFalse(pto.can_patch("updatedlg.cpp"))
 
     def test_single_false_on_other_file(self):
-        pto3 = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
+        pto3 = patch.fromfile("03trail_fname.patch")
         self.assertFalse(pto3.can_patch("03trail_fname.from"))
 
     def test_can_patch_checks_source_filename_even_if_target_can_be_patched(self):
-        pto2 = patch.fromfile(join(tests_dir, "04can_patch.patch"))
+        pto2 = patch.fromfile("04can_patch.patch")
         self.assertFalse(pto2.can_patch("04can_patch.to"))
 
 # ----------------------------------------------------------------------------
@@ -222,8 +222,34 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
         self.assertEqual(pto.header[1][:25], 'Index: updatedlg.h\r\n=====')
 
-# ----------------------------------------------------------------------------
+class TestPatchApply(unittest.TestCase):
+    def setUp(self):
+        self.save_cwd = os.getcwdu()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        os.chdir(self.tmpdir)
 
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        shutil.rmtree(self.tmpdir)
+
+    def tmpcopy(self, filenames):
+        """copy file(s) from test_dir to self.tmpdir"""
+        for f in filenames:
+          shutil.copy(join(tests_dir, f), self.tmpdir)
+
+    def test_apply_returns_false_of_failure(self):
+        self.tmpcopy(['data/failing/reporting.patch',
+                      'data/failing/upload.py'])
+        pto = patch.fromfile('reporting.patch')
+        self.assertFalse(pto.apply())
+
+    def test_apply_returns_true_on_success(self):
+        self.tmpcopy(['03trail_fname.patch',
+                      '03trail_fname.from'])
+        pto = patch.fromfile('03trail_fname.patch')
+        self.assert_(pto.apply())
+
+# ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     unittest.main()
