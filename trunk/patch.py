@@ -20,6 +20,7 @@ import logging
 import re
 # cStringIO doesn't support unicode in 2.5
 from StringIO import StringIO
+import urllib2
 
 from os.path import exists, isfile, abspath
 from os import unlink
@@ -64,6 +65,12 @@ def fromstring(s):
   """ Parse text string and return Patch() object
   """
   return Patch( StringIO(s) )
+
+
+def fromurl(url):
+  """ Read patch from URL
+  """
+  return Patch( urllib2.urlopen(url) )
 
 
 class Hunk(object):
@@ -668,7 +675,9 @@ if __name__ == "__main__":
   from os.path import exists
   import sys
 
-  opt = OptionParser(usage="%prog [options] unipatch-file", version="python-patch %s" % __version__)
+  opt = OptionParser(usage="1. %prog [options] unipatch-file\n"
+                    "       2. %prog [options] http://host/patch",
+                     version="python-patch %s" % __version__)
   opt.add_option("-q", "--quiet", action="store_const", dest="verbosity",
                                   const=0, help="print only warnings and errors", default=1)
   opt.add_option("-v", "--verbose", action="store_const", dest="verbosity",
@@ -681,10 +690,6 @@ if __name__ == "__main__":
     opt.print_help()
     sys.exit()
   debugmode = options.debugmode
-  patchfile = args[0]
-  if not exists(patchfile) or not isfile(patchfile):
-    sys.exit("patch file does not exist - %s" % patchfile)
-
 
   verbosity_levels = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
   loglevel = verbosity_levels[options.verbosity]
@@ -696,8 +701,16 @@ if __name__ == "__main__":
   loghandler.setFormatter(logging.Formatter(logformat))
 
 
+  patchfile = args[0]
+  urltest = patchfile.split(':')[0]
+  if (':' in patchfile and urltest.isalpha()
+      and len(urltest) > 1): # one char before : is a windows drive letter
+    patch = fromurl(patchfile)
+  else:
+    if not exists(patchfile) or not isfile(patchfile):
+      sys.exit("patch file does not exist - %s" % patchfile)
+    patch = fromfile(patchfile)
 
-  patch = fromfile(patchfile)
   #pprint(patch)
   patch.apply() or sys.exit(-1)
 
