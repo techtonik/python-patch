@@ -424,7 +424,7 @@ class Patch(object):
         continue
       filename = f2patch
 
-      info("processing %d/%d:\t %s" % (fileno+1, total, filename))
+      debug("processing %d/%d:\t %s" % (fileno+1, total, filename))
 
       # validate before patching
       f2fp = open(filename)
@@ -450,6 +450,7 @@ class Patch(object):
           if line.rstrip("\r\n") == hunkfind[hunklineno]:
             hunklineno+=1
           else:
+            info("file %d/%d:\t %s" % (fileno+1, total, filename))
             info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno))
             info("  expected: %s" % hunkfind[hunklineno])
             info("  actual  : %s" % line.rstrip("\r\n"))
