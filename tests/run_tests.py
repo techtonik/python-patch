@@ -123,9 +123,11 @@ class TestPatchFiles(unittest.TestCase):
       save_cwd = os.getcwdu()
       os.chdir(tmpdir)
       if verbose:
-        ret = os.system('%s %s "%s"' % (sys.executable, patch_tool, patch_file))
+        cmd = '%s %s "%s"' % (sys.executable, patch_tool, patch_file)
+        print "\n"+cmd
       else:
-        ret = os.system('%s %s -q "%s"' % (sys.executable, patch_tool, patch_file))
+        cmd = '%s %s -q "%s"' % (sys.executable, patch_tool, patch_file)
+      ret = os.system(cmd)
       assert ret == 0, "Error %d running test %s" % (ret, testname)
       os.chdir(save_cwd)
 
