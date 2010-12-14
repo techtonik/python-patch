@@ -52,8 +52,13 @@ and try to make script more interactive.
 == Changes ==
 {{{
 xx.xx
+   - patch.py can read patches from web
+   - patch.py returns -1 if there were errors during patching
    - store patch headers (necessary for future DIFF/SVN/HG/GIT detection)
    - report about extra bytes at the end after patch is parsed
+   - API changes
+     + fromurl()
+     * Patch.apply() now returns True on success
 10.11
    - fixed fromstring() failure due to invalid StringIO import (issue #9)
      (thanks john.stumpo for reporting)
