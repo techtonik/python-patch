@@ -1,0 +1,3 @@
+
+read_patch("fix_devpak_install.patch")
+

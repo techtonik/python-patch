@@ -1,0 +1,22 @@
+--- diff.py Sun Dec 27 16:08:28 2009
++++ trunk/diff.py Sun Dec 27 15:46:58 2009
+@@ -7,7 +7,7 @@
+ 
+ """
+ 
+-import sys, os, datetime, difflib, optparse
++import sys, os, time, difflib, optparse
+ 
+ def main():
+ 
+@@ -29,8 +29,8 @@
+     n = options.lines
+     fromfile, tofile = args
+ 
+-    fromdate = datetime.datetime.fromtimestamp( os.stat(fromfile).st_mtime ).strftime(" ")
+-    todate = datetime.datetime.fromtimestamp( os.stat(fromfile).st_mtime ).strftime(" ")
++    fromdate = time.ctime(os.stat(fromfile).st_mtime)
++    todate = time.ctime(os.stat(tofile).st_mtime)
+     fromlines = open(fromfile, 'U').readlines()
+     tolines = open(tofile, 'U').readlines()
+ 

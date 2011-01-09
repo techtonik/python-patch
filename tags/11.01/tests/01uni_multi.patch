@@ -1,0 +1,180 @@
+Index: updatedlg.cpp
+===================================================================
+--- updatedlg.cpp	(revision 5095)
++++ updatedlg.cpp	(working copy)
+@@ -94,11 +94,13 @@
+     lst->InsertColumn(1, _("Version"));
+     lst->InsertColumn(2, _("Installed"));
+     lst->InsertColumn(3, _("Size"), wxLIST_FORMAT_RIGHT);
++    lst->InsertColumn(4, _("Rev"));
+ 
+-    lst->SetColumnWidth(0, lst->GetSize().x - (64 * 3) - 2); // 1st column takes all remaining space
++    lst->SetColumnWidth(0, lst->GetSize().x - (64 * 3 + 40) - 6 ); // 1st column takes all remaining space
+     lst->SetColumnWidth(1, 64);
+     lst->SetColumnWidth(2, 64);
+     lst->SetColumnWidth(3, 64);
++    lst->SetColumnWidth(4, 40);
+ }
+ 
+ void UpdateDlg::AddRecordToList(UpdateRec* rec)
+@@ -111,8 +113,20 @@
+     lst->SetItem(idx, 1, rec->version);
+     lst->SetItem(idx, 2, rec->installed_version);
+     lst->SetItem(idx, 3, rec->size);
++    lst->SetItem(idx, 4, rec->revision);
+ }
+ 
++wxString UpdateDlg::GetListColumnText(int idx, int col) {
++    wxListCtrl* lst = XRCCTRL(*this, "lvFiles", wxListCtrl);
++    int index = idx == -1 ? lst->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED) : idx;
++    wxListItem info;
++    info.SetId(index);
++    info.SetColumn(col);
++    info.SetMask(wxLIST_MASK_TEXT);
++    lst->GetItem(info);
++    return info.GetText();
++}
++
+ void UpdateDlg::SetListColumnText(int idx, int col, const wxString& text)
+ {
+     wxListCtrl* lst = XRCCTRL(*this, "lvFiles", wxListCtrl);
+@@ -393,7 +407,9 @@
+     if (index == -1)
+         return 0;
+     wxString title = lst->GetItemText(index);
+-    return FindRecByTitle(title, m_Recs, m_RecsCount);
++    wxString version = GetListColumnText(index, 1);
++    wxString revision = GetListColumnText(index, 4);
++    return FindRec(title, version, revision, m_Recs, m_RecsCount);
+ }
+ 
+ void UpdateDlg::DownloadFile(bool dontInstall)
+Index: updatedlg.h
+===================================================================
+--- updatedlg.h	(revision 5095)
++++ updatedlg.h	(working copy)
+@@ -49,6 +49,7 @@
+         UpdateRec* GetRecFromListView();
+         void CreateListColumns();
+         void AddRecordToList(UpdateRec* rec);
++        wxString GetListColumnText(int idx, int col);
+         void SetListColumnText(int idx, int col, const wxString& text);
+ 
+         wxString GetConfFilename();
+Index: manifest.xml
+===================================================================
+--- manifest.xml	(revision 5095)
++++ manifest.xml	(working copy)
+@@ -2,18 +2,19 @@
+ <CodeBlocks_plugin_manifest_file>
+     <SdkVersion major="1" minor="10" release="0" />
+     <Plugin name="DevPakUpdater">
+-        <Value title="Dev-C++ DevPak updater/installer" />
+-        <Value version="0.1" />
++        <Value title="DevPak updater/installer" />
++        <Value version="0.2" />
+         <Value description="Installs selected DevPaks from the Internet" />
+         <Value author="Yiannis Mandravellos" />
+         <Value authorEmail="info@codeblocks.org" />
+         <Value authorWebsite="http://www.codeblocks.org/" />
+         <Value thanksTo="Dev-C++ community.
+-                         Julian R Seward for libbzip2.
+-                         libbzip2 copyright notice:
+-                         bzip2 and associated library libbzip2, are
+-                         copyright (C) 1996-2000 Julian R Seward.
+-                         All rights reserved." />
++        Julian R Seward for libbzip2.
++
++        libbzip2 copyright notice:
++        bzip2 and associated library libbzip2, are
++        copyright (C) 1996-2000 Julian R Seward.
++        All rights reserved." />
+         <Value license="GPL" />
+     </Plugin>
+ </CodeBlocks_plugin_manifest_file>
+Index: conf.cpp
+===================================================================
+--- conf.cpp	(revision 5095)
++++ conf.cpp	(working copy)
+@@ -46,10 +46,16 @@
+     	// fix title
+     	// devpaks.org has changed the title to contain some extra info
+         // e.g.: [libunicows   Library version: 1.1.1   Devpak revision: 1sid]
+-    	// we don't need this extra info, so if we find it we remove it
+-    	int pos = rec.title.Find(_T("Library version:"));
++    	int pos = rec.title.Lower().Find(_T("library version:"));
+     	if (pos != -1)
+     	{
++            int revpos = rec.title.Lower().Find(_T("devpak revision:"));
++            if (revpos != -1) {
++                rec.revision = rec.title.Mid(revpos).AfterFirst(_T(':')).Trim(false);
++                rec.revision.Replace(_T("\t"), _T(" "));
++                rec.revision = rec.revision.BeforeFirst(_T(' '));
++            }
++
+     		rec.title.Truncate(pos);
+     		rec.title = rec.title.Trim(false);
+     		rec.title = rec.title.Trim(true);
+@@ -60,7 +66,7 @@
+     	rec.remote_file = ini.GetKeyValue(i, _T("RemoteFilename"));
+     	rec.local_file = ini.GetKeyValue(i, _T("LocalFilename"));
+     	rec.groups = GetArrayFromString(ini.GetKeyValue(i, _T("Group")), _T(","));
+-    	rec.install = ini.GetKeyValue(i, _T("InstallPath"));
++    	rec.install_path = ini.GetKeyValue(i, _T("InstallPath"));
+     	rec.version = ini.GetKeyValue(i, _T("Version"));
+         ini.GetKeyValue(i, _T("Size")).ToLong(&rec.bytes);
+     	rec.date = ini.GetKeyValue(i, _T("Date"));
+@@ -99,12 +105,17 @@
+     return list;
+ }
+ 
+-UpdateRec* FindRecByTitle(const wxString& title, UpdateRec* list, int count)
++UpdateRec* FindRec(const wxString& title, const wxString& version, const wxString& revision, UpdateRec* list, int count)
+ {
+     for (int i = 0; i < count; ++i)
+     {
+-        if (list[i].title == title)
+-            return &list[i];
++        if (list[i].title == title && list[i].version == version) {
++            if (revision.IsEmpty()) {
++                return &list[i];
++            } else if (list[i].revision == revision) {
++                    return &list[i];
++            }
++        }
+     }
+     return 0;
+ }
+Index: conf.h
+===================================================================
+--- conf.h	(revision 5095)
++++ conf.h	(working copy)
+@@ -7,7 +7,7 @@
+ 
+ struct UpdateRec
+ {
+-    wxString entry;
++    wxString entry;         //! .entry filename for installed
+     wxString title;
+     wxString name;
+     wxString desc;
+@@ -15,8 +15,9 @@
+     wxString remote_file;
+     wxString local_file;
+     wxArrayString groups;
+-    wxString install;
++    wxString install_path;  //! ignored
+     wxString version;
++    wxString revision;
+     wxString installed_version;
+     long int bytes;
+     float kilobytes;
+@@ -31,7 +32,7 @@
+ extern wxString g_MasterPath;
+ 
+ UpdateRec* ReadConf(const IniParser& ini, int* recCount, const wxString& currentServer, const wxString& appPath);
+-UpdateRec* FindRecByTitle(const wxString& title, UpdateRec* list, int count);
++UpdateRec* FindRec(const wxString& title, const wxString& version, const wxString& revision, UpdateRec* list, int count);
+ // utility
+ wxString GetSizeString(int bytes);
+ 
