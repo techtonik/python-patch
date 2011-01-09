@@ -2,7 +2,7 @@
 
     Brute-force line-by-line non-recursive parsing 
 
-    Copyright (c) 2008-2010 anatoly techtonik
+    Copyright (c) 2008-2011 anatoly techtonik
     Available under the terms of MIT license
 
     Project home: http://code.google.com/p/python-patch/
@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "10.12"
+__version__ = "11.01"
 
 import copy
 import logging
