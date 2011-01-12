@@ -1,0 +1,7 @@
+Index: new-file.txt
+===================================================================
+--- new-file.txt	(revision 0)
++++ new-file.txt	(revision 0)
+@@ -0,0 +1 @@
++with content
+\ No newline at end of file
