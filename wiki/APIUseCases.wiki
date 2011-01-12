@@ -1,18 +1,21 @@
 #summary Example driven API
 #labels Phase-Design
 
-= 01. Patch application environment on upgrade =
+== Use cases ==
+{{{
 
-*Storyline:* I want my application (Trac 0.11) patch files in my
-environment (README) to a new version. I want to detect that
-files are not patched, ensure that patch applies clearly before
-processing.
+}}}
+
+== User stories ==
+=== 01. Upgrade Trac environment files ===
+
+*Storyline:* I want to upgrade Trac environment while upgrading Trac itself from 0.9 to 0.11. This requires patching documentation files (README) in environment to a new version. It may not worth to distribute full version of documentation, so I want to detect what files are not patched, ensure that patch applies clearly before processing.
 
 *Proposed API:*
 
 *Example:*
 
-= 02. diffstat on Windows =
+=== 02. diffstat on Windows ===
 
 *Storyline:* I want to see diffstat-like statistics on Windows.
 
