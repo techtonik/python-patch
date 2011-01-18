@@ -10,6 +10,16 @@ Files/directories that comprise one test all have the same name, but a different
 
 TODO: recheck input/output sources
 
+== Code Coverage ==
+
+To refresh code coverage stats, get 'coverage' tool from
+http://pypi.python.org/pypi/coverage/ and run this file with:
+
+  coverage run run_tests.py
+  coverage html -d coverage
+
+On Windows it may be more convenient instead of `coverage` call
+`python -m coverage.__main__`
 """
 
 import os
