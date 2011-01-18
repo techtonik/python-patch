@@ -250,9 +250,9 @@ class TestPatchApply(unittest.TestCase):
           shutil.copy(join(tests_dir, f), self.tmpdir)
 
     def test_apply_returns_false_of_failure(self):
-        self.tmpcopy(['data/failing/reporting.patch',
+        self.tmpcopy(['data/failing/non-empty-patch-for-empty-file.diff',
                       'data/failing/upload.py'])
-        pto = patch.fromfile('reporting.patch')
+        pto = patch.fromfile('non-empty-patch-for-empty-file.diff')
         self.assertFalse(pto.apply())
 
     def test_apply_returns_true_on_success(self):
