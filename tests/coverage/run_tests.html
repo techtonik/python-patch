@@ -5,7 +5,7 @@
     
     
     <meta http-equiv='X-UA-Compatible' content='IE=emulateIE7' />
-    <title>Coverage for run_tests: 95%</title>
+    <title>Coverage for run_tests: 96%</title>
     <link rel='stylesheet' href='style.css' type='text/css'>
     <script type='text/javascript' src='jquery-1.3.2.min.js'></script>
     <script type='text/javascript' src='coverage_html.js'></script>
@@ -18,11 +18,11 @@
 <div id='header'>
     <div class='content'>
         <h1>Coverage for <b>run_tests</b> :
-            <span class='pc_cov'>95%</span>
+            <span class='pc_cov'>96%</span>
         </h1>
         <h2 class='stats'>
-            151 statements
-            <span class='run hide_run' onclick='toggle_lines(this, "run")'>144 run</span>
+            156 statements
+            <span class='run hide_run' onclick='toggle_lines(this, "run")'>149 run</span>
             <span class='mis' onclick='toggle_lines(this, "mis")'>7 missing</span>
             <span class='exc' onclick='toggle_lines(this, "exc")'>0 excluded</span>
             
@@ -279,13 +279,13 @@
 <p id='n243' class='stm run hide_run'><a href='#n243'>243</a></p>
 <p id='n244' class='stm run hide_run'><a href='#n244'>244</a></p>
 <p id='n245' class='stm run hide_run'><a href='#n245'>245</a></p>
-<p id='n246' class='pln'><a href='#n246'>246</a></p>
+<p id='n246' class='stm run hide_run'><a href='#n246'>246</a></p>
 <p id='n247' class='stm run hide_run'><a href='#n247'>247</a></p>
 <p id='n248' class='pln'><a href='#n248'>248</a></p>
 <p id='n249' class='stm run hide_run'><a href='#n249'>249</a></p>
 <p id='n250' class='stm run hide_run'><a href='#n250'>250</a></p>
-<p id='n251' class='pln'><a href='#n251'>251</a></p>
-<p id='n252' class='stm run hide_run'><a href='#n252'>252</a></p>
+<p id='n251' class='stm run hide_run'><a href='#n251'>251</a></p>
+<p id='n252' class='pln'><a href='#n252'>252</a></p>
 <p id='n253' class='stm run hide_run'><a href='#n253'>253</a></p>
 <p id='n254' class='pln'><a href='#n254'>254</a></p>
 <p id='n255' class='stm run hide_run'><a href='#n255'>255</a></p>
@@ -297,10 +297,16 @@
 <p id='n261' class='stm run hide_run'><a href='#n261'>261</a></p>
 <p id='n262' class='stm run hide_run'><a href='#n262'>262</a></p>
 <p id='n263' class='pln'><a href='#n263'>263</a></p>
-<p id='n264' class='pln'><a href='#n264'>264</a></p>
-<p id='n265' class='pln'><a href='#n265'>265</a></p>
-<p id='n266' class='stm run hide_run'><a href='#n266'>266</a></p>
+<p id='n264' class='stm run hide_run'><a href='#n264'>264</a></p>
+<p id='n265' class='stm run hide_run'><a href='#n265'>265</a></p>
+<p id='n266' class='pln'><a href='#n266'>266</a></p>
 <p id='n267' class='stm run hide_run'><a href='#n267'>267</a></p>
+<p id='n268' class='stm run hide_run'><a href='#n268'>268</a></p>
+<p id='n269' class='pln'><a href='#n269'>269</a></p>
+<p id='n270' class='pln'><a href='#n270'>270</a></p>
+<p id='n271' class='pln'><a href='#n271'>271</a></p>
+<p id='n272' class='stm run hide_run'><a href='#n272'>272</a></p>
+<p id='n273' class='stm run hide_run'><a href='#n273'>273</a></p>
                 
             </td>
             <td class='text' valign='top'>
@@ -540,37 +546,43 @@
 <p id='t234' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>fromfile</span><span class='op'>(</span><span class='nam'>join</span><span class='op'>(</span><span class='nam'>tests_dir</span><span class='op'>,</span> <span class='str'>&quot;01uni_multi.patch&quot;</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t235' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assertEqual</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>header</span><span class='op'>[</span><span class='num'>1</span><span class='op'>]</span><span class='op'>[</span><span class='op'>:</span><span class='num'>25</span><span class='op'>]</span><span class='op'>,</span> <span class='str'>&#39;Index: updatedlg.h\r\n=====&#39;</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t236' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t237' class='stm run hide_run'><span class='key'>class</span> <span class='nam'>TestPatchApply</span><span class='op'>(</span><span class='nam'>unittest</span><span class='op'>.</span><span class='nam'>TestCase</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t238' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>setUp</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t239' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>save_cwd</span> <span class='op'>=</span> <span class='nam'>os</span><span class='op'>.</span><span class='nam'>getcwdu</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t240' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span> <span class='op'>=</span> <span class='nam'>mkdtemp</span><span class='op'>(</span><span class='nam'>prefix</span><span class='op'>=</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>__class__</span><span class='op'>.</span><span class='nam'>__name__</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t241' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>os</span><span class='op'>.</span><span class='nam'>chdir</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t237' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>test_fail_missing_hunk_line</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t238' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>fp</span> <span class='op'>=</span> <span class='nam'>open</span><span class='op'>(</span><span class='nam'>join</span><span class='op'>(</span><span class='nam'>tests_dir</span><span class='op'>,</span> <span class='str'>&quot;data/failing/missing-hunk-line.diff&quot;</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t239' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>Patch</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t240' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assertNotEqual</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>parse</span><span class='op'>(</span><span class='nam'>fp</span><span class='op'>)</span><span class='op'>,</span> <span class='nam'>True</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t241' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>fp</span><span class='op'>.</span><span class='nam'>close</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t242' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t243' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>tearDown</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t244' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>os</span><span class='op'>.</span><span class='nam'>chdir</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>save_cwd</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t245' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>shutil</span><span class='op'>.</span><span class='nam'>rmtree</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t246' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t247' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>tmpcopy</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>,</span> <span class='nam'>filenames</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t248' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&quot;&quot;&quot;copy file(s) from test_dir to self.tmpdir&quot;&quot;&quot;</span><span class='strut'>&nbsp;</span></p>
-<p id='t249' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>for</span> <span class='nam'>f</span> <span class='key'>in</span> <span class='nam'>filenames</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t250' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>shutil</span><span class='op'>.</span><span class='nam'>copy</span><span class='op'>(</span><span class='nam'>join</span><span class='op'>(</span><span class='nam'>tests_dir</span><span class='op'>,</span> <span class='nam'>f</span><span class='op'>)</span><span class='op'>,</span> <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t251' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t252' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>test_apply_returns_false_of_failure</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t253' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpcopy</span><span class='op'>(</span><span class='op'>[</span><span class='str'>&#39;data/failing/reporting.patch&#39;</span><span class='op'>,</span><span class='strut'>&nbsp;</span></p>
-<p id='t254' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&#39;data/failing/upload.py&#39;</span><span class='op'>]</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t255' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>fromfile</span><span class='op'>(</span><span class='str'>&#39;reporting.patch&#39;</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t256' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assertFalse</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>apply</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t243' class='stm run hide_run'><span class='key'>class</span> <span class='nam'>TestPatchApply</span><span class='op'>(</span><span class='nam'>unittest</span><span class='op'>.</span><span class='nam'>TestCase</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t244' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>setUp</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t245' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>save_cwd</span> <span class='op'>=</span> <span class='nam'>os</span><span class='op'>.</span><span class='nam'>getcwdu</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t246' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span> <span class='op'>=</span> <span class='nam'>mkdtemp</span><span class='op'>(</span><span class='nam'>prefix</span><span class='op'>=</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>__class__</span><span class='op'>.</span><span class='nam'>__name__</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t247' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>os</span><span class='op'>.</span><span class='nam'>chdir</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t248' class='pln'><span class='strut'>&nbsp;</span></p>
+<p id='t249' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>tearDown</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t250' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>os</span><span class='op'>.</span><span class='nam'>chdir</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>save_cwd</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t251' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>shutil</span><span class='op'>.</span><span class='nam'>rmtree</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t252' class='pln'><span class='strut'>&nbsp;</span></p>
+<p id='t253' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>tmpcopy</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>,</span> <span class='nam'>filenames</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t254' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&quot;&quot;&quot;copy file(s) from test_dir to self.tmpdir&quot;&quot;&quot;</span><span class='strut'>&nbsp;</span></p>
+<p id='t255' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='key'>for</span> <span class='nam'>f</span> <span class='key'>in</span> <span class='nam'>filenames</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t256' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>shutil</span><span class='op'>.</span><span class='nam'>copy</span><span class='op'>(</span><span class='nam'>join</span><span class='op'>(</span><span class='nam'>tests_dir</span><span class='op'>,</span> <span class='nam'>f</span><span class='op'>)</span><span class='op'>,</span> <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpdir</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t257' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t258' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>test_apply_returns_true_on_success</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t259' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpcopy</span><span class='op'>(</span><span class='op'>[</span><span class='str'>&#39;03trail_fname.patch&#39;</span><span class='op'>,</span><span class='strut'>&nbsp;</span></p>
-<p id='t260' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&#39;03trail_fname.from&#39;</span><span class='op'>]</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t261' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>fromfile</span><span class='op'>(</span><span class='str'>&#39;03trail_fname.patch&#39;</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
-<p id='t262' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assert_</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>apply</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t258' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>test_apply_returns_false_of_failure</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t259' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpcopy</span><span class='op'>(</span><span class='op'>[</span><span class='str'>&#39;data/failing/non-empty-patch-for-empty-file.diff&#39;</span><span class='op'>,</span><span class='strut'>&nbsp;</span></p>
+<p id='t260' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&#39;data/failing/upload.py&#39;</span><span class='op'>]</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t261' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>fromfile</span><span class='op'>(</span><span class='str'>&#39;non-empty-patch-for-empty-file.diff&#39;</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t262' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assertFalse</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>apply</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t263' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t264' class='pln'><span class='com'># ----------------------------------------------------------------------------</span><span class='strut'>&nbsp;</span></p>
-<p id='t265' class='pln'><span class='strut'>&nbsp;</span></p>
-<p id='t266' class='stm run hide_run'><span class='key'>if</span> <span class='nam'>__name__</span> <span class='op'>==</span> <span class='str'>&#39;__main__&#39;</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
-<p id='t267' class='stm run hide_run'>&nbsp; &nbsp; <span class='nam'>unittest</span><span class='op'>.</span><span class='nam'>main</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t264' class='stm run hide_run'>&nbsp; &nbsp; <span class='key'>def</span> <span class='nam'>test_apply_returns_true_on_success</span><span class='op'>(</span><span class='nam'>self</span><span class='op'>)</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t265' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>tmpcopy</span><span class='op'>(</span><span class='op'>[</span><span class='str'>&#39;03trail_fname.patch&#39;</span><span class='op'>,</span><span class='strut'>&nbsp;</span></p>
+<p id='t266' class='pln'>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class='str'>&#39;03trail_fname.from&#39;</span><span class='op'>]</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t267' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>pto</span> <span class='op'>=</span> <span class='nam'>patch</span><span class='op'>.</span><span class='nam'>fromfile</span><span class='op'>(</span><span class='str'>&#39;03trail_fname.patch&#39;</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t268' class='stm run hide_run'>&nbsp; &nbsp; &nbsp; &nbsp; <span class='nam'>self</span><span class='op'>.</span><span class='nam'>assert_</span><span class='op'>(</span><span class='nam'>pto</span><span class='op'>.</span><span class='nam'>apply</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t269' class='pln'><span class='strut'>&nbsp;</span></p>
+<p id='t270' class='pln'><span class='com'># ----------------------------------------------------------------------------</span><span class='strut'>&nbsp;</span></p>
+<p id='t271' class='pln'><span class='strut'>&nbsp;</span></p>
+<p id='t272' class='stm run hide_run'><span class='key'>if</span> <span class='nam'>__name__</span> <span class='op'>==</span> <span class='str'>&#39;__main__&#39;</span><span class='op'>:</span><span class='strut'>&nbsp;</span></p>
+<p id='t273' class='stm run hide_run'>&nbsp; &nbsp; <span class='nam'>unittest</span><span class='op'>.</span><span class='nam'>main</span><span class='op'>(</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
                 
             </td>
         </tr>
