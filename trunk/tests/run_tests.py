@@ -234,6 +234,12 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
         self.assertEqual(pto.header[1][:25], 'Index: updatedlg.h\r\n=====')
 
+    def test_fail_missing_hunk_line(self):
+        fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
+        pto = patch.Patch()
+        self.assertNotEqual(pto.parse(fp), True)
+        fp.close()
+
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
         self.save_cwd = os.getcwdu()

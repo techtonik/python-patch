@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "11.01"
+__version__ = "11.01-dev"
 
 import copy
 import logging
@@ -53,6 +53,7 @@ SVN = SUBVERSION = "svn"
 
 def fromfile(filename):
   """ Parse patch file and return Patch() object
+      XXX error reporting
   """
   debug("reading %s" % filename)
   fp = open(filename, "rb")
@@ -126,7 +127,9 @@ class Patch(object):
     return copy.copy(self)
 
   def parse(self, stream):
-    """ parse unified diff """
+    """ parse unified diff
+        return True on success
+    """
     self.header = []
 
     self.source = []
@@ -194,6 +197,7 @@ class Patch(object):
     # regexp to match start of hunk, used groups - 1,3,4,6
     re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?")
     
+    errors = 0
 
     # start of main cycle
     # each parsing block already has line available in fe.line
@@ -220,9 +224,12 @@ class Patch(object):
             fe.next()
         if fe.is_empty:
             if len(self.source) == 0:
+              errors += 1
               warning("warning: no patch data is found")
             else:
               info("%d unparsed bytes left at the end of stream" % len(header))
+              # TODO check for \No new line at the end.. 
+              # otherwise error += 1
             # this is actually a loop exit
             continue
         self.header.append(header)
@@ -260,7 +267,8 @@ class Patch(object):
             warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
             self.hunks[nextfileno-1].append(hunkinfo.copy())
-            self.hunks[nextfileno-1][nexthunkno-1]["invalid"] = True
+            self.hunks[nextfileno-1][nexthunkno-1].invalid = True
+            errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
@@ -270,7 +278,8 @@ class Patch(object):
             warning("extra lines for hunk no.%d at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
             self.hunks[nextfileno-1].append(hunkinfo.copy())
-            self.hunks[nextfileno-1][nexthunkno-1]["invalid"] = True
+            self.hunks[nextfileno-1][nexthunkno-1].invalid = True
+            errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
@@ -307,7 +316,7 @@ class Patch(object):
       if filenames:
         if line.startswith("--- "):
           if nextfileno in self.source:
-            warning("skipping invalid patch for %s" % self.source[nextfileno])
+            warning("skipping false patch for %s" % self.source[nextfileno])
             del self.source[nextfileno]
             # double source filename line is encountered
             # attempt to restart from this second line
@@ -318,12 +327,14 @@ class Patch(object):
             self.source.append(match.group(1).strip())
           else:
             warning("skipping invalid filename at line %d" % lineno)
+            errors += 1
             # switch back to headscan state
             filenames = False
             headscan = True
         elif not line.startswith("+++ "):
           if nextfileno in self.source:
             warning("skipping invalid patch with no target for %s" % self.source[nextfileno])
+            errors += 1
             del self.source[nextfileno]
           else:
             # this should be unreachable
@@ -333,6 +344,7 @@ class Patch(object):
         else:
           if nextfileno in self.target:
             warning("skipping invalid patch - double target at line %d" % lineno)
+            errors += 1
             del self.source[nextfileno]
             del self.target[nextfileno]
             nextfileno -= 1
@@ -345,6 +357,7 @@ class Patch(object):
             match = re.match(re_filename, line)
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % lineno)
+              errors += 1
               # switch back to headscan state
               filenames = False
               headscan = True
@@ -364,11 +377,13 @@ class Patch(object):
         if not match:
           if nextfileno-1 not in self.hunks:
             warning("skipping invalid patch with no hunks for file %s" % self.target[nextfileno-1])
+            errors += 1
             # switch to headscan state
             hunkhead = False
             headscan = True
             continue
           else:
+            # TODO review condition case
             # switch to headscan state
             hunkhead = False
             headscan = True
@@ -402,11 +417,14 @@ class Patch(object):
           pass 
       else:
         warning("error: patch stream is incomplete!")
+        errors += 1
 
     if debugmode and len(self.source) > 0:
         debug("- %2d hunks for %s" % (len(self.hunks[nextfileno-1]), self.source[nextfileno-1]))
 
     debug("total files: %d  total hunks: %d" % (len(self.source), sum(len(hset) for hset in self.hunks)))
+    
+    return (errors == 0)
 
 
   def apply(self):
