@@ -85,9 +85,6 @@ class Hunk(object):
     self.invalid=False
     self.text=[]
 
-  def copy(self):
-    return copy.copy(self)
-
 #  def apply(self, estream):
 #    """ write hunk data into enumerable stream
 #        return strings one by one until hunk is
@@ -140,8 +137,8 @@ class PatchSet(object):
     nextfileno = 0
     nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
 
-    # hunkinfo variable holds parsed values, hunkactual - calculated
-    hunk = Hunk()
+    hunk = None
+    # hunkactual variable is used to calculate hunk lines for comparison
     hunkactual = dict(linessrc=None, linestgt=None)
 
 
@@ -265,8 +262,8 @@ class PatchSet(object):
         else:
             warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
-            self.hunks[nextfileno-1].append(hunk.copy())
-            self.hunks[nextfileno-1][nexthunkno-1].invalid = True
+            hunk.invalid = True
+            self.hunks[nextfileno-1].append(hunk)
             errors += 1
             # switch to hunkskip state
             hunkbody = False
@@ -276,15 +273,15 @@ class PatchSet(object):
         if hunkactual["linessrc"] > hunk.linessrc or hunkactual["linestgt"] > hunk.linestgt:
             warning("extra lines for hunk no.%d at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
-            self.hunks[nextfileno-1].append(hunk.copy())
-            self.hunks[nextfileno-1][nexthunkno-1].invalid = True
+            hunk.invalid = True
+            self.hunks[nextfileno-1].append(hunk)
             errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
         elif hunk.linessrc == hunkactual["linessrc"] and hunk.linestgt == hunkactual["linestgt"]:
             # hunk parsed successfully
-            self.hunks[nextfileno-1].append(hunk.copy())
+            self.hunks[nextfileno-1].append(hunk)
             # switch to hunkparsed state
             hunkbody = False
             hunkparsed = True
@@ -387,6 +384,7 @@ class PatchSet(object):
             hunkhead = False
             headscan = True
         else:
+          hunk = Hunk()
           hunk.startsrc = int(match.group(1))
           hunk.linessrc = 1
           if match.group(3): hunk.linessrc = int(match.group(3))
