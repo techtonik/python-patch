@@ -51,6 +51,9 @@ and try to make script more interactive.
 
 == Changes ==
 {{{
+xx.xx
+   - API changes
+     - Patch.parse() now returns True if parsing completed without errors
 11.01
    - patch.py can read patches from web
    - patch.py returns -1 if there were errors during patching
