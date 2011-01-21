@@ -141,7 +141,7 @@ class PatchSet(object):
     nexthunkno = 0    #: even if index starts with 0 user messages number hunks from 1
 
     # hunkinfo variable holds parsed values, hunkactual - calculated
-    hunkinfo = Hunk()
+    hunk = Hunk()
     hunkactual = dict(linessrc=None, linestgt=None)
 
 
@@ -260,12 +260,12 @@ class PatchSet(object):
             elif not line.startswith("\\"):
               hunkactual["linessrc"] += 1
               hunkactual["linestgt"] += 1
-            hunkinfo.text.append(line)
+            hunk.text.append(line)
             # todo: handle \ No newline cases
         else:
             warning("invalid hunk no.%d at %d for target file %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
-            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            self.hunks[nextfileno-1].append(hunk.copy())
             self.hunks[nextfileno-1][nexthunkno-1].invalid = True
             errors += 1
             # switch to hunkskip state
@@ -273,18 +273,18 @@ class PatchSet(object):
             hunkskip = True
 
         # check exit conditions
-        if hunkactual["linessrc"] > hunkinfo.linessrc or hunkactual["linestgt"] > hunkinfo.linestgt:
+        if hunkactual["linessrc"] > hunk.linessrc or hunkactual["linestgt"] > hunk.linestgt:
             warning("extra lines for hunk no.%d at %d for target %s" % (nexthunkno, lineno+1, self.target[nextfileno-1]))
             # add hunk status node
-            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            self.hunks[nextfileno-1].append(hunk.copy())
             self.hunks[nextfileno-1][nexthunkno-1].invalid = True
             errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
-        elif hunkinfo.linessrc == hunkactual["linessrc"] and hunkinfo.linestgt == hunkactual["linestgt"]:
+        elif hunk.linessrc == hunkactual["linessrc"] and hunk.linestgt == hunkactual["linestgt"]:
             # hunk parsed successfully
-            self.hunks[nextfileno-1].append(hunkinfo.copy())
+            self.hunks[nextfileno-1].append(hunk.copy())
             # switch to hunkparsed state
             hunkbody = False
             hunkparsed = True
@@ -387,14 +387,14 @@ class PatchSet(object):
             hunkhead = False
             headscan = True
         else:
-          hunkinfo.startsrc = int(match.group(1))
-          hunkinfo.linessrc = 1
-          if match.group(3): hunkinfo.linessrc = int(match.group(3))
-          hunkinfo.starttgt = int(match.group(4))
-          hunkinfo.linestgt = 1
-          if match.group(6): hunkinfo.linestgt = int(match.group(6))
-          hunkinfo.invalid = False
-          hunkinfo.text = []
+          hunk.startsrc = int(match.group(1))
+          hunk.linessrc = 1
+          if match.group(3): hunk.linessrc = int(match.group(3))
+          hunk.starttgt = int(match.group(4))
+          hunk.linestgt = 1
+          if match.group(6): hunk.linestgt = int(match.group(6))
+          hunk.invalid = False
+          hunk.text = []
 
           hunkactual["linessrc"] = hunkactual["linestgt"] = 0
 
