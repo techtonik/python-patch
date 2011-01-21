@@ -52,26 +52,26 @@ SVN = SUBVERSION = "svn"
 
 
 def fromfile(filename):
-  """ Parse patch file and return Patch() object
+  """ Parse patch file and return PatchSet() object
       XXX error reporting
   """
   debug("reading %s" % filename)
   fp = open(filename, "rb")
-  patch = Patch(fp)
+  patchset = PatchSet(fp)
   fp.close()
-  return patch
+  return patchset
 
 
 def fromstring(s):
-  """ Parse text string and return Patch() object
+  """ Parse text string and return PatchSet() object
   """
-  return Patch( StringIO(s) )
+  return PatchSet( StringIO(s) )
 
 
 def fromurl(url):
   """ Read patch from URL
   """
-  return Patch( urllib2.urlopen(url) )
+  return PatchSet( urllib2.urlopen(url) )
 
 
 class Hunk(object):
@@ -99,8 +99,7 @@ class Hunk(object):
 #    pass
 
 
-
-class Patch(object):
+class PatchSet(object):
 
   def __init__(self, stream=None):
 

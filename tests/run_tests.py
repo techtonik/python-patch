@@ -236,7 +236,7 @@ class TestPatchParse(unittest.TestCase):
 
     def test_fail_missing_hunk_line(self):
         fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
-        pto = patch.Patch()
+        pto = patch.PatchSet()
         self.assertNotEqual(pto.parse(fp), True)
         fp.close()
 
