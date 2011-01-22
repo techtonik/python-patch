@@ -51,9 +51,11 @@ and try to make script more interactive.
 
 == Changes ==
 {{{
-xx.xx
+xx.xx - Major API Break
    - API changes
-     - Patch.parse() now returns True if parsing completed without errors
+     * previous Patch is renamed to PatchSet
+     * PatchSet.parse() now returns True if parsing completed without errors
+     + PatchSet.__len__()
 11.01
    - patch.py can read patches from web
    - patch.py returns -1 if there were errors during patching
