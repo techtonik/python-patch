@@ -194,6 +194,10 @@ class PatchSet(object):
     re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?")
     
     errors = 0
+    # temp buffers for header and filenames info
+    header = ''
+    srcname = None
+    tgtname = None
 
     # start of main cycle
     # each parsing block already has line available in fe.line
@@ -214,7 +218,6 @@ class PatchSet(object):
 
       # read out header
       if headscan:
-        header = ''
         while not fe.is_empty and not fe.line.startswith("--- "):
             header += fe.line
             fe.next()
@@ -229,6 +232,7 @@ class PatchSet(object):
             # this is actually a loop exit
             continue
         self.header.append(header)
+        header = ''
 
         headscan = False
         # switch to filenames state
@@ -311,16 +315,16 @@ class PatchSet(object):
 
       if filenames:
         if line.startswith("--- "):
-          if nextfileno in self.source:
-            warning("skipping false patch for %s" % self.source[nextfileno])
-            del self.source[nextfileno]
+          if srcname != None:
+            warning("skipping false patch for %s" % srcname)
+            srcname = None
             # double source filename line is encountered
             # attempt to restart from this second line
           re_filename = "^--- ([^\t]+)"
           match = re.match(re_filename, line)
           # todo: support spaces in filenames
           if match:
-            self.source.append(match.group(1).strip())
+            srcname = match.group(1).strip()
           else:
             warning("skipping invalid filename at line %d" % lineno)
             errors += 1
@@ -328,21 +332,22 @@ class PatchSet(object):
             filenames = False
             headscan = True
         elif not line.startswith("+++ "):
-          if nextfileno in self.source:
-            warning("skipping invalid patch with no target for %s" % self.source[nextfileno])
+          if srcname != None:
+            warning("skipping invalid patch with no target for %s" % srcname)
             errors += 1
-            del self.source[nextfileno]
+            srcname = None
           else:
             # this should be unreachable
             warning("skipping invalid target patch")
           filenames = False
           headscan = True
         else:
-          if nextfileno in self.target:
+          if tgtname != None:
+            # XXX seems to be a dead branch  
             warning("skipping invalid patch - double target at line %d" % lineno)
             errors += 1
-            del self.source[nextfileno]
-            del self.target[nextfileno]
+            srcname = None
+            tgtname = None
             # double target filename line is encountered
             # switch back to headscan state
             filenames = False
@@ -353,10 +358,13 @@ class PatchSet(object):
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % lineno)
               errors += 1
+              srcname = None
               # switch back to headscan state
               filenames = False
               headscan = True
             else:
+              self.source.append(srcname)
+              srcname = None
               self.target.append(match.group(1).strip())
               nextfileno += 1
               # switch to hunkhead state
