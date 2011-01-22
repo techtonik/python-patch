@@ -119,8 +119,8 @@ class PatchSet(object):
     if stream:
       self.parse(stream)
 
-  def copy(self):
-    return copy.copy(self)
+  def __len__(self):
+    return len(self.source)
 
   def parse(self, stream):
     """ parse unified diff
@@ -343,7 +343,6 @@ class PatchSet(object):
             errors += 1
             del self.source[nextfileno]
             del self.target[nextfileno]
-            nextfileno -= 1
             # double target filename line is encountered
             # switch back to headscan state
             filenames = False

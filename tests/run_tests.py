@@ -223,8 +223,8 @@ class TestPatchParse(unittest.TestCase):
           readstr = f.read()
         finally:
           f.close()
-        pto = patch.fromstring(readstr)
-        self.assertEqual(len(pto.source), 5)
+        pst = patch.fromstring(readstr)
+        self.assertEqual(len(pst), 5)
 
     def test_no_header_for_plain_diff_with_single_file(self):
         pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
