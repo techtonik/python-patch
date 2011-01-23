@@ -228,11 +228,11 @@ class TestPatchParse(unittest.TestCase):
 
     def test_no_header_for_plain_diff_with_single_file(self):
         pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
-        self.assertEqual(pto.header[0], '')
+        self.assertEqual(pto.items[0].header, '')
 
     def test_header_for_second_file_in_svn_diff(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        self.assertEqual(pto.header[1][:25], 'Index: updatedlg.h\r\n=====')
+        self.assertEqual(pto.items[1].header[:25], 'Index: updatedlg.h\r\n=====')
 
     def test_fail_missing_hunk_line(self):
         fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
