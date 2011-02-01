@@ -22,8 +22,8 @@ import re
 from StringIO import StringIO
 import urllib2
 
-from os.path import exists, isfile, abspath
-from os import unlink
+from os.path import exists, isabs, isfile, abspath, normpath
+import os
 
 
 #------------------------------------------------
@@ -436,7 +436,47 @@ class PatchSet(object):
     # XXX fix total hunks calculation
     debug("total files: %d  total hunks: %d" % (len(self.items),
         sum(len(p.hunks) for p in self.items)))
+
+    # normalize filenames
+    if not self.process_filenames():
+      errors += 1
     
+    return (errors == 0)
+
+
+  def process_filenames(self):
+    """ sanitize filenames, normalizing paths
+        return True on success
+    """
+    errors = 0
+    for i,p in enumerate(self.items):
+      p.source = normpath(p.source)
+      p.target = normpath(p.target)
+
+      # references to parent are not allowed
+      if p.source.startswith(".." + os.sep):
+        warning("error: stripping parent path for source file patch no.%d" % (i+1))
+        errors += 1
+        while p.source.startswith(".." + os.sep):
+          p.source = p.source.partition(os.sep)[2]
+      if p.target.startswith(".." + os.sep):
+        warning("error: stripping parent path for target file patch no.%d" % (i+1))
+        errors += 1
+        while p.target.startswith(".." + os.sep):
+          p.target = p.target.partition(os.sep)[2]
+
+      # absolute paths are not allowed
+      if isabs(p.source) or isabs(p.target):
+        errors += 1
+        warning("error: absolute paths are not allowed for file patch no.%d" % (i+1))
+        if isabs(p.source):
+          p.source = p.source.partition(os.sep)[2]
+        if isabs(p.target):
+          p.target = p.target.partition(os.sep)[2]
+    
+      self.items[i].source = p.source
+      self.items[i].target = p.target
+
     return (errors == 0)
 
 
@@ -542,7 +582,7 @@ class PatchSet(object):
           shutil.move(filename, backupname)
           if self.write_hunks(backupname, filename, p.hunks):
             info("successfully patched %d/%d:\t %s" % (i+1, total, filename))
-            unlink(backupname)
+            os.unlink(backupname)
           else:
             errors += 1
             warning("error patching file %s" % filename)
