@@ -51,11 +51,14 @@ and try to make script more interactive.
 
 == Changes ==
 {{{
-xx.xx - Major API Break
+1.xx.xx - Major API Break
+   - added security checks for filenames to protect against patching files
+     using absolute paths or files in parent directories
    - API changes
      * previous Patch is renamed to PatchSet
      * PatchSet.parse() now returns True if parsing completed without errors
      + PatchSet.__len__()
+     + PatchSet.process_filenames() for normalizing and security checks
 11.01
    - patch.py can read patches from web
    - patch.py returns -1 if there were errors during patching
