@@ -240,6 +240,18 @@ class TestPatchParse(unittest.TestCase):
         self.assertNotEqual(pto.parse(fp), True)
         fp.close()
 
+    def test_fail_absolute_path(self):
+        fp = open(join(tests_dir, "data/failing/absolute-path.diff"))
+        res = patch.PatchSet().parse(fp)
+        self.assertFalse(res)
+        fp.close()
+
+    def test_fail_parent_path(self):
+        fp = open(join(tests_dir, "data/failing/parent-path.diff"))
+        res = patch.PatchSet().parse(fp)
+        self.assertFalse(res)
+        fp.close()
+
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
         self.save_cwd = os.getcwdu()

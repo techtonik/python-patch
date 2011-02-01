@@ -1,0 +1,52 @@
+Index: c:/winnt/tests/run_tests.py
+===================================================================
+--- c:/winnt/tests/run_tests.py	(revision 132)
++++ c:/winnt/tests/run_tests.py	(working copy)
+@@ -240,6 +240,12 @@
+         self.assertNotEqual(pto.parse(fp), True)
+         fp.close()
+ 
++    def test_fail_absolute_path(self):
++        fp = open(join(tests_dir, "data/failing/absolute-path.diff"))
++        res = patch.PatchSet().parse(fp)
++        self.assertFalse(res)
++        fp.close()
++
+ class TestPatchApply(unittest.TestCase):
+     def setUp(self):
+         self.save_cwd = os.getcwdu()
+Index: c:/winnt/patch.py
+===================================================================
+--- c:/winnt/patch.py	(revision 132)
++++ c:/winnt/patch.py	(working copy)
+@@ -22,7 +22,7 @@
+ from StringIO import StringIO
+ import urllib2
+ 
+-from os.path import exists, isfile, abspath
++from os.path import exists, isabs, isfile, abspath
+ from os import unlink
+ 
+ 
+@@ -439,7 +439,21 @@
+     
+     return (errors == 0)
+ 
++  def process_filenames():
++    """ sanitize filenames
++        return True on success
++    """
++    errors = 0
+ 
++    for i,p in enumerate(self.items):
++      # 
++
++      # absolute paths are not allowed
++      if isabs(p.source) or isabs(p.target):
++        warning("error: absolute paths are not allowed for patch no.%d" % i)
++    
++    return (errors == 0)
++
+   def apply(self):
+     """ apply parsed patch
+         return True on success
