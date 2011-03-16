@@ -57,7 +57,7 @@ expand test coverage, and try to make script more interactive.
    - API changes
      * previous Patch is renamed to PatchSet
      * Patch.header is now a list of strings
-     + PatchSet.type contains the type of patch
+     + PatchSet.type and Patch.type
      * PatchSet.parse() now returns True if parsing completed without errors
      + PatchSet.__len__()
 11.01
