@@ -44,11 +44,15 @@ logger.setLevel(logging.CRITICAL)
 
 #------------------------------------------------
 
-# constants for patch types
+# constants for Patch/PatchSet types
 
 DIFF = PLAIN = "plain"
+GIT = GIT = "git"
 HG = MERCURIAL = "mercurial"
 SVN = SUBVERSION = "svn"
+# mixed type is only actual when PatchSet contains
+# Patches of different type
+MIXED = MIXED = "mixed"
 
 
 def fromfile(filename):
@@ -103,7 +107,7 @@ class Patch(object):
     self.target = None
     self.hunks = []
     self.hunkends = []
-    self.header = ''
+    self.header = []
 
 
 class PatchSet(object):
@@ -189,7 +193,7 @@ class PatchSet(object):
     
     errors = 0
     # temp buffers for header and filenames info
-    header = ''
+    header = []
     srcname = None
     tgtname = None
 
@@ -213,14 +217,14 @@ class PatchSet(object):
       # read out header
       if headscan:
         while not fe.is_empty and not fe.line.startswith("--- "):
-            header += fe.line
+            header.append(fe.line)
             fe.next()
         if fe.is_empty:
             if p == None:
               errors += 1
               warning("warning: no patch data is found")
             else:
-              info("%d unparsed bytes left at the end of stream" % len(header))
+              info("%d unparsed bytes left at the end of stream" % len(''.join(header)))
               # TODO check for \No new line at the end.. 
               # TODO test for unparsed bytes
               # otherwise error += 1
@@ -371,7 +375,7 @@ class PatchSet(object):
               srcname = None
               p.target = match.group(1).strip()
               p.header = header
-              header = ''
+              header = []
               # switch to hunkhead state
               filenames = False
               hunkhead = True
@@ -437,12 +441,36 @@ class PatchSet(object):
     debug("total files: %d  total hunks: %d" % (len(self.items),
         sum(len(p.hunks) for p in self.items)))
 
-    # normalize filenames
+    # ---- detect PatchSet type ----
+    self.type = self.detect_type()
+
+    # ---- normalize filenames ----
     if not self.process_filenames():
       errors += 1
     
     return (errors == 0)
 
+  def detect_type(self):
+    """ return PatchSet type based on header and filenames info
+        TODO: return type of specific patch (may be useful)
+    """
+    ptype = None
+    for p in self.items:
+      curtype = None
+      # check for SVN type
+      #  - header starts with Index:
+      #  - next line is ===... delimiter
+      #  - filename is followed by revision number
+      # XXX add SVN specific properties, i.e. revision
+      if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
+        and p.header[-1].startswith("="*67)):
+          curtype = SVN
+
+      if ptype != None and ptype != curtype:
+          return MIXED
+      ptype = curtype
+
+    return ptype or PLAIN
 
   def process_filenames(self):
     """ sanitize filenames, normalizing paths
