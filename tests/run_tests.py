@@ -262,6 +262,10 @@ class TestPatchSetDetect(unittest.TestCase):
         pto = patch.fromfile(join(tests_dir, "data/hg-added-file.diff"))
         self.assertEqual(pto.type, patch.HG)
 
+    def test_git_changed_detected(self):
+        pto = patch.fromfile(join(tests_dir, "data/git-changed-file.diff"))
+        self.assertEqual(pto.type, patch.GIT)
+
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
         self.save_cwd = os.getcwdu()
