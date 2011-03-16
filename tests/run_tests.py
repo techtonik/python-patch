@@ -228,11 +228,12 @@ class TestPatchParse(unittest.TestCase):
 
     def test_no_header_for_plain_diff_with_single_file(self):
         pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))
-        self.assertEqual(pto.items[0].header, '')
+        self.assertEqual(pto.items[0].header, [])
 
     def test_header_for_second_file_in_svn_diff(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        self.assertEqual(pto.items[1].header[:25], 'Index: updatedlg.h\r\n=====')
+        self.assertEqual(pto.items[1].header[0], 'Index: updatedlg.h\r\n')
+        self.assert_(pto.items[1].header[1].startswith('====='))
 
     def test_fail_missing_hunk_line(self):
         fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
@@ -251,6 +252,11 @@ class TestPatchParse(unittest.TestCase):
         res = patch.PatchSet().parse(fp)
         self.assertFalse(res)
         fp.close()
+
+class TestPatchSetDetect(unittest.TestCase):
+    def test_svn_detected(self):
+        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        self.assertEqual(pto.detect_type(), patch.SVN)
 
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
