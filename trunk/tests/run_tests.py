@@ -256,7 +256,11 @@ class TestPatchParse(unittest.TestCase):
 class TestPatchSetDetect(unittest.TestCase):
     def test_svn_detected(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
-        self.assertEqual(pto.detect_type(), patch.SVN)
+        self.assertEqual(pto.type, patch.SVN)
+
+    def test_hg_detected(self):
+        pto = patch.fromfile(join(tests_dir, "data/hg-added-file.diff"))
+        self.assertEqual(pto.type, patch.HG)
 
 class TestPatchApply(unittest.TestCase):
     def setUp(self):

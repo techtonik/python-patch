@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "1.11.02-dev"
+__version__ = "1.11.03-dev"
 
 import copy
 import logging
@@ -47,7 +47,7 @@ logger.setLevel(logging.CRITICAL)
 # constants for Patch/PatchSet types
 
 DIFF = PLAIN = "plain"
-GIT = GIT = "git"
+GIT = "git"
 HG = MERCURIAL = "mercurial"
 SVN = SUBVERSION = "svn"
 # mixed type is only actual when PatchSet contains
@@ -452,7 +452,10 @@ class PatchSet(object):
 
   def detect_type(self):
     """ return PatchSet type based on header and filenames info
-        TODO: return type of specific patch (may be useful)
+
+        NOTE: must be run before filenames are normalized
+
+        TODO: return type of specific patch in set (may be useful)
     """
     ptype = None
     for p in self.items:
@@ -465,6 +468,16 @@ class PatchSet(object):
       if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
         and p.header[-1].startswith("="*67)):
           curtype = SVN
+      # TODO check for GIT type
+      #  - header ends with ???
+
+      # check for HG style (not sure it's actualy HG)
+      #  - Patch header is like "diff -r b2d9961ff1f5 filename"
+      #  - filename starts with a/, b/ or is equal to /dev/null
+      if len(p.header) > 0 and re.match(r'diff -r \w{12} .*', p.header[-1]):
+        if ((p.source.startswith('a/') or p.source == '/dev/null')
+          and (p.target.startswith('b/') or p.target == '/dev/null')):
+            curtype = HG
 
       if ptype != None and ptype != curtype:
           return MIXED
