@@ -464,16 +464,31 @@ class PatchSet(object):
       #  - header starts with Index:
       #  - next line is ===... delimiter
       #  - filename is followed by revision number
-      # XXX add SVN specific properties, i.e. revision
+      # TODO add SVN revision
       if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
         and p.header[-1].startswith("="*67)):
           curtype = SVN
-      # TODO check for GIT type
-      #  - header ends with ???
+
+      # GIT type check
+      #  - header[-2] is like "diff --git a/oldname b/newname"
+      #  - header[-1] is like "index <hash>..<hash> <mode>"
+      # TODO add git rename diffs and add/remove diffs
+      #      add git diff with spaced filename
+      # TODO http://www.kernel.org/pub/software/scm/git/docs/git-diff.html
+
+      # detect the start of diff header - there might be some comments before
+      for idx in reversed(range(len(p.header))):
+        if p.header[idx].startswith("diff --git"):
+          break
+      if len(p.header) > 1 and re.match(r'diff --git a/[\w/.]+ b/[\w/.]+', p.header[idx]):
+        if re.match(r'index \w{7}..\w{7} \d{6}', p.header[idx+1]):
+          if p.source.startswith('a/') and p.target.startswith('b/'):
+            curtype = GIT
 
       # check for HG style (not sure it's actualy HG)
       #  - Patch header is like "diff -r b2d9961ff1f5 filename"
       #  - filename starts with a/, b/ or is equal to /dev/null
+      # TODO add MQ version
       if len(p.header) > 0 and re.match(r'diff -r \w{12} .*', p.header[-1]):
         if ((p.source.startswith('a/') or p.source == '/dev/null')
           and (p.target.startswith('b/') or p.target == '/dev/null')):
