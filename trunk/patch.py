@@ -109,6 +109,8 @@ class Patch(object):
     self.hunkends = []
     self.header = []
 
+    self.type = None
+
 
 class PatchSet(object):
 
@@ -118,7 +120,7 @@ class PatchSet(object):
     # list of Patch objects
     self.items = []
 
-    #: patch type - one of constants
+    #: patch set type - one of constants
     self.type = None
 
     if stream:
@@ -441,8 +443,15 @@ class PatchSet(object):
     debug("total files: %d  total hunks: %d" % (len(self.items),
         sum(len(p.hunks) for p in self.items)))
 
-    # --------
-    self.type = self._detect_type()
+    # ---- detect patch and patchset types ----
+    for idx, p in enumerate(self.items):
+      self.items[idx].type = self._detect_type(p)
+
+    types = set([p.type for p in self.items])
+    if len(types) > 1:
+      self.type = MIXED
+    else:
+      self.type = types.pop()
 
     # --------
     if not self._normalize_filenames():
@@ -450,55 +459,49 @@ class PatchSet(object):
     
     return (errors == 0)
 
-  def _detect_type(self):
-    """ return PatchSet type based on header and filenames info
+  def _detect_type(self, p):
+    """ detect and return type for the specified Patch object
+        analyzes header and filenames info
 
         NOTE: must be run before filenames are normalized
-
-        TODO: return type of specific patch in set (may be useful)
     """
-    ptype = None
-    for p in self.items:
-      curtype = None
-      # check for SVN type
-      #  - header starts with Index:
-      #  - next line is ===... delimiter
-      #  - filename is followed by revision number
-      # TODO add SVN revision
-      if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
-        and p.header[-1].startswith("="*67)):
-          curtype = SVN
 
-      # GIT type check
-      #  - header[-2] is like "diff --git a/oldname b/newname"
-      #  - header[-1] is like "index <hash>..<hash> <mode>"
-      # TODO add git rename diffs and add/remove diffs
-      #      add git diff with spaced filename
-      # TODO http://www.kernel.org/pub/software/scm/git/docs/git-diff.html
+    # check for SVN
+    #  - header starts with Index:
+    #  - next line is ===... delimiter
+    #  - filename is followed by revision number
+    # TODO add SVN revision
+    if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
+      and p.header[-1].startswith("="*67)):
+        return SVN
 
-      # detect the start of diff header - there might be some comments before
-      for idx in reversed(range(len(p.header))):
-        if p.header[idx].startswith("diff --git"):
-          break
-      if len(p.header) > 1 and re.match(r'diff --git a/[\w/.]+ b/[\w/.]+', p.header[idx]):
-        if re.match(r'index \w{7}..\w{7} \d{6}', p.header[idx+1]):
-          if p.source.startswith('a/') and p.target.startswith('b/'):
-            curtype = GIT
+    # GIT type check
+    #  - header[-2] is like "diff --git a/oldname b/newname"
+    #  - header[-1] is like "index <hash>..<hash> <mode>"
+    # TODO add git rename diffs and add/remove diffs
+    #      add git diff with spaced filename
+    # TODO http://www.kernel.org/pub/software/scm/git/docs/git-diff.html
 
-      # check for HG style (not sure it's actualy HG)
-      #  - Patch header is like "diff -r b2d9961ff1f5 filename"
-      #  - filename starts with a/, b/ or is equal to /dev/null
-      # TODO add MQ version
-      if len(p.header) > 0 and re.match(r'diff -r \w{12} .*', p.header[-1]):
-        if ((p.source.startswith('a/') or p.source == '/dev/null')
-          and (p.target.startswith('b/') or p.target == '/dev/null')):
-            curtype = HG
+    # detect the start of diff header - there might be some comments before
+    for idx in reversed(range(len(p.header))):
+      if p.header[idx].startswith("diff --git"):
+        break
+    if len(p.header) > 1 and re.match(r'diff --git a/[\w/.]+ b/[\w/.]+', p.header[idx]):
+      if re.match(r'index \w{7}..\w{7} \d{6}', p.header[idx+1]):
+        if p.source.startswith('a/') and p.target.startswith('b/'):
+          return GIT
 
-      if ptype != None and ptype != curtype:
-          return MIXED
-      ptype = curtype
+    # HG check
+    #  - Patch header is like "diff -r b2d9961ff1f5 filename"
+    #  - filename starts with a/, b/ or is equal to /dev/null
+    # TODO add MQ version
+    if len(p.header) > 0 and re.match(r'diff -r \w{12} .*', p.header[-1]):
+      if ((p.source.startswith('a/') or p.source == '/dev/null')
+        and (p.target.startswith('b/') or p.target == '/dev/null')):
+          return HG
 
-    return ptype or PLAIN
+    return PLAIN
+
 
   def _normalize_filenames(self):
     """ sanitize filenames, normalizing paths
@@ -506,6 +509,10 @@ class PatchSet(object):
     """
     errors = 0
     for i,p in enumerate(self.items):
+      if self.type == HG or self.type == GIT:
+        # TODO: find a way to work around /dev/null entries
+        # strip a/ or b/ prefix
+        pass#p.source = p.
       p.source = normpath(p.source)
       p.target = normpath(p.target)
 
