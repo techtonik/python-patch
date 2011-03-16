@@ -52,7 +52,7 @@ expand test coverage, and try to make script more interactive.
 1.xx.xx - Major API Break
    - added normalization to filenames to protect against patching files
      using absolute paths or files in parent directories
-   - added detection of SVN and HG patch types, unrecognized patches
+   - added detection of SVN, GIT and HG patch types, unrecognized patches
      are marked PLAIN
    - API changes
      * previous Patch is renamed to PatchSet
