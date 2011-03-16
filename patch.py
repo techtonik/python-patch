@@ -441,16 +441,16 @@ class PatchSet(object):
     debug("total files: %d  total hunks: %d" % (len(self.items),
         sum(len(p.hunks) for p in self.items)))
 
-    # ---- detect PatchSet type ----
-    self.type = self.detect_type()
+    # --------
+    self.type = self._detect_type()
 
-    # ---- normalize filenames ----
-    if not self.process_filenames():
+    # --------
+    if not self._normalize_filenames():
       errors += 1
     
     return (errors == 0)
 
-  def detect_type(self):
+  def _detect_type(self):
     """ return PatchSet type based on header and filenames info
 
         NOTE: must be run before filenames are normalized
@@ -485,7 +485,7 @@ class PatchSet(object):
 
     return ptype or PLAIN
 
-  def process_filenames(self):
+  def _normalize_filenames(self):
     """ sanitize filenames, normalizing paths
         return True on success
     """
