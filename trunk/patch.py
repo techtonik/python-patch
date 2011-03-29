@@ -565,7 +565,8 @@ class PatchSet(object):
     insert = []
     delete = []
     namelen = 0
-    statlen = 0  # stats column width
+    maxdiff = 0  # max number of changes for single file
+                 # (for histogram width calculation)
     for patch in self.items:
       i,d = 0,0
       for hunk in patch.hunks:
@@ -578,13 +579,30 @@ class PatchSet(object):
       insert.append(i)
       delete.append(d)
       namelen = max(namelen, len(patch.target))
-      statlen = max(statlen, len(str(i+d)))
+      maxdiff = max(maxdiff, i+d)
     output = ''
+    statlen = len(str(maxdiff))  # stats column width
     for i,n in enumerate(names):
       # %-19s | %-4d %s
-      format = " %-" + str(namelen) + "s | %" + str(statlen) + "d %s\n"
-      # TODO: calculate +- histogram
-      output += (format % (names[i], insert[i] + delete[i], 'N/A'))
+      format = " %-" + str(namelen) + "s | %" + str(statlen) + "s %s\n"
+
+      hist = ''
+      # -- calculating histogram --
+      width = len(format % ('', '', ''))
+      histwidth = max(2, 80 - width)
+      if maxdiff < histwidth:
+        hist = "+"*insert[i] + "-"*delete[i]
+      else:
+        iratio = (float(insert[i]) / maxdiff) * histwidth
+        dratio = (float(delete[i]) / maxdiff) * histwidth
+
+        # make sure every entry gets at least one + or -
+        iwidth = 1 if 0 < iratio < 1 else int(iratio)
+        dwidth = 1 if 0 < dratio < 1 else int(dratio)
+        #print iratio, dratio, iwidth, dwidth, histwidth
+        hist = "+"*int(iwidth) + "-"*int(dwidth)
+      # -- /calculating +- histogram --
+      output += (format % (names[i], insert[i] + delete[i], hist))
  
     output += (" %d files changed, %d insertions(+), %d deletions(-)"
                % (len(names), sum(insert), sum(delete)))
