@@ -505,6 +505,8 @@ class PatchSet(object):
 
   def _normalize_filenames(self):
     """ sanitize filenames, normalizing paths
+        TODO think about using forward slashes for crossplatform issues
+             (diff/patch were born as a unix utility after all)
         return True on success
     """
     errors = 0
@@ -551,6 +553,42 @@ class PatchSet(object):
       self.items[i].target = p.target
 
     return (errors == 0)
+
+
+  def diffstat(self):
+    """ calculate diffstat and return as a string
+        Notes:
+          - original diffstat ouputs target filename
+          - single + or - shouldn't escape histogram
+    """
+    names = []
+    insert = []
+    delete = []
+    namelen = 0
+    statlen = 0  # stats column width
+    for patch in self.items:
+      i,d = 0,0
+      for hunk in patch.hunks:
+        for line in hunk.text:
+          if line.startswith('+'):
+            i += 1
+          elif line.startswith('-'):
+            d += 1
+      names.append(patch.target)
+      insert.append(i)
+      delete.append(d)
+      namelen = max(namelen, len(patch.target))
+      statlen = max(statlen, len(str(i+d)))
+    output = ''
+    for i,n in enumerate(names):
+      # %-19s | %-4d %s
+      format = " %-" + str(namelen) + "s | %" + str(statlen) + "d %s\n"
+      # TODO: calculate +- histogram
+      output += (format % (names[i], insert[i] + delete[i], 'N/A'))
+ 
+    output += (" %d files changed, %d insertions(+), %d deletions(-)"
+               % (len(names), sum(insert), sum(delete)))
+    return output
 
 
   def apply(self):
@@ -808,6 +846,8 @@ if __name__ == "__main__":
                                   const=0, help="print only warnings and errors", default=1)
   opt.add_option("-v", "--verbose", action="store_const", dest="verbosity",
                                   const=2, help="be verbose")
+  opt.add_option("--diffstat", action="store_true", dest="diffstat",
+                                           help="print diffstat and exit")
   opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
@@ -836,6 +876,10 @@ if __name__ == "__main__":
     if not exists(patchfile) or not isfile(patchfile):
       sys.exit("patch file does not exist - %s" % patchfile)
     patch = fromfile(patchfile)
+
+  if options.diffstat:
+    print patch.diffstat()
+    sys.exit(0)
 
   #pprint(patch)
   patch.apply() or sys.exit(-1)
