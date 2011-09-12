@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "1.11.03-dev"
+__version__ = "1.11.09-dev"
 
 import copy
 import logging
@@ -857,8 +857,9 @@ if __name__ == "__main__":
   from os.path import exists
   import sys
 
-  opt = OptionParser(usage="1. %prog [options] unipatch-file\n"
-                    "       2. %prog [options] http://host/patch",
+  opt = OptionParser(usage="1. %prog [options] unified.diff\n"
+                    "       2. %prog [options] http://host/patch\n"
+                    "       3. %prog [options] -- < unified.diff",
                      version="python-patch %s" % __version__)
   opt.add_option("-q", "--quiet", action="store_const", dest="verbosity",
                                   const=0, help="print only warnings and errors", default=1)
@@ -869,10 +870,12 @@ if __name__ == "__main__":
   opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   (options, args) = opt.parse_args()
 
-  if not args:
+  if not args and sys.argv[-1:] != ['--']:
     opt.print_version()
     opt.print_help()
     sys.exit()
+  readstdin = (sys.argv[-1:] == ['--'] and not args)
+
   debugmode = options.debugmode
 
   verbosity_levels = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
@@ -885,15 +888,18 @@ if __name__ == "__main__":
   loghandler.setFormatter(logging.Formatter(logformat))
 
 
-  patchfile = args[0]
-  urltest = patchfile.split(':')[0]
-  if (':' in patchfile and urltest.isalpha()
-      and len(urltest) > 1): # one char before : is a windows drive letter
-    patch = fromurl(patchfile)
+  if readstdin:
+    patch = PatchSet(sys.stdin)
   else:
-    if not exists(patchfile) or not isfile(patchfile):
-      sys.exit("patch file does not exist - %s" % patchfile)
-    patch = fromfile(patchfile)
+    patchfile = args[0]
+    urltest = patchfile.split(':')[0]
+    if (':' in patchfile and urltest.isalpha()
+        and len(urltest) > 1): # one char before : is a windows drive letter
+      patch = fromurl(patchfile)
+    else:
+      if not exists(patchfile) or not isfile(patchfile):
+        sys.exit("patch file does not exist - %s" % patchfile)
+      patch = fromfile(patchfile)
 
   if options.diffstat:
     print patch.diffstat()
