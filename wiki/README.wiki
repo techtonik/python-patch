@@ -48,7 +48,7 @@ expand test coverage, and try to make script more interactive.
 
 
 == Library usage ==
-[http://code.google.com/p/rainforce/wiki/WartsOfPython#Logging_(2.x_tested,_3.x_unknown) Unfortunately], you'll have to configure `logging` module in your application to avoid message 'No handlers could be found for logger "patch"'. For example, using:
+[http://code.google.com/p/rainforce/wiki/WartsOfPython#Logging_(2.x_tested,_3.x_unknown) Unfortunately], you'll have to configure `logging` module for "patch" module (or root logger of your application) to avoid message 'No handlers could be found for logger "patch"'. For example, root logger for application can be configured using:
 
 {{{
 import logging
