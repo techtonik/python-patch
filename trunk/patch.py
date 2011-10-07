@@ -13,7 +13,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "1.11.09-dev"
+__version__ = "1.11.10-dev"
 
 import copy
 import logging
@@ -27,20 +27,16 @@ import os
 
 
 #------------------------------------------------
-# Logging is controlled by "python_patch" logger
+# Logging is controlled by logger named after the
+# module name (e.g. 'patch' for patch.py module)
 
 debugmode = False
 
-logger = logging.getLogger("python_patch")
-loghandler = logging.StreamHandler()
-logger.addHandler(loghandler)
+logger = logging.getLogger(__name__)
 
 debug = logger.debug
 info = logger.info
 warning = logger.warning
-
-#: disable library logging by default
-logger.setLevel(logging.CRITICAL)
 
 #------------------------------------------------
 
@@ -885,7 +881,9 @@ if __name__ == "__main__":
     loglevel = logging.DEBUG
     logformat = "%(levelname)8s %(message)s"
   logger.setLevel(loglevel)
+  loghandler = logging.StreamHandler()
   loghandler.setFormatter(logging.Formatter(logformat))
+  logger.addHandler(loghandler)
 
 
   if readstdin:
