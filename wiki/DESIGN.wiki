@@ -62,9 +62,9 @@ command to start new cycle without waiting until the end of cycle (this
 also prevented the line from being accidentally processed by blocks below).
 
 Testing the line with `if` had two major drawbacks:
-1. regular expressions used in condition checks made the code obscure
-2. line could be intercepted by wrong block, and an extra effort required
-   to place blocks in proper order
+
+  # regular expressions used in condition checks made the code obscure
+  # line could be intercepted by wrong block, and an extra effort required to place blocks in proper order
 
 To illustrate second problem take lines starting with "+" or "-" for
 example. They should be parsed differently depending on where in diff they
@@ -95,16 +95,14 @@ blocks become more sophisticated.
 
 So, while state machine isolated parsing blocks from stealing lines from
 eash other, it still has drawbacks:
-1. blocks should be placed in proper order
-2. parsing blocks that make a decision when switching state should know
-   about lines (i.e. context) of successor blocks
-3. state checks are made for every input line, because block can't request
-   more lines in the middle of input cycle
-
+  # blocks should be placed in proper order
+  # parsing blocks that make a decision when switching state should know about lines (i.e. context) of successor blocks
+  # state checks are made for every input line, because block can't request more lines in the middle of input cycle
+ 
 Let's not forget benefits:
-1. debug is easier, code is more readable
-2. parser is still non-recursive
-3. no risk of endless loops
+  # debug is easier, code is more readable
+  # parser is still non-recursive
+  # no risk of endless loops
 
 This state machine allowed to introduce new `hunkskip` state for recovery
 from corrupted or invalid hunk. When such hunk is encountered - parser
@@ -123,11 +121,11 @@ The order of `hunkskip` is after `hunkbody` parser and before `filenames`
 and `hunkhead` parsing blocks. This guarantees that these blocks get their
 line after the state switch and before the line is discarded.
 
-
+{{{
 TODO: describe "missing line" problem in state recovery with two
       interleaving blocks, when it is impossible to choose which block
       should be placed ahead of the other
-
+}}}
 
 This line by line parser with lines that "fall through" arranged parsing
 blocks may be the fastest possible implementation. There are no calls, no
@@ -138,19 +136,15 @@ the way to go in the future.
 
 
 To summarize:
-- static code analysis is easier thanks to states instead of regexps for
-  branching execution;
-- state checks are run for every line of the input stream (blocks can't
-  request more lines);
-- blocks are not explicitly chained;
-- but still arranged in specific order;
-- every parsing block knows to which state it should switch after
-  processing;
-- this makes state switching complicated when there is choice;
-- because block should fetch the next line to make a decision;
-- line should be processed by the right block until the end of the cycle;
-- if it is impossible to rearrange blocks in the appropriate order then a
-  "decider block" is needed (e.g `hunkskip`).
+  * static code analysis is easier thanks to states instead of regexps for branching execution;
+  * state checks are run for every line of the input stream (blocks can't request more lines);
+  * blocks are not explicitly chained;
+  * but still arranged in specific order;
+  * every parsing block knows to which state it should switch after processing;
+  * this makes state switching complicated when there is choice;
+  * because block should fetch the next line to make a decision;
+  * line should be processed by the right block until the end of the cycle;
+  * if it is impossible to rearrange blocks in the appropriate order then a "decider block" is needed (e.g `hunkskip`).
 
 Absence of function calls should speed up things a little. Function calls
 could make block chaining explicit, but this exposes parser to stack
@@ -221,11 +215,10 @@ them in the correct order in main cycle, because at the end of processing
 the current block should always be higher than the other to pass the line.
 
 The solution can be in:
-- skip fetching line on the next cycle
-- add buffer for discarded lines
-- reinsert line into the stream
-- wrapper switch that judges who gets the next line, this requires one
-  more state variable, and processing lines one by one from the main cycle
+  * skip fetching line on the next cycle
+  * add buffer for discarded lines
+  * reinsert line into the stream
+  * wrapper switch that judges who gets the next line, this requires one more state variable, and processing lines one by one from the main cycle
   
 Reinserting lines can provide some performance overhead, wrapper switch
 complicates parser, so skip line fetching may be a good solution.
@@ -237,4 +230,3 @@ lines as it needs, switches state to "finished" and returns control to the
 beginning of the main cycle. Main cycle analyzes state and passes control
 to the next appropriate block. As a side effect there is now a line number
 that can be used for error messages and debugging.
-
