@@ -74,6 +74,16 @@ def fromurl(url):
   return PatchSet( urllib2.urlopen(url) )
 
 
+# --- Utility functions ---
+def pathstrip(path, n):
+  """ Strip n leading components from the given path """
+  pathlist = [path]
+  while os.path.dirname(pathlist[0]) != '':
+    pathlist[0:1] = os.path.split(pathlist[0])
+  return os.path.join(*pathlist[n:])
+# --- /Utility function ---
+
+
 class Hunk(object):
   """ Parsed hunk data container (hunk starts with @@ -R +R @@) """
 
@@ -624,19 +634,35 @@ class PatchSet(object):
     return output
 
 
-  def apply(self):
+  def apply(self, strip=0):
     """ apply parsed patch
         return True on success
     """
 
     total = len(self.items)
     errors = 0
+    if strip:
+      # [ ] test strip level exceeds nesting level
+      #   [ ] test the same only for selected files
+      #     [ ] test if files end up being on the same level
+      try:
+        strip = int(strip)
+      except ValueError:
+        errors += 1
+        warning("error: strip parameter '%s' must be an integer" % strip)
+        strip = 0
+
     #for fileno, filename in enumerate(self.source):
     for i,p in enumerate(self.items):
-
       f2patch = p.source
+      if strip:
+        debug("stripping %s leading component from '%s'" % (strip, f2patch))
+        f2patch = pathstrip(f2patch, strip)
       if not exists(f2patch):
         f2patch = p.target
+        if strip:
+          debug("stripping %s leading component from '%s'" % (strip, f2patch))
+          f2patch = pathstrip(f2patch, strip)
         if not exists(f2patch):
           warning("source/target file does not exist\n--- %s\n+++ %s" % (p.source, f2patch))
           errors += 1
@@ -880,9 +906,11 @@ if __name__ == "__main__":
                                   const=0, help="print only warnings and errors", default=1)
   opt.add_option("-v", "--verbose", action="store_const", dest="verbosity",
                                   const=2, help="be verbose")
+  opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   opt.add_option("--diffstat", action="store_true", dest="diffstat",
                                            help="print diffstat and exit")
-  opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
+  opt.add_option("-p", "--strip", type="int", metavar='N', default=0,
+                                           help="strip N path components from filenames")
   (options, args) = opt.parse_args()
 
   if not args and sys.argv[-1:] != ['--']:
@@ -923,7 +951,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
   #pprint(patch)
-  patch.apply() or sys.exit(-1)
+  patch.apply(options.strip) or sys.exit(-1)
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
