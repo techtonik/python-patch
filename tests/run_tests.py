@@ -298,6 +298,11 @@ class TestPatchApply(unittest.TestCase):
         pto = patch.fromfile('03trail_fname.patch')
         self.assert_(pto.apply())
 
+    def test_pathstrip(self):
+        self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
+        self.assertEqual(patch.pathstrip('path/name.diff', 1), 'name.diff')
+        self.assertEqual(patch.pathstrip('path/name.diff', 0), 'path/name.diff')
+
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
