@@ -248,6 +248,9 @@ class TestPatchParse(unittest.TestCase):
         fp.close()
 
     def test_fail_parent_path(self):
+        # [ ] exception vs return codes for error recovery
+        #  [ ] separate return code when patch lib compensated the error
+        #   [ ] test for ../something/../../file.to.patch
         fp = open(join(tests_dir, "data/failing/parent-path.diff"))
         res = patch.PatchSet().parse(fp)
         self.assertFalse(res)
