@@ -500,9 +500,15 @@ class PatchSet(object):
 
 
   def _normalize_filenames(self):
-    """ sanitize filenames, normalizing paths
-        TODO think about using forward slashes for crossplatform issues
-             (diff/patch were born as a unix utility after all)
+    """ sanitize filenames, normalizing paths, i.e.:
+        1. strip a/ and b/ prefixes from GIT and HG style patches
+        2. remove all references to parent directories (with warning)
+        3. translate any absolute paths to relative (with warning)
+
+        [ ] think about using forward slashes for crossplatform issues
+            (diff/patch were born as a unix utility after all)
+          [ ] need to find diff/patch with forward slashes 
+        
         return True on success
     """
     errors = 0
@@ -521,6 +527,7 @@ class PatchSet(object):
           else:
             p.target = p.target[2:]
 
+      # [ ] xnormpath, check if forward slash paths can be exploited
       p.source = normpath(p.source)
       p.target = normpath(p.target)
 
@@ -537,13 +544,25 @@ class PatchSet(object):
           p.target = p.target.partition(os.sep)[2]
 
       # absolute paths are not allowed
-      if isabs(p.source) or isabs(p.target):
+      def xisabs(filename):
+        """return True if `filename` is absolute on Linux/Unix/OS X or Windows"""
+        if filename.startswith('/'):
+          return True  # Linux/Unix
+        elif re.match('\w+:', filename):
+          return True  # Windows
+      def xstrip(filename):
+        """strip Linux/Unix/OS X and Windows absolute file prefixes from filename"""
+        warning("stripping absolute path component from '%s'" % filename)
+        while re.match('\w+:', filename) or filename.startswith('/'):
+          filename = re.sub('^\w+:', '', filename)
+          filename = filename.lstrip('/')
+      if xisabs(p.source) or xisabs(p.target):
         errors += 1
         warning("error: absolute paths are not allowed for file patch no.%d" % (i+1))
-        if isabs(p.source):
-          p.source = p.source.partition(os.sep)[2]
-        if isabs(p.target):
-          p.target = p.target.partition(os.sep)[2]
+        if xisabs(p.source):
+          p.source = xstrip(p.source)
+        if xisabs(p.target):
+          p.target = xstrip(p.target)
     
       self.items[i].source = p.source
       self.items[i].target = p.target
