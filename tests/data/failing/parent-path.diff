@@ -1,0 +1,13 @@
+Index: patch.py
+===================================================================
+--- ../patch.py	(revision 151)
++++ ../patch.py	(working copy)
+@@ -13,7 +13,7 @@
+ """
+ 
+ __author__ = "techtonik.rainforce.org"
+-__version__ = "1.11.10-dev"
++__version__ = "1.11.11-dev"
+ 
+ import copy
+ import logging
