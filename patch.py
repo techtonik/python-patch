@@ -24,6 +24,7 @@ import urllib2
 
 from os.path import exists, isabs, isfile, abspath, normpath
 import os
+import shutil
 
 
 #------------------------------------------------
@@ -889,6 +890,8 @@ class PatchSet(object):
 
     tgt.close()
     src.close()
+    # [ ] TODO: add test for permission copy
+    shutil.copymode(srcname, tgtname)
     return True
 
 
