@@ -312,7 +312,13 @@ class TestHelpers(unittest.TestCase):
             self.assertFalse(patch.xisabs(path), 'Target path: ' + repr(path))
 
     def test_xstrip(self):
-        self.assertEqual(patch.xstrip('c:/path'), 'path')
+        for path in self.absolute[:4]:
+            self.assertEqual(patch.xstrip(path), '')
+        for path in self.absolute[4:6]:
+            self.assertEqual(patch.xstrip(path), 'path')
+        # test relative paths are not affected
+        for path in self.relative:
+            self.assertEqual(patch.xstrip(path), path)
 
     def test_pathstrip(self):
         self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
