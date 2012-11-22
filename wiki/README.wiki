@@ -74,6 +74,7 @@ logging.basicConfig()
      + PatchSet.type and Patch.type
      * PatchSet.parse() now returns True if parsing completed without errors
      + PatchSet.__len__()
+     + xisabs() cross-platform version of `os.path.isabs()`
 11.01
    - patch.py can read patches from web
    - patch.py returns -1 if there were errors during patching
