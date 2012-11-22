@@ -58,7 +58,7 @@ MIXED = MIXED = "mixed"
 def xisabs(filename):
   """ Cross-platform version of `os.path.isabs()`
       Returns True if `filename` is absolute on
-      either Linux/Unix/OS X or Windows.
+      Linux, OS X or Windows.
   """
   if filename.startswith('/'):     # Linux/Unix
     return True
@@ -69,12 +69,18 @@ def xisabs(filename):
   return False
 
 def xstrip(filename):
-  """ Strip absolute path prefixes used on
-      Linux/Unix/OS X and Windows
+  """ Make relative path out of absolute by stripping
+      prefixes used on Linux, OS X and Windows.
+
+      This function is critical for security.
   """
-  while re.match('\w+:', filename) or filename.startswith('/'):
-    filename = re.sub('^\w+:', '', filename)
-    filename = filename.lstrip('/')
+  while xisabs(filename):
+    # strip windows drive with all slashes
+    if re.match(r'\w:[\\/]', filename):
+      filename = re.sub(r'^\w+:[\\/]+', '', filename)
+    # strip all slashes
+    elif re.match(r'[\\/]', filename):
+      filename = re.sub(r'^[\\/]+', '', filename)
   return filename
 
 #-----------------------------------------------
