@@ -64,7 +64,7 @@ def xisabs(filename):
     return True
   elif filename.startswith('\\'):  # Windows
     return True
-  elif re.match('\w+:', filename): # Windows
+  elif re.match(r'\w:[\\/]', filename): # Windows
     return True
   return False
 
