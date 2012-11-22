@@ -479,6 +479,8 @@ class PatchSet(object):
       else:
         warning("error: patch stream is incomplete!")
         errors += 1
+        if len(self.items) == 0:
+          return False
 
     if debugmode and len(self.items) > 0:
         debug("- %2d hunks for %s" % (len(p.hunks), p.source))
