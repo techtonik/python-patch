@@ -92,12 +92,13 @@ def fromurl(url):
 
 
 # --- Utility functions ---
+# [ ] reuse more universal pathsplit()
 def pathstrip(path, n):
   """ Strip n leading components from the given path """
   pathlist = [path]
   while os.path.dirname(pathlist[0]) != '':
     pathlist[0:1] = os.path.split(pathlist[0])
-  return os.path.join(*pathlist[n:])
+  return '/'.join(pathlist[n:])
 # --- /Utility function ---
 
 
