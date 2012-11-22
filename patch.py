@@ -14,7 +14,7 @@
 """
 
 __author__ = "techtonik.rainforce.org"
-__version__ = "1.11.11-dev"
+__version__ = "1.12.11-dev"
 
 import copy
 import logging
@@ -41,8 +41,7 @@ info = logger.info
 warning = logger.warning
 
 #------------------------------------------------
-
-# constants for Patch/PatchSet types
+# Constants for Patch/PatchSet types
 
 DIFF = PLAIN = "plain"
 GIT = "git"
@@ -52,6 +51,22 @@ SVN = SUBVERSION = "svn"
 # Patches of different type
 MIXED = MIXED = "mixed"
 
+
+#------------------------------------------------
+# Helpers (these could come with Python stdlib)
+
+def xisabs(filename):
+  """ Cross-platform version of `os.path.isabs()`
+      Returns True if `filename` is absolute on
+      either Linux/Unix/OS X or Windows.
+  """
+  if filename.startswith('/'):
+    return True  # Linux/Unix
+  elif re.match('\w+:', filename):
+    return True  # Windows
+
+
+#-----------------------------------------------
 
 def fromfile(filename):
   """ Parse patch file and return PatchSet() object
@@ -554,14 +569,7 @@ class PatchSet(object):
         errors += 1
         while p.target.startswith(".." + os.sep):
           p.target = p.target.partition(os.sep)[2]
-
       # absolute paths are not allowed
-      def xisabs(filename):
-        """return True if `filename` is absolute on Linux/Unix/OS X or Windows"""
-        if filename.startswith('/'):
-          return True  # Linux/Unix
-        elif re.match('\w+:', filename):
-          return True  # Windows
       def xstrip(filename):
         """strip Linux/Unix/OS X and Windows absolute file prefixes from filename"""
         warning("stripping absolute path component from '%s'" % filename)
