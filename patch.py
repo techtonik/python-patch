@@ -84,6 +84,7 @@ def xstrip(filename):
   return filename
 
 #-----------------------------------------------
+# Main API functions
 
 def fromfile(filename):
   """ Parse patch file and return PatchSet() object
@@ -265,7 +266,7 @@ class PatchSet(object):
         if fe.is_empty:
             if p == None:
               errors += 1
-              warning("warning: no patch data is found")
+              debug("no patch data found")  # warning is thrown later
             else:
               info("%d unparsed bytes left at the end of stream" % len(''.join(header)))
               # TODO check for \No new line at the end.. 
@@ -461,8 +462,10 @@ class PatchSet(object):
           nexthunkno += 1
           continue
 
+    # /while fe.next()
 
-    self.items.append(p)
+    if p:
+      self.items.append(p)
 
     if not hunkparsed:
       if hunkskip:
@@ -470,7 +473,7 @@ class PatchSet(object):
       elif headscan:
         if len(self.items) == 0:
           warning("error: no patch data found!")
-          # ? sys.exit(-1)
+          return False
         else: # extra data at the end of file
           pass 
       else:
