@@ -247,6 +247,12 @@ class TestPatchParse(unittest.TestCase):
         self.assertFalse(res)
         fp.close()
 
+    def test_fail_not_a_patch(self):
+        fp = open(join(tests_dir, "data/failing/not-a-patch.log"))
+        res = patch.PatchSet().parse(fp)
+        self.assertFalse(res)
+        fp.close()
+
     def test_fail_parent_path(self):
         # [ ] exception vs return codes for error recovery
         #  [ ] separate return code when patch lib compensated the error
