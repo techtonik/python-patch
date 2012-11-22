@@ -256,6 +256,17 @@ class TestPatchParse(unittest.TestCase):
         self.assertFalse(res)
         fp.close()
 
+    def test_diffstat(self):
+        output = """\
+ updatedlg.cpp | 20 ++++++++++++++++++--
+ updatedlg.h   |  1 +
+ manifest.xml  | 15 ++++++++-------
+ conf.cpp      | 23 +++++++++++++++++------
+ conf.h        |  7 ++++---
+ 5 files changed, 48 insertions(+), 18 deletions(-)"""
+        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        self.assertEqual(pto.diffstat(), output, "Output doesn't match")
+
 class TestPatchSetDetect(unittest.TestCase):
     def test_svn_detected(self):
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
