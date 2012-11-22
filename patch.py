@@ -68,6 +68,13 @@ def xisabs(filename):
     return True
   return False
 
+def xstrip(filename):
+  """ Strip absolute path prefixes used on
+      Linux/Unix/OS X and Windows
+  """
+  while re.match('\w+:', filename) or filename.startswith('/'):
+    filename = re.sub('^\w+:', '', filename)
+    filename = filename.lstrip('/')
 
 #-----------------------------------------------
 
@@ -574,18 +581,14 @@ class PatchSet(object):
         while p.target.startswith(".." + os.sep):
           p.target = p.target.partition(os.sep)[2]
       # absolute paths are not allowed
-      def xstrip(filename):
-        """strip Linux/Unix/OS X and Windows absolute file prefixes from filename"""
-        warning("stripping absolute path component from '%s'" % filename)
-        while re.match('\w+:', filename) or filename.startswith('/'):
-          filename = re.sub('^\w+:', '', filename)
-          filename = filename.lstrip('/')
       if xisabs(p.source) or xisabs(p.target):
         errors += 1
-        warning("error: absolute paths are not allowed for file patch no.%d" % (i+1))
+        warning("error: absolute paths are not allowed - file no.%d" % (i+1))
         if xisabs(p.source):
+          warning("stripping absolute path from source name '%s'" % p.source)
           p.source = xstrip(p.source)
         if xisabs(p.target):
+          warning("stripping absolute path from target name '%s'" % p.target)
           p.target = xstrip(p.target)
     
       self.items[i].source = p.source
