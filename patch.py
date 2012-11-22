@@ -60,10 +60,13 @@ def xisabs(filename):
       Returns True if `filename` is absolute on
       either Linux/Unix/OS X or Windows.
   """
-  if filename.startswith('/'):
-    return True  # Linux/Unix
-  elif re.match('\w+:', filename):
-    return True  # Windows
+  if filename.startswith('/'):     # Linux/Unix
+    return True
+  elif filename.startswith('\\'):  # Windows
+    return True
+  elif re.match('\w+:', filename): # Windows
+    return True
+  return False
 
 
 #-----------------------------------------------
