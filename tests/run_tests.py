@@ -247,6 +247,12 @@ class TestPatchParse(unittest.TestCase):
         self.assertFalse(res)
         fp.close()
 
+    def test_fail_context_format(self):
+        fp = open(join(tests_dir, "data/failing/context-format.diff"))
+        res = patch.PatchSet().parse(fp)
+        self.assertFalse(res)
+        fp.close()
+
     def test_fail_not_a_patch(self):
         fp = open(join(tests_dir, "data/failing/not-a-patch.log"))
         res = patch.PatchSet().parse(fp)
