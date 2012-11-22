@@ -302,11 +302,11 @@ class TestHelpers(unittest.TestCase):
     def test_xisabs(self):
         self.longMessage = True
         for path in [
-                '/', 'c:\\', '\\', '/path', 'c:\\path']:
-            self.assertTrue(patch.xisabs(path), 'Target path: ' + path)
+                '/', 'c:\\', 'c:/', '\\', '/path', 'c:\\path']:
+            self.assertTrue(patch.xisabs(path), 'Target path: ' + repr(path))
         for path in [
-                'path', 'path:\\', 'path\\', 'path/', 'path\\path']:
-            self.assertFalse(patch.xisabs(path), 'Target path: ' + path)
+                'path', 'path:\\', 'path:/', 'path\\', 'path/', 'path\\path']:
+            self.assertFalse(patch.xisabs(path), 'Target path: ' + repr(path))
 
     def test_pathstrip(self):
         self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
