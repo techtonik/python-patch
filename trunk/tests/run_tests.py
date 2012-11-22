@@ -298,6 +298,16 @@ class TestPatchApply(unittest.TestCase):
         pto = patch.fromfile('03trail_fname.patch')
         self.assert_(pto.apply())
 
+class TestHelpers(unittest.TestCase):
+    def test_xisabs(self):
+        self.longMessage = True
+        for path in [
+                '/', 'c:\\', '\\', '/path', 'c:\\path']:
+            self.assertTrue(patch.xisabs(path), 'Target path: ' + path)
+        for path in [
+                'path', 'path:\\', 'path\\', 'path/', 'path\\path']:
+            self.assertFalse(patch.xisabs(path), 'Target path: ' + path)
+
     def test_pathstrip(self):
         self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
         self.assertEqual(patch.pathstrip('path/name.diff', 1), 'name.diff')
