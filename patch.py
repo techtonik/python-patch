@@ -75,6 +75,7 @@ def xstrip(filename):
   while re.match('\w+:', filename) or filename.startswith('/'):
     filename = re.sub('^\w+:', '', filename)
     filename = filename.lstrip('/')
+  return filename
 
 #-----------------------------------------------
 

@@ -299,14 +299,20 @@ class TestPatchApply(unittest.TestCase):
         self.assert_(pto.apply())
 
 class TestHelpers(unittest.TestCase):
+    # unittest setting
+    longMessage = True
+
+    absolute = ['/', 'c:\\', 'c:/', '\\', '/path', 'c:\\path']
+    relative = ['path', 'path:\\', 'path:/', 'path\\', 'path/', 'path\\path']
+
     def test_xisabs(self):
-        self.longMessage = True
-        for path in [
-                '/', 'c:\\', 'c:/', '\\', '/path', 'c:\\path']:
+        for path in self.absolute:
             self.assertTrue(patch.xisabs(path), 'Target path: ' + repr(path))
-        for path in [
-                'path', 'path:\\', 'path:/', 'path\\', 'path/', 'path\\path']:
+        for path in self.relative:
             self.assertFalse(patch.xisabs(path), 'Target path: ' + repr(path))
+
+    def test_xstrip(self):
+        self.assertEqual(patch.xstrip('c:/path'), 'path')
 
     def test_pathstrip(self):
         self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
