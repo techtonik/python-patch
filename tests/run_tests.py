@@ -317,8 +317,6 @@ class TestPatchApply(unittest.TestCase):
           shutil.copy(join(tests_dir, f), self.tmpdir)
 
     def test_apply_returns_false_on_failure(self):
-        # Hack to remove 'No handlers could be found for ...' message
-        import logging; logging.basicConfig(level=logging.CRITICAL)
         self.tmpcopy(['data/failing/non-empty-patch-for-empty-file.diff',
                       'data/failing/upload.py'])
         pto = patch.fromfile('non-empty-patch-for-empty-file.diff')
