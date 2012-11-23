@@ -235,16 +235,26 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.items[1].header[0], 'Index: updatedlg.h\r\n')
         self.assert_(pto.items[1].header[1].startswith('====='))
 
+    def test_autofixed_absolute_path(self):
+        pto = patch.fromfile(join(tests_dir, "data/autofix/absolute-path.diff"))
+        self.assertEqual(pto.errors, 0)
+        self.assertEqual(pto.warnings, 2)
+        self.assertEqual(pto.items[0].source, "winnt\\tests\\run_tests.py")
+
+    def test_autofixed_parent_path(self):
+        # [ ] exception vs return codes for error recovery
+        #  [x] separate return code when patch lib compensated the error
+        #      (implemented as warning count)
+        #   [ ] test for ../something/../../file.to.patch
+        pto = patch.fromfile(join(tests_dir, "data/autofix/parent-path.diff"))
+        self.assertEqual(pto.errors, 0)
+        self.assertEqual(pto.warnings, 2)
+        self.assertEqual(pto.items[0].source, "patch.py")
+
     def test_fail_missing_hunk_line(self):
         fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
         pto = patch.PatchSet()
         self.assertNotEqual(pto.parse(fp), True)
-        fp.close()
-
-    def test_fail_absolute_path(self):
-        fp = open(join(tests_dir, "data/failing/absolute-path.diff"))
-        res = patch.PatchSet().parse(fp)
-        self.assertFalse(res)
         fp.close()
 
     def test_fail_context_format(self):
@@ -255,15 +265,6 @@ class TestPatchParse(unittest.TestCase):
 
     def test_fail_not_a_patch(self):
         fp = open(join(tests_dir, "data/failing/not-a-patch.log"))
-        res = patch.PatchSet().parse(fp)
-        self.assertFalse(res)
-        fp.close()
-
-    def test_fail_parent_path(self):
-        # [ ] exception vs return codes for error recovery
-        #  [ ] separate return code when patch lib compensated the error
-        #   [ ] test for ../something/../../file.to.patch
-        fp = open(join(tests_dir, "data/failing/parent-path.diff"))
         res = patch.PatchSet().parse(fp)
         self.assertFalse(res)
         fp.close()
