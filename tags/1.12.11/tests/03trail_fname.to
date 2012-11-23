@@ -1,0 +1,9 @@
+Tests:
+- file not found
+- already patched
+
+Features:
+- create new files
+- remove files
+- svn diff
+- hg diff

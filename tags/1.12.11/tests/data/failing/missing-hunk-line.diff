@@ -1,0 +1,27 @@
+Index: codereview/urls.py
+===================================================================
+--- codereview/urls.py	(revision 646)
++++ codereview/urls.py	(working copy)
+@@ -76,7 +76,8 @@
+     (r'^_ah/xmpp/message/chat/', 'incoming_chat'),
+     (r'^_ah/mail/(.*)', 'incoming_mail'),
+     (r'^xsrf_token$', 'xsrf_token'),
+-    (r'^static/upload.py$', 'customized_upload_py'),
++    # patching upload.py on the fly
++    (r'^dynamic/upload.py$', 'customized_upload_py'),
+     (r'^search$', 'search'),
+     )
+Index: templates/use_uploadpy.html
+===================================================================
+--- templates/use_uploadpy.html	(revision 646)
++++ templates/use_uploadpy.html	(working copy)
+@@ -2,7 +2,7 @@
+ 
+ {%block body%}
+ <h1>Tired of uploading files through the form?</h1>
+-<p>Download <a href="{{media_url}}upload.py">upload.py</a>, a simple tool for
++<p>Download <a href="{%url codereview.views.customized_upload_py%}">upload.py</a>, a simple tool for
+ uploading diffs from a version control system to the codereview app.</p>
+ 
+ <p><strong>Usage summary:</strong>
+y

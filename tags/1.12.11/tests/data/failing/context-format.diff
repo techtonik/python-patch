@@ -1,0 +1,24 @@
+*** socketserver.py	2011-02-03 14:45:53.075396994 -0700
+--- socketserver-new.py	2011-02-03 14:57:53.185396998 -0700
+***************
+*** 224,229 ****
+--- 224,232 ----
+                  r, w, e = select.select([self], [], [], poll_interval)
+                  if self in r:
+                      self._handle_request_noblock()
++ 
++                 if getattr(self, "active_children", None) != None and len(self.active_children) > 0:
++                     self.collect_children()
+          finally:
+              self.__shutdown_request = False
+              self.__is_shut_down.set()
+***************
+*** 521,527 ****
+  
+      def process_request(self, request, client_address):
+          """Fork a new subprocess to process the request."""
+-         self.collect_children()
+          pid = os.fork()
+          if pid:
+              # Parent process
+--- 524,529 ----

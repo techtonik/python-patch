@@ -1,0 +1,62 @@
+Index: Python/peephole.c
+===================================================================
+--- Python/peephole.c	(revision 72970)
++++ Python/peephole.c	(working copy)
+@@ -180,11 +180,12 @@
+ }
+
+ static int
+-fold_unaryops_on_constants(unsigned char *codestr, PyObject *consts)
++fold_unaryops_on_constants(unsigned char *codestr, PyObject *consts,
++    PyObject *names)
+ {
+ 	PyObject *newconst=NULL, *v;
+ 	Py_ssize_t len_consts;
+-	int opcode;
++	int opcode, i = 1, j;
+
+ 	/* Pre-conditions */
+ 	assert(PyList_CheckExact(consts));
+@@ -205,6 +206,11 @@
+ 		case UNARY_INVERT:
+ 			newconst = PyNumber_Invert(v);
+ 			break;
++		case LOAD_ATTR:
++		    i = 3;
++	        newconst = PyObject_GetAttr(v,
++	            PyTuple_GET_ITEM(names, GETARG(codestr, 3)));
++		    break;
+ 		default:
+ 			/* Called with an unknown opcode */
+ 			PyErr_Format(PyExc_SystemError,
+@@ -226,9 +232,11 @@
+ 	Py_DECREF(newconst);
+
+ 	/* Write NOP LOAD_CONST newconst */
+-	codestr[0] = NOP;
+-	codestr[1] = LOAD_CONST;
+-	SETARG(codestr, 1, len_consts);
++	for (j = 0; j < i; j++) {
++    	codestr[j] = NOP;
++    }
++	codestr[i] = LOAD_CONST;
++	SETARG(codestr, i, len_consts);
+ 	return 1;
+ }
+
+@@ -484,10 +492,13 @@
+ 			case UNARY_NEGATIVE:
+ 			case UNARY_CONVERT:
+ 			case UNARY_INVERT:
++			case LOAD_ATTR:
+ 				if (lastlc >= 1	 &&
+ 				    ISBASICBLOCK(blocks, i-3, 4)  &&
+-				    fold_unaryops_on_constants(&codestr[i-3], consts))	{
+-					i -= 2;
++				    fold_unaryops_on_constants(&codestr[i-3], consts, names))	{
++				    if (opcode != LOAD_ATTR) {
++    					i -= 2;
++    				}
+ 					assert(codestr[i] == LOAD_CONST);
+ 					cumlc = 1;
+ 				}

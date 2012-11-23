@@ -1,0 +1,11 @@
+--- 04can_patch.from	Sun Dec 27 09:53:51 2009
++++ 04can_patch.to	Sun Dec 27 09:54:06 2009
+@@ -6,8 +6,6 @@
+ beta
+ beta
+ alpha
+-beta
+-beta
+ beta
+ beta
+ beta
