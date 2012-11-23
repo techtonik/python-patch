@@ -13,7 +13,7 @@
     $HeadURL$
 """
 
-__author__ = "techtonik.rainforce.org"
+__author__ = "anatoly techtonik <techtonik@gmail.com>"
 __version__ = "1.12.11-dev"
 
 import copy
