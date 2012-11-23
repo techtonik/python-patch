@@ -239,13 +239,12 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromfile(join(tests_dir, "data/autofix/absolute-path.diff"))
         self.assertEqual(pto.errors, 0)
         self.assertEqual(pto.warnings, 2)
-        self.assertEqual(pto.items[0].source, "winnt\\tests\\run_tests.py")
+        self.assertEqual(pto.items[0].source, "winnt/tests/run_tests.py")
 
     def test_autofixed_parent_path(self):
         # [ ] exception vs return codes for error recovery
         #  [x] separate return code when patch lib compensated the error
         #      (implemented as warning count)
-        #   [ ] test for ../something/../../file.to.patch
         pto = patch.fromfile(join(tests_dir, "data/autofix/parent-path.diff"))
         self.assertEqual(pto.errors, 0)
         self.assertEqual(pto.warnings, 2)
@@ -338,6 +337,10 @@ class TestHelpers(unittest.TestCase):
             self.assertTrue(patch.xisabs(path), 'Target path: ' + repr(path))
         for path in self.relative:
             self.assertFalse(patch.xisabs(path), 'Target path: ' + repr(path))
+
+    def test_xnormpath(self):
+        path = "../something/..\\..\\file.to.patch"
+        self.assertEqual(patch.xnormpath(path), '../../file.to.patch')
 
     def test_xstrip(self):
         for path in self.absolute[:4]:

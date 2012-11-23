@@ -3,7 +3,7 @@
 
     Brute-force line-by-line non-recursive parsing 
 
-    Copyright (c) 2008-2011 anatoly techtonik
+    Copyright (c) 2008-2012 anatoly techtonik
     Available under the terms of MIT license
 
     Project home: http://code.google.com/p/python-patch/
@@ -23,7 +23,7 @@ import re
 from StringIO import StringIO
 import urllib2
 
-from os.path import exists, isabs, isfile, abspath, normpath
+from os.path import exists, isfile, abspath
 import os
 import shutil
 
@@ -55,6 +55,10 @@ MIXED = MIXED = "mixed"
 #------------------------------------------------
 # Helpers (these could come with Python stdlib)
 
+# x...() function are used to work with paths in
+# cross-platform manner - all paths use forward
+# slashes even on Windows.
+
 def xisabs(filename):
   """ Cross-platform version of `os.path.isabs()`
       Returns True if `filename` is absolute on
@@ -67,6 +71,10 @@ def xisabs(filename):
   elif re.match(r'\w:[\\/]', filename): # Windows
     return True
   return False
+
+def xnormpath(path):
+  """ Cross-platform version of os.path.normpath """
+  return os.path.normpath(path).replace(os.sep, '/')
 
 def xstrip(filename):
   """ Make relative path out of absolute by stripping
@@ -579,9 +587,8 @@ class PatchSet(object):
         2. remove all references to parent directories (with warning)
         3. translate any absolute paths to relative (with warning)
 
-        [ ] always use forward slashes to be crossplatform
+        [x] always use forward slashes to be crossplatform
             (diff/patch were born as a unix utility after all)
-          [ ] need to find diff/patch with forward slashes 
         
         return None
     """
@@ -600,21 +607,22 @@ class PatchSet(object):
           else:
             p.target = p.target[2:]
 
-      # [ ] xnormpath, check if forward slash paths can be exploited
-      p.source = normpath(p.source)
-      p.target = normpath(p.target)
+      p.source = xnormpath(p.source)
+      p.target = xnormpath(p.target)
+
+      sep = '/'  # sep value can be hardcoded, but it looks nice this way
 
       # references to parent are not allowed
-      if p.source.startswith(".." + os.sep):
+      if p.source.startswith(".." + sep):
         warning("error: stripping parent path for source file patch no.%d" % (i+1))
         self.warnings += 1
-        while p.source.startswith(".." + os.sep):
-          p.source = p.source.partition(os.sep)[2]
-      if p.target.startswith(".." + os.sep):
+        while p.source.startswith(".." + sep):
+          p.source = p.source.partition(sep)[2]
+      if p.target.startswith(".." + sep):
         warning("error: stripping parent path for target file patch no.%d" % (i+1))
         self.warnings += 1
-        while p.target.startswith(".." + os.sep):
-          p.target = p.target.partition(os.sep)[2]
+        while p.target.startswith(".." + sep):
+          p.target = p.target.partition(sep)[2]
       # absolute paths are not allowed
       if xisabs(p.source) or xisabs(p.target):
         warning("error: absolute paths are not allowed - file no.%d" % (i+1))
