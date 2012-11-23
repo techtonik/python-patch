@@ -68,8 +68,10 @@ See [APIUseCases].
 {{{
 1.12.11  Major API Break
 
-   - added detection of SVN, GIT and HG patch types, unrecognized patches
-     are marked as PLAIN
+   - patch.py can read patched from stdin
+   - patch.py can show nice histogram with --diffstat option
+   - added detection of SVN, GIT and HG patch types, unrecognized
+     patches marked as PLAIN
    - added error reporting for parsing functions and helpers (now they
      return False if parsing failed) - make sure you handle this correctly
    - added normalization to filenames to protect against patching files
@@ -83,6 +85,7 @@ See [APIUseCases].
      * Patch.header is now a list of strings
      * PatchSet.parse() now returns True if parsing completed without errors
      + PatchSet.__len__()
+     + PatchSet.diffstat()
      + PatchSet.type and Patch.type
      + PatchSet.errors and 
      + xisabs() cross-platform version of `os.path.isabs()`
