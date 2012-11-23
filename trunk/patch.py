@@ -157,13 +157,19 @@ class Patch(object):
 class PatchSet(object):
 
   def __init__(self, stream=None):
-    self.name = None   # descriptive name of the PatchSet
+    # --- API accessible fields ---
+
+    # name of the PatchSet (filename or ...)
+    self.name = None
+    # patch set type - one of constants
+    self.type = None
 
     # list of Patch objects
     self.items = []
 
-    #: patch set type - one of constants
-    self.type = None
+    self.errors = 0    # fatal parsing errors
+    self.warnings = 0  # non-critical warnings
+    # --- /API ---
 
     if stream:
       self.parse(stream)
@@ -235,7 +241,7 @@ class PatchSet(object):
     # regexp to match start of hunk, used groups - 1,3,4,6
     re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?")
     
-    errors = 0
+    self.errors = 0
     # temp buffers for header and filenames info
     header = []
     srcname = None
@@ -265,10 +271,11 @@ class PatchSet(object):
             fe.next()
         if fe.is_empty:
             if p == None:
-              errors += 1
-              debug("no patch data found")  # warning is thrown later
+              debug("no patch data found")  # error is shown later
+              self.errors += 1
             else:
               info("%d unparsed bytes left at the end of stream" % len(''.join(header)))
+              self.warnings += 1
               # TODO check for \No new line at the end.. 
               # TODO test for unparsed bytes
               # otherwise error += 1
@@ -309,7 +316,7 @@ class PatchSet(object):
             # add hunk status node
             hunk.invalid = True
             p.hunks.append(hunk)
-            errors += 1
+            self.errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
@@ -320,7 +327,7 @@ class PatchSet(object):
             # add hunk status node
             hunk.invalid = True
             p.hunks.append(hunk)
-            errors += 1
+            self.errors += 1
             # switch to hunkskip state
             hunkbody = False
             hunkskip = True
@@ -335,6 +342,7 @@ class PatchSet(object):
             ends = p.hunkends
             if ((ends["cr"]!=0) + (ends["crlf"]!=0) + (ends["lf"]!=0)) > 1:
               warning("inconsistent line ends in patch hunks for %s" % p.source)
+              self.warnings += 1
             if debugmode:
               debuglines = dict(ends)
               debuglines.update(file=p.target, hunk=nexthunkno)
@@ -370,7 +378,7 @@ class PatchSet(object):
             srcname = match.group(1).strip()
           else:
             warning("skipping invalid filename at line %d" % lineno)
-            errors += 1
+            self.errors += 1
             # XXX p.header += line
             # switch back to headscan state
             filenames = False
@@ -378,7 +386,7 @@ class PatchSet(object):
         elif not line.startswith("+++ "):
           if srcname != None:
             warning("skipping invalid patch with no target for %s" % srcname)
-            errors += 1
+            self.errors += 1
             srcname = None
             # XXX header += srcname
             # XXX header += line
@@ -391,7 +399,7 @@ class PatchSet(object):
           if tgtname != None:
             # XXX seems to be a dead branch  
             warning("skipping invalid patch - double target at line %d" % lineno)
-            errors += 1
+            self.errors += 1
             srcname = None
             tgtname = None
             # XXX header += srcname
@@ -406,7 +414,7 @@ class PatchSet(object):
             match = re.match(re_filename, line)
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % lineno)
-              errors += 1
+              self.errors += 1
               srcname = None
               # switch back to headscan state
               filenames = False
@@ -432,7 +440,7 @@ class PatchSet(object):
         if not match:
           if not p.hunks:
             warning("skipping invalid patch with no hunks for file %s" % p.source)
-            errors += 1
+            self.errors += 1
             # XXX review switch
             # switch to headscan state
             hunkhead = False
@@ -469,7 +477,7 @@ class PatchSet(object):
 
     if not hunkparsed:
       if hunkskip:
-        warning("warning: finished with warnings, some hunks may be invalid")
+        warning("warning: finished with errors, some hunks may be invalid")
       elif headscan:
         if len(self.items) == 0:
           warning("error: no patch data found!")
@@ -478,7 +486,7 @@ class PatchSet(object):
           pass 
       else:
         warning("error: patch stream is incomplete!")
-        errors += 1
+        self.errors += 1
         if len(self.items) == 0:
           return False
 
@@ -498,12 +506,11 @@ class PatchSet(object):
       self.type = MIXED
     else:
       self.type = types.pop()
-
     # --------
-    if not self._normalize_filenames():
-      errors += 1
+
+    self._normalize_filenames()
     
-    return (errors == 0)
+    return (self.errors == 0)
 
   def _detect_type(self, p):
     """ detect and return type for the specified Patch object
@@ -572,13 +579,12 @@ class PatchSet(object):
         2. remove all references to parent directories (with warning)
         3. translate any absolute paths to relative (with warning)
 
-        [ ] think about using forward slashes for crossplatform issues
+        [ ] always use forward slashes to be crossplatform
             (diff/patch were born as a unix utility after all)
           [ ] need to find diff/patch with forward slashes 
         
-        return True on success
+        return None
     """
-    errors = 0
     for i,p in enumerate(self.items):
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
@@ -601,18 +607,18 @@ class PatchSet(object):
       # references to parent are not allowed
       if p.source.startswith(".." + os.sep):
         warning("error: stripping parent path for source file patch no.%d" % (i+1))
-        errors += 1
+        self.warnings += 1
         while p.source.startswith(".." + os.sep):
           p.source = p.source.partition(os.sep)[2]
       if p.target.startswith(".." + os.sep):
         warning("error: stripping parent path for target file patch no.%d" % (i+1))
-        errors += 1
+        self.warnings += 1
         while p.target.startswith(".." + os.sep):
           p.target = p.target.partition(os.sep)[2]
       # absolute paths are not allowed
       if xisabs(p.source) or xisabs(p.target):
-        errors += 1
         warning("error: absolute paths are not allowed - file no.%d" % (i+1))
+        self.warnings += 1
         if xisabs(p.source):
           warning("stripping absolute path from source name '%s'" % p.source)
           p.source = xstrip(p.source)
@@ -622,8 +628,6 @@ class PatchSet(object):
     
       self.items[i].source = p.source
       self.items[i].target = p.target
-
-    return (errors == 0)
 
 
   def diffstat(self):
