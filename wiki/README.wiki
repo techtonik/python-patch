@@ -76,6 +76,7 @@ See [APIUseCases].
      using absolute paths or files in parent directories
    - test run patch.py on all patches submitted to Python bug tracker, which
      resulted in improved parsing and error handling for some corner cases
+   - improved logging
    - API changes
      * fromfile(), fromstring() and fromurl() now return False on errors
      * previous Patch is renamed to PatchSet, new Patch is single file entry
