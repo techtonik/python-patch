@@ -1,9 +1,15 @@
 #summary Example driven API
 #labels Phase-Design
 
-== Use cases ==
 {{{
+import patch
+}}}
 
+== Use cases ==
+=== Detect if a file is a valid patch ===
+{{{
+>>> bool( patch.fromfile('doc/example.diff.diff') )
+True
 }}}
 
 == User stories ==
