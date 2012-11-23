@@ -40,6 +40,20 @@ debug = logger.debug
 info = logger.info
 warning = logger.warning
 
+class NullHandler(logging.Handler):
+  """ Copied from Python 2.7 to avoid getting
+      `No handlers could be found for logger "patch"`
+      http://bugs.python.org/issue16539
+  """
+  def handle(self, record):
+    pass
+  def emit(self, record):
+    pass
+  def createLock(self):
+    self.lock = None
+
+logger.addHandler(NullHandler())
+
 #------------------------------------------------
 # Constants for Patch/PatchSet types
 
