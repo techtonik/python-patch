@@ -46,35 +46,30 @@ ways'. Thanks creators, _the format of unified diff_ is rather simple (an
 illustration of Subversion style unified diff is included in
 [http://python-patch.googlecode.com/svn/trunk/doc/ source doc/] directory).
 
-It would be nice to further simplify parser, make it more modular to allow easy
-customization and extension, but the primary focus for now is to figure out
-an API that will make it usable as a library. There is separate TODO item to
-check behavior of "\ No newline at end of file" cases. Other goals is to
-expand test coverage, and try to make script more interactive.
-
 == Features ==
 
-* Single file, which is a command line tool and library
-* No dependencies outside Python stdlib
-* Automatic correction of linefeeds according to patched file
-* Automatic correction of diffs broken by stripping trailing whitespace
-* Patch format detection (SVN, HG, GIT)
-* Python 2.5+ compatible, 2.7 tested, 3 not supported
+ * Single file, which is a command line tool and library
+ * No dependencies outside Python stdlib
+ * Automatic correction of linefeeds according to patched file
+ * Automatic correction of diffs broken by stripping trailing whitespace
+ * Patch format detection (SVN, HG, GIT)
+ * Python 2.5+ compatible, 2.7 tested, 3 not supported
 
 Things that don't work:
 
-* Python 3
-* File renaming, creation and removal
-* Version control specific properties
-* Non-unified diff formats
+ * Python 3
+ * File renaming, creation and removal
+ * Version control specific properties
+ * Non-unified diff formats
 
 == Library usage ==
 
-See APIUseCases.
+See [APIUseCases].
 
 == Changes ==
 {{{
 1.12.11  Major API Break
+
    - added detection of SVN, GIT and HG patch types, unrecognized patches
      are marked as PLAIN
    - added error reporting for parsing functions and helpers (now they
@@ -163,3 +158,9 @@ parsing techniques (with [http://pyparsing.wikispaces.com/ pyparsing],
 as example).
 
 See also https://code.google.com/p/rainforce/wiki/ModerationQueue
+
+It would be nice to further simplify parser, make it more modular to allow easy
+customization and extension, but the primary focus for now is to figure out
+an API that will make it usable as a library. There is separate TODO item to
+check behavior of "\ No newline at end of file" cases. Other goals is to
+expand test coverage, and try to make script more interactive.
