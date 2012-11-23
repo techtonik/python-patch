@@ -300,6 +300,14 @@ class PatchSet(object):
 
       # hunkskip and hunkbody code skipped until definition of hunkhead is parsed
       if hunkbody:
+        # [x] treat empty lines inside hunks as containing single space
+        #     (this happens when diff is saved by copy/pasting to editor
+        #      that strips trailing whitespace)
+        if line.strip("\r\n") == "":
+            debug("expanding empty line in a middle of hunk body")
+            self.warnings += 1
+            line = ' ' + line
+
         # process line first
         if re.match(r"^[- \+\\]", line):
             # gather stats about line endings

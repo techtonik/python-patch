@@ -250,6 +250,11 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.warnings, 2)
         self.assertEqual(pto.items[0].source, "patch.py")
 
+    def test_autofixed_stripped_trailing_whitespace(self):
+        pto = patch.fromfile(join(tests_dir, "data/autofix/stripped-trailing-whitespace.diff"))
+        self.assertEqual(pto.errors, 0)
+        self.assertEqual(pto.warnings, 4)
+
     def test_fail_missing_hunk_line(self):
         fp = open(join(tests_dir, "data/failing/missing-hunk-line.diff"))
         pto = patch.PatchSet()
