@@ -8,14 +8,15 @@ run by web server process.
 Usually patches are applied with a UNIX *patch* utility available as
 [http://www.gnu.org/software/patch/ a part of] GNU tools. It is
 [http://gnuwin32.sourceforge.net/packages/patch.htm ported to windows],
-but still seems
-[http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c buggy],
-insecure for web server process and not customizable without a C compiler.
-And it is a good idea to have a *diff.py* counterpart
-[http://bugs.python.org/issue2057 bundled] with Python.
+but still feels
+[http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c
+buggy and insecure] for web server process. It is also not customizable
+without a C compiler, which is a problem for Windows. To summarize,
+it is good to have a good utility written in Python that can be potential
+[http://bugs.python.org/issue2057 *diff.py* counterpart].
 
 *patch.py* is meant to be a command line tool with intuitive defaults,
-that also takes care of line end differences automatically.
+taking care of the most problems (e.g. line end differences) automatically.
 
 
 == Status ==
@@ -35,7 +36,7 @@ are converted to forward slashes and so on.
 endings from patch are converted into 
 best suitable format for patched file. patch.py scans line endings in source
 file, and if they are consistent - lines from patch are applied with the
-same ending. If linefeed in source are inconsistend - lines from patch are
+same ending. If source linefeeds are inconsistend - lines from patch are
 applied "as is".
 
 
@@ -51,30 +52,49 @@ an API that will make it usable as a library. There is separate TODO item to
 check behavior of "\ No newline at end of file" cases. Other goals is to
 expand test coverage, and try to make script more interactive.
 
+== Features ==
+
+* Single file, which is a command line tool and library
+* No dependencies outside Python stdlib
+* Automatic correction of linefeeds according to patched file
+* Automatic correction of diffs broken by stripping trailing whitespace
+* Patch format detection (SVN, HG, GIT)
+* Python 2.5+ compatible, 2.7 tested, 3 not supported
+
+Things that don't work:
+
+* Python 3
+* File renaming, creation and removal
+* Version control specific properties
+* Non-unified diff formats
 
 == Library usage ==
-[http://code.google.com/p/rainforce/wiki/WartsOfPython#Logging_(2.x_tested,_3.x_unknown) Unfortunately], you'll have to configure `logging` module for "patch" module (or root logger of your application) to avoid message 'No handlers could be found for logger "patch"'. For example, root logger for application can be configured using:
 
-{{{
-import logging
-logging.basicConfig()
-}}}
-
+See APIUseCases.
 
 == Changes ==
 {{{
-1.xx.xx - Major API Break
+1.12.11  Major API Break
+   - added detection of SVN, GIT and HG patch types, unrecognized patches
+     are marked as PLAIN
+   - added error reporting for parsing functions and helpers (now they
+     return False if parsing failed) - make sure you handle this correctly
    - added normalization to filenames to protect against patching files
      using absolute paths or files in parent directories
-   - added detection of SVN, GIT and HG patch types, unrecognized patches
-     are marked PLAIN
+   - test run patch.py on all patches submitted to Python bug tracker, which
+     resulted in improved parsing and error handling for some corner cases
    - API changes
-     * previous Patch is renamed to PatchSet
+     * fromfile(), fromstring() and fromurl() now return False on errors
+     * previous Patch is renamed to PatchSet, new Patch is single file entry
      * Patch.header is now a list of strings
-     + PatchSet.type and Patch.type
      * PatchSet.parse() now returns True if parsing completed without errors
      + PatchSet.__len__()
+     + PatchSet.type and Patch.type
+     + PatchSet.errors and 
      + xisabs() cross-platform version of `os.path.isabs()`
+     + xnormpath() forward slashed version of `os.path.normpath()`
+     + xstrip() to strip absolute path prefixes
+
 11.01
    - patch.py can read patches from web
    - patch.py returns -1 if there were errors during patching
