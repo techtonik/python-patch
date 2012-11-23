@@ -37,8 +37,10 @@ if "-v" in sys.argv or "--verbose" in sys.argv:
   verbose = True
 
 
-#: full path for directory with tests
+# full path for directory with tests
 tests_dir = dirname(abspath(__file__))
+def testfile(name):
+  return join(tests_dir, 'data', name)
 
 
 # import patch.py from parent directory
@@ -225,6 +227,13 @@ class TestPatchParse(unittest.TestCase):
           f.close()
         pst = patch.fromstring(readstr)
         self.assertEqual(len(pst), 5)
+
+    def test_fromfile(self):
+        pst = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        self.assertNotEqual(pst, False)
+        self.assertEqual(len(pst), 5)
+        ps2 = patch.fromfile(testfile("failing/not-a-patch.log"))
+        self.assertFalse(ps2)
 
     def test_no_header_for_plain_diff_with_single_file(self):
         pto = patch.fromfile(join(tests_dir, "03trail_fname.patch"))

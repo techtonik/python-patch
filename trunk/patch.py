@@ -109,26 +109,38 @@ def xstrip(filename):
 # Main API functions
 
 def fromfile(filename):
-  """ Parse patch file and return PatchSet() object
-      XXX error reporting
+  """ Parse patch file. If successful, returns
+      PatchSet() object. Otherwise returns False.
   """
+  patchset = PatchSet()
   debug("reading %s" % filename)
   fp = open(filename, "rb")
-  patchset = PatchSet(fp)
+  res = patchset.parse(fp)
   fp.close()
-  return patchset
+  if res == True:
+    return patchset
+  return False
 
 
 def fromstring(s):
-  """ Parse text string and return PatchSet() object
+  """ Parse text string and return PatchSet()
+      object (or False if parsing fails)
   """
-  return PatchSet( StringIO(s) )
+  ps = PatchSet( StringIO(s) )
+  if ps.errors == 0:
+    return ps
+  return False
 
 
 def fromurl(url):
-  """ Read patch from URL
+  """ Parse patch from an URL, return False
+      if an error occured. Note that this also
+      can throw urlopen() exceptions.
   """
-  return PatchSet( urllib2.urlopen(url) )
+  ps = PatchSet( urllib2.urlopen(url) )
+  if ps.errors == 0:
+    return ps
+  return False
 
 
 # --- Utility functions ---
