@@ -244,6 +244,10 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.items[1].header[0], 'Index: updatedlg.h\r\n')
         self.assert_(pto.items[1].header[1].startswith('====='))
 
+    def test_hunk_desc(self):
+        pto = patch.fromfile(testfile('git-changed-file.diff'))
+        self.assertEqual(pto.items[0].hunks[0].desc, 'class JSONPluginMgr(object):')
+
     def test_autofixed_absolute_path(self):
         pto = patch.fromfile(join(tests_dir, "data/autofix/absolute-path.diff"))
         self.assertEqual(pto.errors, 0)

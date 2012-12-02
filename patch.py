@@ -14,7 +14,7 @@
 """
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.12.11"
+__version__ = "1.12.12dev"
 
 import copy
 import logging
@@ -163,6 +163,7 @@ class Hunk(object):
     self.starttgt=None
     self.linestgt=None
     self.invalid=False
+    self.desc=''
     self.text=[]
 
 #  def apply(self, estream):
@@ -273,7 +274,7 @@ class PatchSet(object):
     hunkparsed = False # state after successfully parsed hunk
 
     # regexp to match start of hunk, used groups - 1,3,4,6
-    re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?")
+    re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@")
     
     self.errors = 0
     # temp buffers for header and filenames info
@@ -478,7 +479,7 @@ class PatchSet(object):
               continue
 
       if hunkhead:
-        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))?", line)
+        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
         if not match:
           if not p.hunks:
             warning("skipping invalid patch with no hunks for file %s" % p.source)
@@ -502,6 +503,7 @@ class PatchSet(object):
           hunk.linestgt = 1
           if match.group(6): hunk.linestgt = int(match.group(6))
           hunk.invalid = False
+          hunk.desc = match.group(7)[1:].rstrip()
           hunk.text = []
 
           hunkactual["linessrc"] = hunkactual["linestgt"] = 0
