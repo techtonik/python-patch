@@ -23,6 +23,31 @@ True
  5 files changed, 48 insertions(+), 18 deletions(-)
 }}}
 
+=== Find all patch files and do something about them ===
+{{{
+import patch, os
+
+matched = 0
+for file in os.listdir('.'):
+  if os.path.isdir(file):
+    continue
+
+  with open(file, "rb") as fp:
+    ps = patch.PatchSet()
+    if not ps.parse(fp):
+      pass
+    else:
+      print(file)
+      for each in ps.items:
+       print("  " + each.target)
+       for h in each.hunks:
+        if h.desc:
+         print("   " + h.desc)
+      matched += 1
+
+print('Found %s' % matched)
+}}}
+
 == User stories ==
 === 01. Upgrade Trac environment files ===
 
@@ -31,4 +56,3 @@ True
 *Proposed API:*
 
 *Example:*
-
