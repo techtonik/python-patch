@@ -70,6 +70,7 @@ See [APIUseCases].
 x.xx.xx
 
    - hunk headers produced by `diff -p` option are now parsed and accessible
+     (issue #22, found by Philippe Ombredanne)
 
 1.12.11  Major API Break
 
