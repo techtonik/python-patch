@@ -32,10 +32,3 @@ True
 
 *Example:*
 
-=== 02. diffstat on Windows ===
-
-*Storyline:* I want to see diffstat-like statistics on Windows.
-
-*Proposed API:*
-
-*Example:*

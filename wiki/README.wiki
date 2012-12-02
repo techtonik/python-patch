@@ -67,6 +67,10 @@ See [APIUseCases].
 
 == Changes ==
 {{{
+x.xx.xx
+
+   - hunk headers produced by `diff -p` option are now parsed and accessible
+
 1.12.11  Major API Break
 
    - patch.py can read patches from stdin
