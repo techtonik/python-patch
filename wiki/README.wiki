@@ -47,17 +47,19 @@ illustration of Subversion style unified diff is included in
 == Features ==
 
  * Single file, which is a command line tool and library
+ * Python 2.5+ compatible, 2.7 tested, 3 not supported
  * No dependencies outside Python stdlib
  * Automatic correction of linefeeds according to patched file
  * Automatic correction of diffs broken by stripping trailing whitespace
  * Patch format detection (SVN, HG, GIT)
- * Show diffstat histogram
- * Python 2.5+ compatible, 2.7 tested, 3 not supported
+ * Test coverage for easy modification
+ * Nice diffstat histogram
 
 Things that don't work:
 
  * Python 3
  * File renaming, creation and removal
+ * Directory tree operations
  * Version control specific properties
  * Non-unified diff formats
 
@@ -69,8 +71,13 @@ See [APIUseCases].
 {{{
 x.xx.xx
 
+   - added --directory (-d) option to specify root when applying patches
    - hunk headers produced by `diff -p` option are now parsed and accessible
      (issue #22, found by Philippe Ombredanne)
+   - API changes:
+     + Hunk.desc field to access hunk headers content
+     + PatchSet.apply() gets `root` keyword argument for the working dir
+       when applying patches (issue #7)
 
 1.12.11  Major API Break
 
