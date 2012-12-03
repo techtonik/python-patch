@@ -728,10 +728,14 @@ class PatchSet(object):
     return output
 
 
-  def apply(self, strip=0):
-    """ apply parsed patch
+  def apply(self, strip=0, root=None):
+    """ Apply parsed patch, optionally stripping leading components
+        from file paths. `root` parameter specifies working dir.
         return True on success
     """
+    if root:
+      prevdir = os.getcwd()
+      os.chdir(root)
 
     total = len(self.items)
     errors = 0
@@ -854,6 +858,9 @@ class PatchSet(object):
             warning("invalid version is saved to %s" % filename+".invalid")
             # todo: proper rejects
             shutil.move(backupname, filename)
+
+    if root:
+      os.chdir(prevdir)
 
     # todo: check for premature eof
     return (errors == 0)
@@ -1005,6 +1012,8 @@ if __name__ == "__main__":
   opt.add_option("--debug", action="store_true", dest="debugmode", help="debug mode")
   opt.add_option("--diffstat", action="store_true", dest="diffstat",
                                            help="print diffstat and exit")
+  opt.add_option("-d", "--directory", metavar='DIR',
+                                           help="specify root directory for applying patch")
   opt.add_option("-p", "--strip", type="int", metavar='N', default=0,
                                            help="strip N path components from filenames")
   (options, args) = opt.parse_args()
@@ -1047,7 +1056,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
   #pprint(patch)
-  patch.apply(options.strip) or sys.exit(-1)
+  patch.apply(options.strip, root=options.dir) or sys.exit(-1)
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends

@@ -340,6 +340,12 @@ class TestPatchApply(unittest.TestCase):
         pto = patch.fromfile('03trail_fname.patch')
         self.assert_(pto.apply())
 
+    def test_apply_root(self):
+        treeroot = join(self.tmpdir, 'rootparent')
+        shutil.copytree(join(tests_dir, '06nested.from'), treeroot)
+        pto = patch.fromfile(join(tests_dir, '06nested.patch'))
+        self.assert_(pto.apply(root=treeroot))
+
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True
