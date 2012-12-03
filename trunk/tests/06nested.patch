@@ -1,0 +1,112 @@
+diff -r dcee1189d959 .hgignore
+--- a/.hgignore	Tue Oct 23 01:05:32 2012 +0300
++++ b/.hgignore	Mon Dec 03 11:32:26 2012 +0300
+@@ -5,6 +5,7 @@
+ pyglet.*.log
+ *.orig
+ .DS_Store
++_htmlapi
+ doc/api
+ doc/_build
+ doc/internal/build.rst
+diff -r dcee1189d959 examples/font_comparison.py
+--- a/examples/font_comparison.py	Tue Oct 23 01:05:32 2012 +0300
++++ b/examples/font_comparison.py	Mon Dec 03 10:06:28 2012 +0300
+@@ -45,13 +45,14 @@
+ FONTS = ['Andale Mono', 'Consolas', 'Inconsolata', 'Inconsolata-dz', 'Monaco',
+     'Menlo']
+ 
+-SAMPLE = '''class Spam(object):
+-	def __init__(self):
+-		# The quick brown fox
+-		self.spam = {"jumped": 'over'}
++SAMPLE = '''\
++class Spam(object):
++    def __init__(self):
++        # The quick brown fox
++        self.spam = {"jumped": 'over'}
+     @the
+-	def lazy(self, *dog):
+-		self.dog = [lazy, lazy]'''
++    def lazy(self, *dog):
++        self.dog = [lazy, lazy]'''
+ 
+ class Window(pyglet.window.Window):
+     font_num = 0
+diff -r dcee1189d959 experimental/console.py
+--- a/experimental/console.py	Tue Oct 23 01:05:32 2012 +0300
++++ b/experimental/console.py	Mon Dec 03 10:06:28 2012 +0300
+@@ -18,7 +18,7 @@
+ 
+ class Console(object):
+     def __init__(self, width, height, globals=None, locals=None):
+-        self.font = pyglet.text.default_font_factory.get_font('bitstream vera sans mono', 12)
++        self.font = pyglet.font.load('bitstream vera sans mono', 12)
+         self.lines = []
+         self.buffer = ''
+         self.pre_buffer = ''
+@@ -29,7 +29,7 @@
+         self.write_pending = ''
+ 
+         self.width, self.height = (width, height)
+-        self.max_lines = self.height / self.font.glyph_height - 1
++        self.max_lines = self.height / (self.font.ascent - self.font.descent) - 1
+ 
+         self.write('pyglet command console\n')
+         self.write('Version %s\n' % __version__)
+diff -r dcee1189d959 pyglet/font/win32.py
+--- a/pyglet/font/win32.py	Tue Oct 23 01:05:32 2012 +0300
++++ b/pyglet/font/win32.py	Mon Dec 03 10:06:28 2012 +0300
+@@ -45,6 +45,7 @@
+ from sys import byteorder
+ import pyglet
+ from pyglet.font import base
++from pyglet.font import win32query
+ import pyglet.image
+ from pyglet.libs.win32.constants import *
+ from pyglet.libs.win32.types import *
+@@ -262,9 +263,7 @@
+ 
+     @classmethod
+     def have_font(cls, name):
+-        # CreateFontIndirect always returns a font... have to work out
+-        # something with EnumFontFamily... TODO
+-        return True
++        return win32query.have_font(name)
+ 
+     @classmethod
+     def add_font_data(cls, data):
+diff -r dcee1189d959 tests/app/EVENT_LOOP.py
+--- a/tests/app/EVENT_LOOP.py	Tue Oct 23 01:05:32 2012 +0300
++++ b/tests/app/EVENT_LOOP.py	Mon Dec 03 10:06:28 2012 +0300
+@@ -21,8 +21,8 @@
+ 
+ class EVENT_LOOP(unittest.TestCase):
+     def t_scheduled(self, interval, iterations, sleep_time=0):
+-        print 'Test interval=%s, iterations=%s, sleep=%s' % (interval,
+-            iterations, sleep_time)
++        print('Test interval=%s, iterations=%s, sleep=%s' % (interval,
++            iterations, sleep_time))
+         warmup_iterations = iterations
+ 
+         self.last_t = 0.
+@@ -76,6 +76,6 @@
+ 
+ if __name__ == '__main__':
+     if pyglet.version != '1.2dev':
+-        print 'Wrong version of pyglet imported; please check your PYTHONPATH'
++        print('Wrong version of pyglet imported; please check your PYTHONPATH')
+     else:
+         unittest.main()
+diff -r dcee1189d959 tests/font/SYSTEM.py
+--- a/tests/font/SYSTEM.py	Tue Oct 23 01:05:32 2012 +0300
++++ b/tests/font/SYSTEM.py	Mon Dec 03 10:06:28 2012 +0300
+@@ -20,7 +20,7 @@
+ if sys.platform == 'darwin':
+     font_name = 'Helvetica'
+ elif sys.platform in ('win32', 'cygwin'):
+-    font_name = 'Arial'
++    font_name = 'Modern No.20'
+ else:
+     font_name = 'Arial'
+ 
