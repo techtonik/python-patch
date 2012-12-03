@@ -758,7 +758,7 @@ class PatchSet(object):
           debug("stripping %s leading component from '%s'" % (strip, f2patch))
           f2patch = pathstrip(f2patch, strip)
         if not exists(f2patch):
-          warning("source/target file does not exist\n--- %s\n+++ %s" % (p.source, f2patch))
+          warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (p.source, f2patch))
           errors += 1
           continue
       if not isfile(f2patch):
