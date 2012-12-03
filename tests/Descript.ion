@@ -3,3 +3,5 @@
 03trail_fname.patch trailing spaces in patch filenames
 04can_patch.patch can be applied multiple times to the same file
 data various patch data samples
+06nested.patch nested dirs
+05hg_change.patch mercurial diff

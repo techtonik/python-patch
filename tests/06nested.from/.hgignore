@@ -1,0 +1,11 @@
+syntax: glob
+*.pyc
+*.pyo
+build
+pyglet.*.log
+*.orig
+.DS_Store
+doc/api
+doc/_build
+doc/internal/build.rst
+website/dist
