@@ -1056,7 +1056,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
   #pprint(patch)
-  patch.apply(options.strip, root=options.dir) or sys.exit(-1)
+  patch.apply(options.strip, root=options.directory) or sys.exit(-1)
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
