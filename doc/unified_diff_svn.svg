@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -13,9 +14,12 @@
    height="1052.3622"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.46"
-   sodipodi:docname="unified_diff_format.svg"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="unified_diff_svn.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="E:\p\_py\rietveld\.rietveld\rietveld2\python-patch-read-only\doc\unified_diff_svn.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <metadata
      id="metadata321">
     <rdf:RDF>
@@ -24,11 +28,12 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <sodipodi:namedview
-     inkscape:window-height="977"
+     inkscape:window-height="800"
      inkscape:window-width="1280"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
@@ -42,10 +47,11 @@
      showgrid="false"
      inkscape:zoom="1"
      inkscape:cx="326.14062"
-     inkscape:cy="773.5073"
+     inkscape:cy="619.06721"
      inkscape:window-x="-4"
      inkscape:window-y="-4"
-     inkscape:current-layer="g3096" />
+     inkscape:current-layer="svg2"
+     inkscape:window-maximized="0" />
   <defs
      id="defs4">
     <inkscape:perspective
@@ -129,15 +135,17 @@
      id="path4563"
      d="M 29.242421,684.86231 L 29.242421,695.01427 L 157.24347,695.01427 L 157.24347,684.86231 L 29.242421,684.86231 z" />
   <text
-     style="font-size:40.86742401px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     style="font-size:28px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
      xml:space="preserve"
      id="text3113"
      y="55.509674"
      x="25.596079"
-     transform="scale(1.0216856,0.9787747)"><tspan
-       id="tspan3117"
+     transform="scale(1.0216856,0.97877469)"
+     sodipodi:linespacing="125%"><tspan
        y="55.509674"
-       x="25.596079">Unified Diff/Patch Format</tspan></text>
+       x="25.596079"
+       sodipodi:role="line"
+       id="tspan4421">Unified Diff/Patch Format (Subversion)</tspan></text>
   <g
      id="g4529"
      transform="matrix(1.0472513,0,0,1.0032667,-0.2576625,-0.3375146)">
@@ -379,10 +387,10 @@
        x="37.980774">http://techtonik.rainforce.org</tspan></text>
   <text
      sodipodi:linespacing="120%"
-     style="font-size:8.17348385px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Lucida Console;-inkscape-font-specification:Lucida Console"
+     style="font-size:8.17348385px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Lucida Console;-inkscape-font-specification:Lucida Console"
      xml:space="preserve"
      id="text4629"
-     transform="scale(0.960765,1.0408372)"
+     transform="scale(0.96076502,1.0408372)"
      y="126.03973"
      x="39.688015"><tspan
        id="tspan4631"
