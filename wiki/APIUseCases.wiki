@@ -5,7 +5,6 @@
 import patch
 }}}
 
-== Use cases ==
 === Detect if a file is a valid patch ===
 {{{
 >>> bool( patch.fromfile('doc/example.diff.diff') )
@@ -20,7 +19,7 @@ True
  manifest.xml  | 15 ++++++++-------
  conf.cpp      | 23 +++++++++++++++++------
  conf.h        |  7 ++++---
- 5 files changed, 48 insertions(+), 18 deletions(-)
+ 5 files changed, 48 insertions(+), 18 deletions(-), +1203 bytes
 }}}
 
 === Find all patch files and do something about them ===
