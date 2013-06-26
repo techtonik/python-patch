@@ -683,6 +683,7 @@ class PatchSet(object):
     names = []
     insert = []
     delete = []
+    delta = 0    # size change in bytes
     namelen = 0
     maxdiff = 0  # max number of changes for single file
                  # (for histogram width calculation)
@@ -692,8 +693,10 @@ class PatchSet(object):
         for line in hunk.text:
           if line.startswith('+'):
             i += 1
+            delta += len(line)-1
           elif line.startswith('-'):
             d += 1
+            delta -= len(line)-1
       names.append(patch.target)
       insert.append(i)
       delete.append(d)
@@ -723,8 +726,8 @@ class PatchSet(object):
       # -- /calculating +- histogram --
       output += (format % (names[i], insert[i] + delete[i], hist))
  
-    output += (" %d files changed, %d insertions(+), %d deletions(-)"
-               % (len(names), sum(insert), sum(delete)))
+    output += (" %d files changed, %d insertions(+), %d deletions(-), %+d bytes"
+               % (len(names), sum(insert), sum(delete), delta))
     return output
 
 

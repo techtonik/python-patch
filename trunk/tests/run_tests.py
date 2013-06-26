@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 TestSuite
 
@@ -292,7 +293,7 @@ class TestPatchParse(unittest.TestCase):
  manifest.xml  | 15 ++++++++-------
  conf.cpp      | 23 +++++++++++++++++------
  conf.h        |  7 ++++---
- 5 files changed, 48 insertions(+), 18 deletions(-)"""
+ 5 files changed, 48 insertions(+), 18 deletions(-), +1203 bytes"""
         pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
         self.assertEqual(pto.diffstat(), output, "Output doesn't match")
 
