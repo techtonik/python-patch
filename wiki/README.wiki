@@ -71,6 +71,7 @@ See [APIUseCases].
 {{{
 x.xx.xx
 
+   - diffstat output now also shows size delta in bytes
    - added --directory (-d) option to specify root when applying patches
    - hunk headers produced by `diff -p` option are now parsed and accessible
      (issue #22, found by Philippe Ombredanne)
