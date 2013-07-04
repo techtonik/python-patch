@@ -1,0 +1,33 @@
+patchset evolution
+
+(diff era)
+1. change some content in a stream
+1. change some lines in a file
+1. protect change with context
+1. change several files
+
+(git diff era)
+2. create file
+2. rename file
+2. move file
+2. copy file
+2. copy and rename
+2. move and rename
+
+3. know file attributes
+3. know file mime-type
+3. know file binary/text
+3. change file attributes
+
+(2D patch jump)
+4. create directory
+4. rename directory
+4. move directory
+4. copy directory
+4. copy and rename
+4. move and rename
+
+5. know directory contents
+5. record directory tree in 1D structure
+5. record changes for 2D structure in 1D structure
+
