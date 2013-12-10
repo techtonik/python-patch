@@ -1,0 +1,6 @@
+#summary pure python patch utility
+#labels Deprecated
+
+Cross-platform alternative to unix *patch* utility capable to apply unified diffs.
+
+_Patches are welcome._
