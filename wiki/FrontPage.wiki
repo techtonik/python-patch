@@ -4,3 +4,5 @@
 Cross-platform alternative to unix *patch* utility capable to apply unified diffs.
 
 _Patches are welcome._
+
+<g:plusone size="medium"></g:plusone>
