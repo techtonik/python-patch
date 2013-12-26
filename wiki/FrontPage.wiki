@@ -5,7 +5,7 @@ Cross-platform alternative to unix *patch* utility capable to apply unified diff
 
 _Patches are welcome._
 
-<a href="https://flattr.com/submit/auto?user_id=techtonik&url=https%3A%2F%2Fcode.google.com%2Fp%2Fpython-patch%2F">
+<a href="https://flattr.com/submit/auto?user_id=techtonik&url=https%3A%2F%2Fcode.google.com%2Fp%2Fpython-patch%2F&title=patch%20utility%20for%20python">
 <img src="https://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0"/>
 </a>
 <g:plusone size="medium"></g:plusone>
