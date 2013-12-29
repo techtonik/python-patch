@@ -5,4 +5,4 @@ Cross-platform alternative to unix *patch* utility capable to apply unified diff
 
 _Patches are welcome._
 
-<wiki:gadget url="https://bitbucket.org/techtonik/discovery/raw/32b2e2383313/web/gadgets/flattr.xml" border="0" width="110" height="20"/> <g:plusone size="medium"></g:plusone>
+<wiki:gadget url="https://bitbucket.org/techtonik/discovery/raw/a55875717274/web/gadgets/flattr.xml" border="0" width="110" height="20"/> <g:plusone size="medium"></g:plusone>
