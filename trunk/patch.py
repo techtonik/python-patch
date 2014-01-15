@@ -744,6 +744,16 @@ class PatchSet(object):
     return output
 
 
+  def findfile(self, old, new):
+    """ return name of file to be patched or None """
+    if exists(old):
+      return old
+    elif exists(new):
+      return new
+    else:
+      return None
+
+
   def apply(self, strip=0, root=None):
     """ Apply parsed patch, optionally stripping leading components
         from file paths. `root` parameter specifies working dir.
@@ -768,25 +778,26 @@ class PatchSet(object):
 
     #for fileno, filename in enumerate(self.source):
     for i,p in enumerate(self.items):
-      f2patch = p.source
       if strip:
-        debug("stripping %s leading component from '%s'" % (strip, f2patch))
-        f2patch = pathstrip(f2patch, strip)
-      if not exists(f2patch):
-        f2patch = p.target
-        if strip:
-          debug("stripping %s leading component from '%s'" % (strip, f2patch))
-          f2patch = pathstrip(f2patch, strip)
-        if not exists(f2patch):
-          warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (p.source, f2patch))
+        debug("stripping %s leading component(s) from:" % strip)
+        debug("   %s" % p.source)
+        debug("   %s" % p.target)
+        old = pathstrip(p.source, strip)
+        new = pathstrip(p.target, strip)
+      else:
+        old, new = p.source, p.target
+
+      filename = self.findfile(old, new)
+      if not filename:
+          warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
           errors += 1
           continue
-      if not isfile(f2patch):
-        warning("not a file - %s" % f2patch)
+      if not isfile(filename):
+        warning("not a file - %s" % filename)
         errors += 1
         continue
-      filename = f2patch
 
+      # [ ] check absolute paths security here
       debug("processing %d/%d:\t %s" % (i+1, total, filename))
 
       # validate before patching
