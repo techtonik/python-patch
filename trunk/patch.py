@@ -1052,6 +1052,17 @@ class PatchSet(object):
     return True
 
 
+  def dump(self):
+    for p in self.items:
+      for headline in p.header:
+        print headline.rstrip('\n')
+      print '--- ' + p.source
+      print '+++ ' + p.target
+      for h in p.hunks:
+        print '@@ -%s,%s +%s,%s @@' % (h.startsrc, h.linessrc, h.starttgt, h.linestgt)
+        for line in h.text:
+          print line.rstrip('\n')
+
 
 if __name__ == "__main__":
   from optparse import OptionParser
