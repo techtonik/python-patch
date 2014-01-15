@@ -70,6 +70,12 @@ See [APIUseCases].
 
 == Changes ==
 {{{
+
+1.xx.x
+
+   - API changes:
+     + Patchset and Patch objects are iterable
+
 1.13
 
    - diffstat output now also shows size delta in bytes
