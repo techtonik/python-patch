@@ -1,0 +1,41 @@
+--- a/07google_code_wiki.from
++++ b/07google_code_wiki.to
+@@ -28,7 +28,7 @@
+ 
+ == Introduction ==
+ 
+-Spyder plugins are just importable Python files that use internal APIs to do different stuff in IDE. Spyder goal is to be reusable set of components and widgets, so a lot of stuff inside is made with plugins. For example, code editor and python console are plugins. Object inspector, history browser and so on. You can see them [https://code.google.com/p/spyderlib/source/browse/#hg%2Fspyderlib%2Fplugins here].
++Spyder plugins are importable Python modules that may use internal API to do different stuff in IDE. Spyder goal is to be reusable set of components and widgets, so a lot of things is made with plugins. For example, code editor and python console are plugins. Object inspector, history browser and so on. You can see them [https://code.google.com/p/spyderlib/source/browse/#hg%2Fspyderlib%2Fplugins here].
+ 
+ There are two type of plugins in Spyder:
+   * `core plugins` - these are standard Spyder components located in `spyderlib.plugins` module. They are explicitly imported like usual Python modules.
+@@ -55,15 +55,15 @@
+ 
+ `[more research is needed - ask techtonik@gmail.com if you feel capable]`
+ 
+-While many software use directories to distribute and find plugins, Spyder uses Python modules. It's own plugin are located under `spyderlib` namespace with all Spyder application. It can be used as a library. External plugins are expected to be found in a special importable module named.
++Some software use directories for plugin installation and discovery. Spyder uses Python modules. Internal components are contained in `spyderlib` namespace and are imported explicitly. External and 3rd party plugins are automatically imported from certain predefined locations. One such location is `spyderplugins` module.
+ 
+   * _spyderplugins_: this is what this page is about
+ 
++To make you module appear in `spyderplugins` namespace, you need to make Spyder discover and import it first.  In Spyder source code tree you can just drop your module into `spyderplugins` directory. This is more like hack than convenient plugin discovery interface, so proposal to fix this are welcome. One of the ideas is to inspect Python files without importing them with `astdump` modules and check if their interface is compatible. This will also allow Spyder to enable/disable plugins from config menu.
++
+ The module _spyderplugins_ includes third-party plugins of several kinds.
+ <wiki:comment>TODO: check if prefix for plugin kind really affects loading or if it just a convention</wiki:comment>
+ 
+-In Spyder v1.1, the only kind of plugin supported were the input/output plugins (modules starting with `io_`) which provide I/O functions for the variable explorer (_Workspace_ and _Globals explorer_ in v1.1, _Variable explorer_ in v2.0). Spyder natively supports .mat, .npy, .txt, .csv, .jpg, .png and .tiff file formats. These plugins allow users to add their own types, like HDF5 files for example.
+-
+ In Spyder v2.0, any kind of plugin may be created in the module _spyderplugins_. These third-party plugins may communicate with other Spyder components through the plugin interface (see [http://code.google.com/p/spyderlib/source/browse/spyderlib/plugins/__init__.py spyderlib/plugins/__init__.py]).
+ 
+ == I/O Spyder plugins ==
+@@ -82,6 +82,10 @@
+   * More examples of load/save functions may be found here:
+     http://code.google.com/p/spyderlib/source/browse/spyderlib/utils/iofuncs.py
+ 
++== History ===
++
++Spyder v1.1 supported only  input/output plugins (modules starting with `io_`) which provided I/O functions for the variable explorer (_Workspace_ and _Globals explorer_ in v1.1, _Variable explorer_ in v2.0). Spyder natively supports .mat, .npy, .txt, .csv, .jpg, .png and .tiff file formats out of the box. These input plugins allowed users to add their own types, like HDF5 files for example.
++
+ == Other Spyder plugins ==
+ 
+ See the example of the `pylint` third-party plugin in Spyder v2.0.

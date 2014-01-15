@@ -751,6 +751,16 @@ class PatchSet(object):
     elif exists(new):
       return new
     else:
+      # [w] Google Code generates broken patches with its online editor
+      debug("broken patch from Google Code, stripping prefixes..")
+      if old.startswith('a/') and new.startswith('b/'):
+        old, new = old[2:], new[2:]
+        debug("   %s" % old)
+        debug("   %s" % new)
+        if exists(old):
+          return old
+        elif exists(new):
+          return new
       return None
 
 
@@ -788,6 +798,7 @@ class PatchSet(object):
         old, new = p.source, p.target
 
       filename = self.findfile(old, new)
+
       if not filename:
           warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
           errors += 1
@@ -1087,3 +1098,8 @@ if __name__ == "__main__":
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
+
+
+# Legend:
+# [ ]  - some thing to be done
+# [w]  - official wart, external or internal that is unlikely to be fixed
