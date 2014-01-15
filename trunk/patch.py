@@ -14,7 +14,7 @@
 """
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.13"
+__version__ = "1.14dev"
 
 import copy
 import logging
@@ -178,7 +178,9 @@ class Hunk(object):
 
 
 class Patch(object):
-  """ Patch for a single file """
+  """ Patch for a single file.
+      If used as an iterable, returns hunks.
+  """
   def __init__(self):
     self.source = None 
     self.target = None
@@ -188,8 +190,15 @@ class Patch(object):
 
     self.type = None
 
+  def __iter__(self):
+    for h in self.hunks:
+      yield h
+
 
 class PatchSet(object):
+  """ PatchSet is a patch parser and container.
+      When used as an iterable, returns patches.
+  """
 
   def __init__(self, stream=None):
     # --- API accessible fields ---
@@ -211,6 +220,10 @@ class PatchSet(object):
 
   def __len__(self):
     return len(self.items)
+
+  def __iter__(self):
+    for i in self.items:
+      yield i
 
   def parse(self, stream):
     """ parse unified diff
