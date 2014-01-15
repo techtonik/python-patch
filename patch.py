@@ -14,7 +14,7 @@
 """
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.12.12dev"
+__version__ = "1.13"
 
 import copy
 import logging
