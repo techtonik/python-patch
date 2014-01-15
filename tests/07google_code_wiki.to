@@ -1,0 +1,91 @@
+#summary Plugin development
+#sidebar TOC
+
+<wiki:comment>
+!!WARNING!! The table below displays the navigation bar
+!!WARNING!! Please don't touch it unless you know what you're doing.
+</wiki:comment>
+
+<table border="0" cellspacing="0" cellpadding="0" align="center">
+<tr>
+<td colspan="9" align="center">http://wiki.spyderlib.googlecode.com/hg/Buttons/logo-mini.png</td>
+</tr>
+<tr>
+<td>[http://code.google.com/p/spyderlib http://wiki.spyderlib.googlecode.com/hg/Buttons/home.png]</td>
+<td>[http://code.google.com/p/spyderlib/downloads/list http://wiki.spyderlib.googlecode.com/hg/Buttons/download.png]</td>
+<td>[http://code.google.com/p/spyderlib/wiki/Features http://wiki.spyderlib.googlecode.com/hg/Buttons/features.png]</td>
+<td>[http://code.google.com/p/spyderlib/wiki/Screenshots http://wiki.spyderlib.googlecode.com/hg/Buttons/screenshots.png]</td>
+<td>[http://packages.python.org/spyder/ http://wiki.spyderlib.googlecode.com/hg/Buttons/docs.png]</td>
+<td>[http://code.google.com/p/spyderlib/wiki/Roadmap http://wiki.spyderlib.googlecode.com/hg/Buttons/roadmap.png]</td>
+<td>[http://code.google.com/p/spyderlib/wiki/Support http://wiki.spyderlib.googlecode.com/hg/Buttons/support.png]</td>
+<td>[http://code.google.com/p/spyderlib/wiki/Development http://wiki.spyderlib.googlecode.com/hg/Buttons/development_sel.png]</td>
+<td>[http://spyder-ide.blogspot.com http://wiki.spyderlib.googlecode.com/hg/Buttons/blog.png]</td>
+</tr>
+</table>
+
+= Spyder plugin development =
+----
+
+== Introduction ==
+
+Spyder plugins are importable Python modules that may use internal API to do different stuff in IDE. Spyder goal is to be reusable set of components and widgets, so a lot of things is made with plugins. For example, code editor and python console are plugins. Object inspector, history browser and so on. You can see them [https://code.google.com/p/spyderlib/source/browse/#hg%2Fspyderlib%2Fplugins here].
+
+There are two type of plugins in Spyder:
+  * `core plugins` - these are standard Spyder components located in `spyderlib.plugins` module. They are explicitly imported like usual Python modules.
+  * `external plugins` - are discovered and imported dynamically, so they should follow naming convention so that Spyder can find them. External plugins are also initialized later all at once when some of the `core` set are already loaded `[reference need]`.
+
+Both plugin types should include class that inherits from the same base plugin class.
+
+<wiki:comment>
+ [ ] check if plugins can be enabled/disabled
+ [ ] list of all lookup dirs
+ [ ] how to debug plugin discovery
+ [ ] API reference, version information
+ [ ] time when core plugins are initialized
+ [ ] time when external plugins are initialized
+
+== Architecture ==
+
+Spyder main window is de-facto storage for all Spyder state.
+
+</wiki:comment>
+
+
+== Plugin discovery ==
+
+`[more research is needed - ask techtonik@gmail.com if you feel capable]`
+
+Some software use directories for plugin installation and discovery. Spyder uses Python modules. Internal components are contained in `spyderlib` namespace and are imported explicitly. External and 3rd party plugins are automatically imported from certain predefined locations. One such location is `spyderplugins` module.
+
+  * _spyderplugins_: this is what this page is about
+
+To make you module appear in `spyderplugins` namespace, you need to make Spyder discover and import it first.  In Spyder source code tree you can just drop your module into `spyderplugins` directory. This is more like hack than convenient plugin discovery interface, so proposal to fix this are welcome. One of the ideas is to inspect Python files without importing them with `astdump` modules and check if their interface is compatible. This will also allow Spyder to enable/disable plugins from config menu.
+
+The module _spyderplugins_ includes third-party plugins of several kinds.
+<wiki:comment>TODO: check if prefix for plugin kind really affects loading or if it just a convention</wiki:comment>
+
+In Spyder v2.0, any kind of plugin may be created in the module _spyderplugins_. These third-party plugins may communicate with other Spyder components through the plugin interface (see [http://code.google.com/p/spyderlib/source/browse/spyderlib/plugins/__init__.py spyderlib/plugins/__init__.py]).
+
+== I/O Spyder plugins ==
+
+How to create your own I/O Spyder plugins:
+  * Create a Python module named `io_foobar.py` where `foobar` is the name of your plugin
+  * Write your loading function and/or your saving function:
+    * load:
+      * input is a string: filename
+      * output is a tuple with two elements: dictionary containing at least one element (key is the variable name) and error message (or `None`)
+    * save:
+      * input is a tuple with two elements: data (dictionary), filename
+      * output is a string or `None`: error message or `None` if no error occured
+  * Define the global variables `FORMAT_NAME`, `FORMAT_EXT`, `FORMAT_LOAD` and `FORMAT_SAVE`. See the example of DICOM images support:
+    http://code.google.com/p/spyderlib/source/browse/spyderplugins/io_dicom.py
+  * More examples of load/save functions may be found here:
+    http://code.google.com/p/spyderlib/source/browse/spyderlib/utils/iofuncs.py
+
+== History ===
+
+Spyder v1.1 supported only  input/output plugins (modules starting with `io_`) which provided I/O functions for the variable explorer (_Workspace_ and _Globals explorer_ in v1.1, _Variable explorer_ in v2.0). Spyder natively supports .mat, .npy, .txt, .csv, .jpg, .png and .tiff file formats out of the box. These input plugins allowed users to add their own types, like HDF5 files for example.
+
+== Other Spyder plugins ==
+
+See the example of the `pylint` third-party plugin in Spyder v2.0.
