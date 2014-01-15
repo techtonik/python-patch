@@ -46,11 +46,12 @@ illustration of Subversion style unified diff is included in
 
 == Features ==
 
+ * Automatic correction of
+   * Linefeeds according to patched file
+   * Diffs broken by stripping trailing whitespace
  * Single file, which is a command line tool and library
  * Python 2.5+ compatible, 2.7 tested, 3 not supported
  * No dependencies outside Python stdlib
- * Automatic correction of linefeeds according to patched file
- * Automatic correction of diffs broken by stripping trailing whitespace
  * Patch format detection (SVN, HG, GIT)
  * Test coverage for easy modification
  * Nice diffstat histogram
@@ -69,7 +70,7 @@ See [APIUseCases].
 
 == Changes ==
 {{{
-x.xx.xx
+1.13
 
    - diffstat output now also shows size delta in bytes
    - added --directory (-d) option to specify root when applying patches
@@ -79,6 +80,8 @@ x.xx.xx
      + Hunk.desc field to access hunk headers content
      + PatchSet.apply() gets `root` keyword argument for the working dir
        when applying patches (issue #7)
+   - improve error message for missing files
+   - improve docs (fix issue #5)
 
 1.12.11  Major API Break
 
