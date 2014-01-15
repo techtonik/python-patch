@@ -16,9 +16,6 @@
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
 __version__ = "1.14dev"
 
-# [ ] API break (2.x) wishlist
-# PatchSet.items  -->  PatchSet.patches
-
 import copy
 import logging
 import re
@@ -1130,3 +1127,9 @@ if __name__ == "__main__":
 # Legend:
 # [ ]  - some thing to be done
 # [w]  - official wart, external or internal that is unlikely to be fixed
+
+# [ ] API break (2.x) wishlist
+# PatchSet.items  -->  PatchSet.patches
+
+# [ ] run --revert test for all dataset items
+# [ ] run .parse() / .dump() test for dataset
