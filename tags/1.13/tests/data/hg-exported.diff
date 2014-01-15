@@ -1,0 +1,59 @@
+# HG changeset patch
+# User ralf@brainbot.com
+# Date 1215097201 -7200
+# Branch xmlrpc_repr
+# Node ID 2f52c1a4e3ff26d4d7b391e7851792d4e47d8017
+# Parent  185779ba2591ba6249601209c8dd5750b6e14716
+implement _Method.__repr__/__str__
+
+diff --git a/Lib/test/test_xmlrpc.py b/Lib/test/test_xmlrpc.py
+--- a/Lib/test/test_xmlrpc.py
++++ b/Lib/test/test_xmlrpc.py
+@@ -639,9 +639,31 @@
+         os.remove("xmldata.txt")
+         os.remove(test_support.TESTFN)
+ 
++class ReprTest(unittest.TestCase):
++    """
++    calling repr/str on a _Method object should not consult the xmlrpc server
++    (http://bugs.python.org/issue1690840)
++    """
++    def _make_method(self):
++        """return a _Method object, which when called raises a RuntimeError"""
++        def _raise_error(*args):
++            raise RuntimeError("called")
++        return xmlrpclib._Method(_raise_error, 'test')
++    
++    def test_method_repr(self):
++        m = self._make_method()
++        repr(m)
++        repr(xmlrpclib.ServerProxy('http://localhost:8000').doit)
++        
++        
++    def test_method_str(self):
++        m = self._make_method()
++        str(m)
++        str(xmlrpclib.ServerProxy('http://localhost:8000').doit)
++            
+ def test_main():
+     xmlrpc_tests = [XMLRPCTestCase, HelperTestCase, DateTimeTestCase,
+-         BinaryTestCase, FaultTestCase]
++         BinaryTestCase, FaultTestCase, ReprTest]
+ 
+     # The test cases against a SimpleXMLRPCServer raise a socket error
+     # 10035 (WSAEWOULDBLOCK) in the server thread handle_request call when
+diff --git a/Lib/xmlrpclib.py b/Lib/xmlrpclib.py
+--- a/Lib/xmlrpclib.py
++++ b/Lib/xmlrpclib.py
+@@ -1191,7 +1191,10 @@
+         return _Method(self.__send, "%s.%s" % (self.__name, name))
+     def __call__(self, *args):
+         return self.__send(self.__name, args)
+-
++    def __repr__(self):
++        return "<%s.%s %s %s>" % (self.__class__.__module__, self.__class__.__name__, self.__name, self.__send)
++    __str__ = __repr__
++    
+ ##
+ # Standard transport class for XML-RPC over HTTP.
+ # <p>
