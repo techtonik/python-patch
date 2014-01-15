@@ -341,6 +341,17 @@ class TestPatchApply(unittest.TestCase):
         pto = patch.fromfile('03trail_fname.patch')
         self.assert_(pto.apply())
 
+    def test_revert(self):
+        self.tmpcopy(['03trail_fname.patch',
+                      '03trail_fname.from'])
+        pto = patch.fromfile('03trail_fname.patch')
+        self.assert_(pto.apply())
+        self.assertNotEqual(open(self.tmpdir + '/03trail_fname.from').read(),
+                            open(tests_dir + '/03trail_fname.from').read())
+        self.assert_(pto.revert())
+        self.assertEqual(open(self.tmpdir + '/03trail_fname.from').read(),
+                         open(tests_dir + '/03trail_fname.from').read())
+
     def test_apply_root(self):
         treeroot = join(self.tmpdir, 'rootparent')
         shutil.copytree(join(tests_dir, '06nested.from'), treeroot)
