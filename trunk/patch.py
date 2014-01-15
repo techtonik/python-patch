@@ -907,6 +907,25 @@ class PatchSet(object):
     return (errors == 0)
 
 
+  def _reverse(self):
+    """ reverse patch direction (this doesn't touch filenames) """
+    for p in self.items:
+      for h in p.hunks:
+        h.startsrc, h.starttgt = h.starttgt, h.startsrc
+        h.linessrc, h.linestgt = h.linestgt, h.linessrc
+        for i,line in enumerate(h.text):
+          if line[0] == '+':
+            h.text[i] = '-' + line[1:]
+          elif line[0] == '-':
+            h.text[i] = '+' +line[1:]
+
+  def revert(self, strip=0, root=None):
+    """ apply patch in reverse order """
+    reverted = copy.deepcopy(self)
+    reverted._reverse()
+    return reverted.apply(strip, root)
+
+
   def can_patch(self, filename):
     """ Check if specified filename can be patched. Returns None if file can
     not be found among source filenames. False if patch can not be applied
@@ -1057,6 +1076,8 @@ if __name__ == "__main__":
                                            help="specify root directory for applying patch")
   opt.add_option("-p", "--strip", type="int", metavar='N', default=0,
                                            help="strip N path components from filenames")
+  opt.add_option("--revert", action="store_true",
+                                           help="apply patch in reverse order (unpatch)")
   (options, args) = opt.parse_args()
 
   if not args and sys.argv[-1:] != ['--']:
@@ -1097,7 +1118,10 @@ if __name__ == "__main__":
     sys.exit(0)
 
   #pprint(patch)
-  patch.apply(options.strip, root=options.directory) or sys.exit(-1)
+  if options.revert:
+    patch.revert(options.strip, root=options.directory) or sys.exit(-1)
+  else:
+    patch.apply(options.strip, root=options.directory) or sys.exit(-1)
 
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
