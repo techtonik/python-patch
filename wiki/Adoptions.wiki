@@ -1,6 +1,7 @@
 #summary List of companies, projects and individuals using patch.py
 
 || Project || Description || patch.py version || Reviewed ||
+|| [https://pypi.python.org/pypi/collective.recipe.patch/0.2.2 collective.recipe.patch] || buildout recipe for patching eggs || [https://github.com/garbas/collective.recipe.patch/blob/master/collective/recipe/patch/patch.py 8.06-1+] || 2014-01-17 ||
 || [https://backports.wiki.kernel.org/index.php/Documentation Linux Kernel Backports] || backporting Linux upstream device drivers for usage on older kernels || [https://git.kernel.org/cgit/linux/kernel/git/backports/backports.git/tree/lib/patch.py 1.12.12dev+] || 2014-01-17 ||
 || [http://lua-users.org/wiki/LuaPatch LuaPatch] || rewrite of patch.py for Lua by David Manura || 8.06-1|| 2014-01-17 ||
 || [https://openhatch.org/ OpenHatch] || help wannabe open source developers find interesting projects || [https://github.com/openhatch/oh-mainline/blob/master/vendor/packages/python-patch/patch.py 10.04-2+] || 2014-01-17 ||
