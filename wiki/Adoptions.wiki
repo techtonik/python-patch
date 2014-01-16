@@ -1,4 +1,5 @@
 #summary List of companies, projects and individuals using patch.py
 
 || Project || Description || patch.py version || Reviewed ||
-|| [https://nose.readthedocs.org/en/latest/ nose] || `nose` extends unittest to make testing easier || [https://github.com/nose-devs/nose/blob/master/patch.py 10.04-2] || 2014-01-17 ||
+|| [https://openhatch.org/ OpenHatch] || help wannabe open source developers find interesting projects || [https://github.com/openhatch/oh-mainline/blob/master/vendor/packages/python-patch/patch.py 10.04-2+] || 2014-01-17 ||
+|| [https://nose.readthedocs.org/en/latest/ nose] || `nose` extends unittest to make testing easier || [https://github.com/nose-devs/nose/blob/master/patch.py 10.04-2+] || 2014-01-17 ||
