@@ -1,0 +1,4 @@
+#summary List of companies, projects and individuals using patch.py
+
+|| Project || Description || patch.py version || Reviewed ||
+|| [https://nose.readthedocs.org/en/latest/ nose] || `nose` extends unittest to make testing easier || [https://github.com/nose-devs/nose/blob/master/patch.py 10.04-2] || 2014-01-17 ||
