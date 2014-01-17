@@ -37,7 +37,7 @@ for file in os.listdir('.'):
       pass
     else:
       print(file)
-      for each in ps.items:
+      for each in ps:
        print("  " + each.target)
        for h in each.hunks:
         if h.desc:
