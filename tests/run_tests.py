@@ -10,12 +10,11 @@ There are two kind of tests:
 File-based test is patch file, initial file and resulting file
 for comparison.
 
-Directory-based test is a [ ] self-sufficient directory with:
-files to be patched, patch file and [result] directory used for
-comparison. Copy directory, exec patch file manually and compare
-with [result]. This is what this runner does.
+Directory-based test is a directory with: files to be patched
+and [result] dir. This runner copies directory, applies patch
+and compares with [result].
 
-All unit tests are inside of this runner.
+Unit tests are all inside of this runner.
 
 
 == Code Coverage ==
@@ -37,7 +36,7 @@ import shutil
 import unittest
 import copy
 from os import listdir
-from os.path import abspath, dirname, exists, join, isdir
+from os.path import abspath, dirname, exists, join, isdir, isfile
 from tempfile import mkdtemp
 
 verbose = False
@@ -119,19 +118,21 @@ class TestPatchFiles(unittest.TestCase):
 
       tmpdir = mkdtemp(prefix="%s."%testname)
 
-      patch_file = join(tmpdir, "%s.patch" % testname)
-      shutil.copy(join(tests_dir, "%s.patch" % testname), patch_file)
-      
-      from_src = join(tests_dir, "%s.from" % testname)
-      from_tgt = join(tmpdir, "%s.from" % testname)
+      basepath = join(tests_dir, testname)
+      basetmp = join(tmpdir, testname)
 
-      if not isdir(from_src):
-        # file-based test
-        shutil.copy(from_src, from_tgt)
+      patch_file = basetmp + ".patch"
+      shutil.copy(basepath + ".patch", tmpdir)
+      
+      file_based = isfile(basepath + ".from")
+      from_tgt = basetmp + ".from"
+
+      if file_based:
+        shutil.copy(basepath + ".from", tmpdir)
       else:
         # directory-based
-        for e in listdir(from_src):
-          epath = join(from_src, e)
+        for e in listdir(basepath + ".from"):
+          epath = join(basepath + ".from", e)
           if not isdir(epath):
             shutil.copy(epath, join(tmpdir, e))
           else:
@@ -155,11 +156,11 @@ class TestPatchFiles(unittest.TestCase):
 
       # 4.
       # compare results
-      if not isdir(from_src):
-        self._assert_files_equal(join(tests_dir, "%s.to" % testname), from_tgt)
+      if file_based:
+        self._assert_files_equal(basepath + ".to", from_tgt)
       else:
         # recursive comparison
-        self._assert_dirs_equal(join(from_src, "[result]"),
+        self._assert_dirs_equal(join(basepath + ".from", "[result]"),
                                 tmpdir,
                                 ignore=["%s.patch" % testname, ".svn", "[result]"])
 
