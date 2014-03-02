@@ -80,6 +80,7 @@ See [APIUseCases].
      + PatchSet and Patch objects are now iterable
      + new PatchSet.findfile() contains logic detecting filename to patch
      + PatchSet.revert()
+   - make directory based tests easier to create and run manually
 
 1.13
 
