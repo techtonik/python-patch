@@ -14,7 +14,7 @@ Directory-based test is a directory with: files to be patched
 and [result] dir. This runner copies directory, applies patch
 and compares with [result].
 
-Unit tests are all inside of this runner.
+Unit tests test API and are all inside this runner.
 
 
 == Code Coverage ==
@@ -131,8 +131,8 @@ class TestPatchFiles(unittest.TestCase):
         shutil.copy(basepath + ".from", tmpdir)
       else:
         # directory-based
-        for e in listdir(basepath + ".from"):
-          epath = join(basepath + ".from", e)
+        for e in listdir(basepath):
+          epath = join(basepath, e)
           if not isdir(epath):
             shutil.copy(epath, join(tmpdir, e))
           else:
@@ -160,7 +160,7 @@ class TestPatchFiles(unittest.TestCase):
         self._assert_files_equal(basepath + ".to", from_tgt)
       else:
         # recursive comparison
-        self._assert_dirs_equal(join(basepath + ".from", "[result]"),
+        self._assert_dirs_equal(join(basepath, "[result]"),
                                 tmpdir,
                                 ignore=["%s.patch" % testname, ".svn", "[result]"])
 
@@ -202,7 +202,7 @@ class TestCheckPatched(unittest.TestCase):
 
     def test_patched_multiline(self):
         pto = patch.fromfile("01uni_multi.patch")
-        os.chdir(join(tests_dir, "01uni_multi.from", "[result]"))
+        os.chdir(join(tests_dir, "01uni_multi", "[result]"))
         self.assert_(pto.can_patch("updatedlg.cpp"))
 
     def test_can_patch_single_source(self):
@@ -216,7 +216,7 @@ class TestCheckPatched(unittest.TestCase):
    
     def test_multiline_false_on_other_file(self):
         pto = patch.fromfile("01uni_multi.patch")
-        os.chdir(join(tests_dir, "01uni_multi.from"))
+        os.chdir(join(tests_dir, "01uni_multi"))
         self.assertFalse(pto.can_patch("updatedlg.cpp"))
 
     def test_single_false_on_other_file(self):
@@ -365,13 +365,13 @@ class TestPatchApply(unittest.TestCase):
 
     def test_apply_root(self):
         treeroot = join(self.tmpdir, 'rootparent')
-        shutil.copytree(join(tests_dir, '06nested.from'), treeroot)
+        shutil.copytree(join(tests_dir, '06nested'), treeroot)
         pto = patch.fromfile(join(tests_dir, '06nested.patch'))
         self.assert_(pto.apply(root=treeroot))
 
     def test_apply_strip(self):
         treeroot = join(self.tmpdir, 'rootparent')
-        shutil.copytree(join(tests_dir, '06nested.from'), treeroot)
+        shutil.copytree(join(tests_dir, '06nested'), treeroot)
         pto = patch.fromfile(join(tests_dir, '06nested.patch'))
         for p in pto:
           p.source = 'nasty/prefix/' + p.source
