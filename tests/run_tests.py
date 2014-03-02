@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-TestSuite
+python-patch test suite
 
 Files/directories that comprise one test all have the same name, but a different extensions:
 *.patch
@@ -74,7 +74,7 @@ class TestPatchFiles(unittest.TestCase):
   
   def _assert_dirs_equal(self, dir1, dir2, ignore=[]):
       """
-      compare dir1 with reference dir2
+      compare dir2 with reference dir1
 
       """
       # recursive
@@ -118,8 +118,10 @@ class TestPatchFiles(unittest.TestCase):
       from_tgt = join(tmpdir, "%s.from" % testname)
 
       if not isdir(from_src):
+        # file-based test
         shutil.copy(from_src, from_tgt)
       else:
+        # directory-based
         for e in listdir(from_src):
           epath = join(from_src, e)
           if not isdir(epath):
@@ -148,7 +150,7 @@ class TestPatchFiles(unittest.TestCase):
       if not isdir(from_src):
         self._assert_files_equal(join(tests_dir, "%s.to" % testname), from_tgt)
       else:
-        # need recursive compare
+        # recursive comparison
         self._assert_dirs_equal(join(tests_dir, "%s.to" % testname),
                                 tmpdir,
                                 ignore=["%s.patch" % testname, ".svn"])
