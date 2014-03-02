@@ -10,9 +10,10 @@ There are two kind of tests:
 File-based test is patch file, initial file and resulting file
 for comparison.
 
-Directory-based test is a directory with: files to be patched
-and [result] dir. This runner copies directory, applies patch
-and compares with [result].
+Directory-based test is a self-sufficient directory with:
+files to be patched, patch file itself and [result] dir. You can
+manually apply patch and compare outcome with [result] directory.
+This is what this test runner does.
 
 Unit tests test API and are all inside this runner.
 
@@ -122,13 +123,13 @@ class TestPatchFiles(unittest.TestCase):
       basetmp = join(tmpdir, testname)
 
       patch_file = basetmp + ".patch"
-      shutil.copy(basepath + ".patch", tmpdir)
       
       file_based = isfile(basepath + ".from")
       from_tgt = basetmp + ".from"
 
       if file_based:
         shutil.copy(basepath + ".from", tmpdir)
+        shutil.copy(basepath + ".patch", tmpdir)
       else:
         # directory-based
         for e in listdir(basepath):
@@ -177,8 +178,10 @@ def add_test_methods(cls):
 
     # list testcases - every test starts with number
     # and add them as test* methods
-    testptn = re.compile(r"^(?P<name>\d{2,}.+)\.(?P<ext>[^\.]+)")
-    testset = sorted( set([testptn.match(e).group('name') for e in listdir(tests_dir) if testptn.match(e)]) )
+    testptn = re.compile(r"^(?P<name>\d{2,}[^\.]+).*$")
+
+    testset = [testptn.match(e).group('name') for e in listdir(tests_dir) if testptn.match(e)]
+    testset = sorted(set(testset))
 
     for filename in testset:
       methname = filename.replace(" ", "_")
@@ -200,8 +203,8 @@ class TestCheckPatched(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.save_cwd)
 
-    def test_patched_multiline(self):
-        pto = patch.fromfile("01uni_multi.patch")
+    def test_patched_multipatch(self):
+        pto = patch.fromfile("01uni_multi/01uni_multi.patch")
         os.chdir(join(tests_dir, "01uni_multi", "[result]"))
         self.assert_(pto.can_patch("updatedlg.cpp"))
 
@@ -215,7 +218,7 @@ class TestCheckPatched(unittest.TestCase):
         self.assertEqual(None, pto3.can_patch("not_in_source.also"))
    
     def test_multiline_false_on_other_file(self):
-        pto = patch.fromfile("01uni_multi.patch")
+        pto = patch.fromfile("01uni_multi/01uni_multi.patch")
         os.chdir(join(tests_dir, "01uni_multi"))
         self.assertFalse(pto.can_patch("updatedlg.cpp"))
 
@@ -232,7 +235,7 @@ class TestCheckPatched(unittest.TestCase):
 class TestPatchParse(unittest.TestCase):
     def test_fromstring(self):
         try:
-          f = open(join(tests_dir, "01uni_multi.patch"), "rb")
+          f = open(join(tests_dir, "01uni_multi/01uni_multi.patch"), "rb")
           readstr = f.read()
         finally:
           f.close()
@@ -240,7 +243,7 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(len(pst), 5)
 
     def test_fromfile(self):
-        pst = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pst = patch.fromfile(join(tests_dir, "01uni_multi/01uni_multi.patch"))
         self.assertNotEqual(pst, False)
         self.assertEqual(len(pst), 5)
         ps2 = patch.fromfile(testfile("failing/not-a-patch.log"))
@@ -251,7 +254,7 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.items[0].header, [])
 
     def test_header_for_second_file_in_svn_diff(self):
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pto = patch.fromfile(join(tests_dir, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.items[1].header[0], 'Index: updatedlg.h\r\n')
         self.assert_(pto.items[1].header[1].startswith('====='))
 
@@ -305,12 +308,12 @@ class TestPatchParse(unittest.TestCase):
  conf.cpp      | 23 +++++++++++++++++------
  conf.h        |  7 ++++---
  5 files changed, 48 insertions(+), 18 deletions(-), +1203 bytes"""
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pto = patch.fromfile(join(tests_dir, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.diffstat(), output, "Output doesn't match")
 
 class TestPatchSetDetect(unittest.TestCase):
     def test_svn_detected(self):
-        pto = patch.fromfile(join(tests_dir, "01uni_multi.patch"))
+        pto = patch.fromfile(join(tests_dir, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.type, patch.SVN)
 
     def test_hg_detected(self):
@@ -366,13 +369,13 @@ class TestPatchApply(unittest.TestCase):
     def test_apply_root(self):
         treeroot = join(self.tmpdir, 'rootparent')
         shutil.copytree(join(tests_dir, '06nested'), treeroot)
-        pto = patch.fromfile(join(tests_dir, '06nested.patch'))
+        pto = patch.fromfile(join(tests_dir, '06nested/06nested.patch'))
         self.assert_(pto.apply(root=treeroot))
 
     def test_apply_strip(self):
         treeroot = join(self.tmpdir, 'rootparent')
         shutil.copytree(join(tests_dir, '06nested'), treeroot)
-        pto = patch.fromfile(join(tests_dir, '06nested.patch'))
+        pto = patch.fromfile(join(tests_dir, '06nested/06nested.patch'))
         for p in pto:
           p.source = 'nasty/prefix/' + p.source
           p.target = 'nasty/prefix/' + p.target
