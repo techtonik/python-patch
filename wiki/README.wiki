@@ -81,6 +81,8 @@ See [APIUseCases].
      + new PatchSet.findfile() contains logic detecting filename to patch
      + PatchSet.revert()
    - make directory based tests easier to create and run manually
+   - fix xnormpath with Windows paths on Linux
+     (issue #24, found by Philippe Ombredanne)
 
 1.13
 
