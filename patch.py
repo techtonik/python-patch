@@ -25,6 +25,7 @@ import urllib2
 
 from os.path import exists, isfile, abspath
 import os
+import posixpath
 import shutil
 
 
@@ -88,7 +89,10 @@ def xisabs(filename):
 
 def xnormpath(path):
   """ Cross-platform version of os.path.normpath """
-  return os.path.normpath(path).replace(os.sep, '/')
+  # replace escapes and Windows slashes
+  normalized = posixpath.normpath(path).replace('\\', '/')
+  # fold the result
+  return posixpath.normpath(normalized)
 
 def xstrip(filename):
   """ Make relative path out of absolute by stripping
