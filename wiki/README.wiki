@@ -19,8 +19,10 @@ taking care of the most problems (e.g. line end differences) automatically.
 
 == Status ==
 
-*NOTE:* API is unstable, so use strict dependencies on major version when
-using this tool as a library.
+*Build status*: https://drone.io/techtonik/python-patch
+
+*API status*: API is unstable, so *use strict dependencies on major
+version number* when using this tool as a library.
 
 It understands only _unified diffs_. Currently it doesn't support file
 renames, creation and removals.
