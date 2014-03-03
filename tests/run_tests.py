@@ -88,8 +88,10 @@ class TestPatchFiles(unittest.TestCase):
       # recursive
       if type(ignore) == str:
         ignore = [ignore]
-      e2list = listdir(dir2)
+      e2list = [en for en in listdir(dir2) if en not in ignore]
       for e1 in listdir(dir1):
+        if e1 in ignore:
+          continue
         e1path = join(dir1, e1)
         e2path = join(dir2, e1)
         self.assert_(exists(e1path))
@@ -98,11 +100,9 @@ class TestPatchFiles(unittest.TestCase):
         if not isdir(e1path):
           self._assert_files_equal(e1path, e2path)
         else:
-          self._assert_dirs_equal(e1path, e2path)
+          self._assert_dirs_equal(e1path, e2path, ignore=ignore)
         e2list.remove(e1)
       for e2 in e2list:
-        if e2 in ignore:
-          continue
         self.fail("extra file or directory: %s" % e2)
 
   
