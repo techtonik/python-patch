@@ -1068,7 +1068,7 @@ class PatchSet(object):
           print line.rstrip('\n')
 
 
-if __name__ == "__main__":
+def main():
   from optparse import OptionParser
   from os.path import exists
   import sys
@@ -1138,6 +1138,9 @@ if __name__ == "__main__":
   # todo: document and test line ends handling logic - patch.py detects proper line-endings
   #       for inserted hunks and issues a warning if patched file has incosistent line ends
 
+
+if __name__ == "__main__":
+  main()
 
 # Legend:
 # [ ]  - some thing to be done
