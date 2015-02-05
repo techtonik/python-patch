@@ -19,10 +19,41 @@ def get_version(path):
 
 def zipadd(archive, filename, newname):
   '''Add filename to archive. `newname` is required. Otherwise
-     zipfile may create unsafe entries, such as "../patch.py" '''
+     zipfile may create unsafe entries, such as "../patch.py".
+     Returns open ZipFile object.
+  '''
   import zipfile
   zf = zipfile.ZipFile(archive, 'a', zipfile.ZIP_DEFLATED)
   zf.write(filename, newname)
+  return zf
+
+class MiniJinja(object):
+    """Template engine that knows how to render {{ tag }}"""
+
+    def __init__(self, templates='.'):
+        """templates  - template path"""
+        import re
+        import sys
+        self.PY3K = sys.version_info[0] == 3
+
+        self.path = templates + '/'
+        self.tag  = re.compile('{{ *(?P<tag>\w+) *}}')
+
+    def render(self, template, vardict=None, **kwargs):
+        """returns unicode str"""
+        data = vardict or {}
+        data.update(kwargs)
+
+        def lookup(match):
+            return data[match.group('tag')]
+
+        tpl = open(self.path + template).read()
+        if not self.PY3K:
+            return unicode(self.tag.sub(lookup, tpl))
+        else:
+            return self.tag.sub(lookup, tpl)
+
+# ---
 
 if not sys.argv[1:]:
   sys.exit("usage: pack.py <module.py>")
@@ -34,5 +65,10 @@ packname = modname + "-" + version + ".zip"
 print("[*] Packing %s into %s" % (modpath, packname))
 if os.path.exists(packname):
   os.remove(packname)
-zipadd(packname, modpath, os.path.basename(modpath))
+zf = zipadd(packname, modpath, os.path.basename(modpath))
+print("[*] Making %s executable" % (packname))
+# http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
+text = MiniJinja().render('pack.mainpy.tpl', module=modname)
+zf.writestr('__main__.py', text)
+zf.close()
 
