@@ -1,0 +1,13 @@
+#summary Source code access
+
+Official sources for patch.py are hosted in Google Code Subversion:
+{{{
+svn checkout http://python-patch.googlecode.com/svn/trunk/ python-patch
+}}}
+
+It can be accessed with [http://mercurial.selenic.com/ Mercurial] + [https://bitbucket.org/durin42/hgsubversion/ hgsubversion] plugin:
+{{{
+hg clone http://python-patch.googlecode.com/svn/trunk/ python-patch
+}}}
+
+(for committing to Google Code, the URL needs to be changed to https)
