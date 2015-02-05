@@ -1,6 +1,6 @@
 #summary Source code access
 
-|| `[` [https://code.google.com/p/python-patch/source/list Browse] `]` || `[` [https://code.google.com/p/python-patch/source/list Changes] `]` ||
+|| `[` [https://code.google.com/p/python-patch/source/browse/ Browse Files] `]` || `[` [https://code.google.com/p/python-patch/source/list Commit Log ] `]` ||
 
 Official sources for patch.py are hosted in Google Code Subversion:
 {{{
