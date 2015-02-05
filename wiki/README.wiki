@@ -19,7 +19,7 @@ taking care of the most problems (e.g. line end differences) automatically.
 
 == Status ==
 
-*Build status*: https://drone.io/techtonik/python-patch
+[https://drone.io/techtonik/python-patch https://drone.io/techtonik/python-patch/status.png]
 
 *API status*: API is unstable, so *use strict dependencies on major
 version number* when using this tool as a library.
