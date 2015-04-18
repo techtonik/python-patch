@@ -1,0 +1,55 @@
+
+```
+import patch
+```
+
+### Detect if a file is a valid patch ###
+```
+>>> bool( patch.fromfile('doc/example.diff.diff') )
+True
+```
+
+### Print diffstat ###
+```
+>>> print(patch.fromfile('tests/01uni_multi.patch').diffstat())
+ updatedlg.cpp | 20 ++++++++++++++++++--
+ updatedlg.h   |  1 +
+ manifest.xml  | 15 ++++++++-------
+ conf.cpp      | 23 +++++++++++++++++------
+ conf.h        |  7 ++++---
+ 5 files changed, 48 insertions(+), 18 deletions(-), +1203 bytes
+```
+
+### Find all patch files and do something about them ###
+```
+import patch, os
+
+matched = 0
+for file in os.listdir('.'):
+  if os.path.isdir(file):
+    continue
+
+  with open(file, "rb") as fp:
+    ps = patch.PatchSet()
+    if not ps.parse(fp):
+      pass
+    else:
+      print(file)
+      for each in ps:
+       print("  " + each.target)
+       for h in each.hunks:
+        if h.desc:
+         print("   " + h.desc)
+      matched += 1
+
+print('Found %s' % matched)
+```
+
+## User stories ##
+### 01. Upgrade Trac environment files ###
+
+**Storyline:** I want to upgrade Trac environment while upgrading Trac itself from 0.9 to 0.11. This requires patching documentation files (README) in environment to a new version. It may not worth to distribute full version of documentation, so I want to detect what files are not patched, ensure that patch applies clearly before processing.
+
+**Proposed API:**
+
+**Example:**

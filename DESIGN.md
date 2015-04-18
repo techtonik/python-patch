@@ -1,0 +1,231 @@
+#author Anatoly Techtonik
+
+The initial goal was to make cross-platform alternative to unix patch
+utility. This utility should not require compiling, must be easy to
+extend and should be run as standalone tool or as server process. That's
+why Python was chosen.
+
+Another goal was to make a library for automation of patching tasks as
+part of rainforce project to encourage development of tools that will
+make "patchwork" more intuitive and easy.
+
+And the last goal was to reinvert line parser theory from scratch, because
+you need to reinvent things to prove that there is no better way to do
+something (or to understand what do you need to look for).
+
+
+## Design decisions ##
+
+#### Patch target file if source is not found ####
+
+If the source file is not found while patching, **patch.py** tries to patch
+target filename. This logic is used to process old style manual patches
+that were made by comparing backup file (with some fancy .old extension)
+with modified version that holds original name.
+
+#### "Already patched" detection ####
+
+_unified diff format_ doesn't allow to correctly validate if file is
+already patched, but only to check if it could be patched. It is because
+in some rare cases it is possible to apply the same patch several times
+(see 04check\_patched example in tests).
+
+Only checksum can reliably detect if file is not patched, but in this case
+linefeed differences or minor changes in file will mark file as
+non-patchable, while in fact it could be possible if these minor changes
+do not intersect with unified diff contents.  This is the feature of
+unified format - non-conlicting patches can be applied in different
+order. Some conflicts can even be resolved automatically (not by this lib
+so far). Version control systems actually do this during merges.
+
+
+## Parsers overview ##
+
+
+## Parser no.0 - Brute Force Line By Line Regexp ##
+
+Versions before 8.06.
+
+Initially the process was very straightforward. Main cycle reads one line
+at a time from the input stream. Detects to which part of Diff it belongs
+(free header, filename header, hunk) and parses it into corresponding data
+structure. The line is discarded at the end of each cycle. This guarantees
+no endless loops or recursions as long as input stream is finite.
+
+The parser code is one big `for` loop with a series of "parsing blocks"
+at the root level. After a line is read at the loop start, each parsing
+block then tested it with an `if` condition to see if it should process
+the line. If condition matched the block then extracted text into Python
+structure. Blocks can't request more lines, but they can use `continue`
+command to start new cycle without waiting until the end of cycle (this
+also prevented the line from being accidentally processed by blocks below).
+
+Testing the line with `if` had two major drawbacks:
+
+  1. regular expressions used in condition checks made the code obscure
+  1. line could be intercepted by wrong block, and an extra effort required to place blocks in proper order
+
+To illustrate second problem take lines starting with "+" or "-" for
+example. They should be parsed differently depending on where in diff they
+are located - in header block they are just usual lines that are not
+parsed at all, but for hunk they are the main data.
+
+## Parser no.1 - Line By Line State Machine ##
+
+Versions 8.06 up to 10.04.
+
+To make parser code more clear, regular expression checks were replaced
+with checks of state variables. These local boolean variables were named
+`header`, `filenames`, `hunkhead`, `hunkbody` after the regions in unified
+diff format. Only one variable is set to true at any given time, so parser
+is said to be in one given state at any moment. This made debug process
+significantly easier.
+
+After this change `if`s at the top level of main cycle started to check
+state variables instead of probing line content to delegate line processing
+into their parsing block. When block finishes processing, it is responsible
+for switching state to the next one. Sometime the next state should be
+chosen from several possible alternatives, and parsing block needs content
+of the following line to make the decision. As the line is discarded at the
+end of cycle - blocks are still required to be placed in proper order.
+
+Main cycle turned to be more readable, but checks at the end of parsing
+blocks become more sophisticated.
+
+So, while state machine isolated parsing blocks from stealing lines from
+eash other, it still has drawbacks:
+  1. blocks should be placed in proper order
+  1. parsing blocks that make a decision when switching state should know about lines (i.e. context) of successor blocks
+  1. state checks are made for every input line, because block can't request more lines in the middle of input cycle
+
+Let's not forget benefits:
+  1. debug is easier, code is more readable
+  1. parser is still non-recursive
+  1. no risk of endless loops
+
+This state machine allowed to introduce new `hunkskip` state for recovery
+from corrupted or invalid hunk. When such hunk is encountered - parser
+switches to `hunkskip` state and skips input lines until it finds header of
+the next hunk or filenames section. It appeared that the same check is done
+when hunk ends as usual, so the state check after hunk was delegated to
+`hunkskip` block as well.
+
+The parsing block for `hunkskip` state doesn't actually parse any data - it
+exists solely for making branching decision. Until 'hunkskip' state primary
+purpose of blocks in main cycle was extracting data, that's why they were
+named "parsing blocks", but 'hunkskip' introduced new class of blocks that
+can be named "decider blocks".
+
+The order of `hunkskip` is after `hunkbody` parser and before `filenames`
+and `hunkhead` parsing blocks. This guarantees that these blocks get their
+line after the state switch and before the line is discarded.
+
+```
+TODO: describe "missing line" problem in state recovery with two
+      interleaving blocks, when it is impossible to choose which block
+      should be placed ahead of the other
+```
+
+This line by line parser with lines that "fall through" arranged parsing
+blocks may be the fastest possible implementation. There are no calls, no
+repeated checks after state switching. But the code is still hard to read
+and extend due to these implicit arrangements. This can be a minor issue
+though as unified diff format is simple and such optimizations could be
+the way to go in the future.
+
+
+To summarize:
+  * static code analysis is easier thanks to states instead of regexps for branching execution;
+  * state checks are run for every line of the input stream (blocks can't request more lines);
+  * blocks are not explicitly chained;
+  * but still arranged in specific order;
+  * every parsing block knows to which state it should switch after processing;
+  * this makes state switching complicated when there is choice;
+  * because block should fetch the next line to make a decision;
+  * line should be processed by the right block until the end of the cycle;
+  * if it is impossible to rearrange blocks in the appropriate order then a "decider block" is needed (e.g `hunkskip`).
+
+Absence of function calls should speed up things a little. Function calls
+could make block chaining explicit, but this exposes parser to stack
+depletion problem. It is not actual for this specific parser, where amount
+of parsed data in memory is bigger anyway, but it is still worthy to keep
+this non-recursive and stackless.
+
+Development of parser is still complicated, because you need to keep in
+mind the correct order of blocks while making modifications, and know about
+interleaving blocks corner case to be able to manually detect them before
+they hack your mind.
+
+
+## Parser no.2 - Block Context ##
+
+Versions 
+
+The need to extend patch parser for processing Mercurial and Git formats
+required changes to allow easy extension without sacrificing non-recursive
+non-looping behavior. The first enhancement was to allow parser blocks
+fetch lines from input stream directly without waiting for the line in the
+main cycle. Block reads as many lines as it needs, and after that switches
+state. All lines that belong to this block are called "block context" and
+are not exposed to main `if` cycle. This way there are less chances that
+line could be intercepted by the wrong block.
+
+This feature can be called "isolation of block context".
+
+While it sounds good, block context can not be fully separated. When block
+doesn't know how many lines it needs it just reads the input until a line
+out of context is encountered. This line already belongs to another "block
+context". Current block switches state to pass control to owner, but the
+owner need to catch the line before it is discarded at the end of cycle.
+
+For example, when header parser reads line that starts with "--- " - it
+should switch state and pass this line to the owner - filename parser.
+The filename parser should be called before the end of the cycle to avoid
+line being overwritten. In case of `if`s structure that means owner's
+block check should be located under part of the code that switched state.
+
+So each block still knows about the next state or states. It should make a
+decision where to switch next. Hence it should know about "block contexts"
+of its successors. This bloats and complicates code.
+
+To simplify the code, it is possible to prevent blocks from analysing
+each other's context for making switch. The block should only check that
+line doesn't belong to its context and switch state to pass control
+further to "decider's block", which in turn make the proper state switch.
+
+"block context separation" is another feature of Parser no.2.
+
+It's not a complete separation in a sense that header parser still knows
+that line starting with "--- " doesn't belong to it. It switches state by
+setting `headscan` to False and `filescan` to True and that's all. No
+parsing block makes assumptions or decisions where to pass the processing.
+There is only one way to switch from parsing block. If there should be a
+decision what is to be parsed next, then this decision should be made by
+"decider's block" that doesn't parse, but just analyzes context to make a
+switch. The problem with arranging pieces in correct order still persists.
+
+To solve rearrangement problem it is necessary to either reinvent GOTO or
+to be able to reinsert analyzed line back into stream for fetching in
+the next cycle after state had already been switched.
+
+Rearrangement problem can be illustrated with two blocks that analyze each
+others context to pass control to each other. It is impossible to place
+them in the correct order in main cycle, because at the end of processing
+the current block should always be higher than the other to pass the line.
+
+The solution can be in:
+  * skip fetching line on the next cycle
+  * add buffer for discarded lines
+  * reinsert line into the stream
+  * wrapper switch that judges who gets the next line, this requires one more state variable, and processing lines one by one from the main cycle
+
+Reinserting lines can provide some performance overhead, wrapper switch
+complicates parser, so skip line fetching may be a good solution.
+
+
+So, this parser overcomes strict requirement when line should processed in
+the same cycle to avoid being overwritten. Every block requests as many
+lines as it needs, switches state to "finished" and returns control to the
+beginning of the main cycle. Main cycle analyzes state and passes control
+to the next appropriate block. As a side effect there is now a line number
+that can be used for error messages and debugging.
