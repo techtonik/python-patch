@@ -55,20 +55,21 @@ class MiniJinja(object):
 
 # ---
 
-if not sys.argv[1:]:
-  sys.exit("usage: pack.py <module.py>")
+if __name__ == '__main__':
+  if not sys.argv[1:]:
+    sys.exit("usage: pack.py <module.py>")
 
-modpath = sys.argv[1]
-modname = os.path.basename(modpath)[:-3] # also strip extension
-version  = get_version(modpath)
-packname = modname + "-" + version + ".zip"
-print("[*] Packing %s into %s" % (modpath, packname))
-if os.path.exists(packname):
-  os.remove(packname)
-zf = zipadd(packname, modpath, os.path.basename(modpath))
-print("[*] Making %s executable" % (packname))
-# http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
-text = MiniJinja().render('pack.mainpy.tpl', module=modname)
-zf.writestr('__main__.py', text)
-zf.close()
+  modpath = sys.argv[1]
+  modname = os.path.basename(modpath)[:-3] # also strip extension
+  version  = get_version(modpath)
+  packname = modname + "-" + version + ".zip"
+  print("[*] Packing %s into %s" % (modpath, packname))
+  if os.path.exists(packname):
+    os.remove(packname)
+  zf = zipadd(packname, modpath, os.path.basename(modpath))
+  print("[*] Making %s executable" % (packname))
+  # http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
+  text = MiniJinja().render('pack.mainpy.tpl', module=modname)
+  zf.writestr('__main__.py', text)
+  zf.close()
 
