@@ -71,5 +71,8 @@ if __name__ == '__main__':
   # http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
   text = MiniJinja().render('pack.mainpy.tpl', module=modname)
   zf.writestr('__main__.py', text)
+  print("[*] Making %s installable" % (packname))
+  text2 = MiniJinja().render('pack.setuppy.tpl', module=modname, version=version)
+  zf.writestr('setup.py', text2)
   zf.close()
 
