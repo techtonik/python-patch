@@ -17,4 +17,5 @@ avoid hitting an API break.
 ### Other stuff
 
 * Support project: <a href="https://gratipay.com/techtonik/"><img src='https://img.shields.io/gratipay/techtonik.svg'/></a>
-* Credits:
+* (CREDITS)[doc/CREDITS]
+* (LICENSE)[doc/LICENSE]
