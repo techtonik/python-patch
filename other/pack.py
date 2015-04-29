@@ -55,6 +55,8 @@ class MiniJinja(object):
 
 # ---
 
+BASE = os.path.abspath(os.path.dirname(__file__))
+
 if __name__ == '__main__':
   if not sys.argv[1:]:
     sys.exit("usage: pack.py <module.py>")
@@ -69,10 +71,10 @@ if __name__ == '__main__':
   zf = zipadd(packname, modpath, os.path.basename(modpath))
   print("[*] Making %s executable" % (packname))
   # http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
-  text = MiniJinja().render('pack.mainpy.tpl', module=modname)
+  text = MiniJinja(BASE).render('pack.mainpy.tpl', module=modname)
   zf.writestr('__main__.py', text)
   print("[*] Making %s installable" % (packname))
-  text2 = MiniJinja().render('pack.setuppy.tpl', module=modname, version=version)
+  text2 = MiniJinja(BASE).render('pack.setuppy.tpl', module=modname, version=version)
   zf.writestr('setup.py', text2)
   zf.close()
 
