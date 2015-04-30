@@ -1,3 +1,5 @@
 * Pack .zip archive
     ./other/pack.py
 * Upload .zip (manually so far)
+  * Create new version https://pypi.python.org/pypi?%3Aaction=submit_form&name=patch
+  * Upload .zip for this version
