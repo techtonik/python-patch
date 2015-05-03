@@ -76,5 +76,7 @@ if __name__ == '__main__':
   print("[*] Making %s installable" % (packname))
   text2 = MiniJinja(BASE).render('pack.setuppy.tpl', module=modname, version=version)
   zf.writestr('setup.py', text2)
+  print("[*] Making %s uploadable to PyPI" % (packname))
+  zf.writestr('PKG-INFO', '')
   zf.close()
 
