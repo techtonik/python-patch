@@ -8,13 +8,12 @@
 
     Project home: http://code.google.com/p/python-patch/
 
-
     $Id$
     $HeadURL$
 """
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.14dev"
+__version__ = "1.14.2"
 
 import copy
 import logging
