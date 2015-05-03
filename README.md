@@ -10,9 +10,15 @@ Download **patch.py** and run it with Python. It is a self-contained file with n
 
 It is better to just stuff **patch.py** into your repository and use it from here. This way your setup
 will always be repeatable. If you still want to install it, make sure to use strict dependencies to
-avoid hitting an API break.
+avoid hitting an API break:
 
     pip install "patch>=1,<2"
+
+With pip 6.x.x and later it is possible to use the alternative syntax:
+
+
+    pip install "patch==1.*"
+
 
 ### Other stuff
 
