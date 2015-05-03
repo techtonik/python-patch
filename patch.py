@@ -1,19 +1,18 @@
 #!/usr/bin/env python
-""" Patch utility to apply unified diffs
+"""
+    Patch utility to apply unified diffs
 
     Brute-force line-by-line non-recursive parsing 
 
-    Copyright (c) 2008-2014 anatoly techtonik
+    Copyright (c) 2008-2015 anatoly techtonik
     Available under the terms of MIT license
 
-    Project home: http://code.google.com/p/python-patch/
+    https://github.com/techtonik/python-patch/
 
-    $Id$
-    $HeadURL$
 """
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.14.2"
+__version__ = "1.15dev"
 
 import copy
 import logging
