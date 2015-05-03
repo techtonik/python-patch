@@ -10,4 +10,8 @@ setup(
     license='MIT',
 
     py_modules=['{{ module }}'],
+
+    classifiers=[
+        'Classifier: Programming Language :: Python :: 2 :: Only',
+    ],
 )
