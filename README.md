@@ -2,9 +2,13 @@ Cross-platform **patch** utility to apply unified diffs.
 
 ### How to use?
 
-Download **patch.py** and run it with Python. It is a self-contained file with not external dependencies.
+Download **patch.py** and run it with Python. It is a self-contained module without external dependencies.
 
     python patch.py diff.patch
+
+You can also run the .zip file.
+    
+    python patch-1.14.2.zip diff.patch
 
 ### How to install?
 
