@@ -435,7 +435,7 @@ class PatchSet(object):
           if match:
             srcname = match.group(1).strip()
           else:
-            warning("skipping invalid filename at line %d" % lineno)
+            warning("skipping invalid filename at line %d" % (lineno+1))
             self.errors += 1
             # XXX p.header += line
             # switch back to headscan state
@@ -456,7 +456,7 @@ class PatchSet(object):
         else:
           if tgtname != None:
             # XXX seems to be a dead branch  
-            warning("skipping invalid patch - double target at line %d" % lineno)
+            warning("skipping invalid patch - double target at line %d" % (lineno+1))
             self.errors += 1
             srcname = None
             tgtname = None
@@ -471,7 +471,7 @@ class PatchSet(object):
             re_filename = "^\+\+\+ ([^\t]+)"
             match = re.match(re_filename, line)
             if not match:
-              warning("skipping invalid patch - no target filename at line %d" % lineno)
+              warning("skipping invalid patch - no target filename at line %d" % (lineno+1))
               self.errors += 1
               srcname = None
               # switch back to headscan state
@@ -838,7 +838,7 @@ class PatchSet(object):
             hunklineno+=1
           else:
             info("file %d/%d:\t %s" % (i+1, total, filename))
-            info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno))
+            info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno+1))
             info("  expected: %s" % hunkfind[hunklineno])
             info("  actual  : %s" % line.rstrip("\r\n"))
             # not counting this as error, because file may already be patched.
