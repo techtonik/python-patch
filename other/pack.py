@@ -64,6 +64,8 @@ if __name__ == '__main__':
   modpath = sys.argv[1]
   modname = os.path.basename(modpath)[:-3] # also strip extension
   version  = get_version(modpath)
+  if version == None:
+    sys.exit("error: no __version__ specifier found in %s" % modpath)
   packname = modname + "-" + version + ".zip"
   print("[*] Packing %s into %s" % (modpath, packname))
   if os.path.exists(packname):
