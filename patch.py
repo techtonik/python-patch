@@ -31,8 +31,6 @@ import shutil
 # Logging is controlled by logger named after the
 # module name (e.g. 'patch' for patch.py module)
 
-debugmode = False
-
 logger = logging.getLogger(__name__)
 
 debug = logger.debug
@@ -51,7 +49,22 @@ class NullHandler(logging.Handler):
   def createLock(self):
     self.lock = None
 
+streamhandler = logging.StreamHandler()
+
+# initialize logger itself
 logger.addHandler(NullHandler())
+logger.addHandler(streamhandler)
+
+debugmode = False
+
+def setdebug():
+  global debugmode, streamhandler
+
+  loglevel = logging.DEBUG
+  logformat = "%(levelname)8s %(message)s"
+  logger.setLevel(loglevel)
+  streamhandler.setFormatter(logging.Formatter(logformat))
+
 
 #------------------------------------------------
 # Constants for Patch/PatchSet types
@@ -1096,19 +1109,14 @@ def main():
     sys.exit()
   readstdin = (sys.argv[-1:] == ['--'] and not args)
 
-  debugmode = options.debugmode
-
   verbosity_levels = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
   loglevel = verbosity_levels[options.verbosity]
   logformat = "%(message)s"
-  if debugmode:
-    loglevel = logging.DEBUG
-    logformat = "%(levelname)8s %(message)s"
   logger.setLevel(loglevel)
-  loghandler = logging.StreamHandler()
-  loghandler.setFormatter(logging.Formatter(logformat))
-  logger.addHandler(loghandler)
+  streamhandler.setFormatter(logging.Formatter(logformat))
 
+  if options.debugmode:
+    setdebug()  # this sets global debugmode variable
 
   if readstdin:
     patch = PatchSet(sys.stdin)
