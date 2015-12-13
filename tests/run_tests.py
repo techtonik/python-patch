@@ -185,11 +185,12 @@ def add_test_methods(cls):
     testset = sorted(set(testset))
 
     for filename in testset:
-      methname = filename.replace(" ", "_")
+      methname = 'test_' + filename
       def create_closure():
         name = filename
         return lambda self: self._run_test(name)
-      setattr(cls, "test%s" % methname, create_closure())
+      test = create_closure()
+      setattr(cls, methname, test)
       if verbose:
         print "added test method %s to %s" % (methname, cls)
 add_test_methods(TestPatchFiles)
