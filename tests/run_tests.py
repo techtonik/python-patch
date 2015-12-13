@@ -326,13 +326,11 @@ class TestPatchSetDetection(unittest.TestCase):
         pto = patch.fromfile(join(TESTS, "data/hg-exported.diff"))
         self.assertEqual(pto.type, patch.HG)
 
-    def test_git_changed_detected(self):
-        pto = patch.fromfile(join(TESTS, "data/git-changed-file.diff"))
-        self.assertEqual(pto.type, patch.GIT)
-
-    def test_git_changed_detected(self):
-        pto = patch.fromfile(testfile("git-changed-file.diff"))
-        self.assertEqual(pto.type, patch.GIT)
+    def test_git_detected(self):
+        for filename in os.listdir(TESTDATA):
+          if filename.startswith('git-'):
+            pto = patch.fromfile(join(TESTDATA, filename))
+            self.assertEqual(pto.type, patch.GIT)
 
 
 class TestPatchApply(unittest.TestCase):
