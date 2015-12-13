@@ -47,8 +47,9 @@ if "-v" in sys.argv or "--verbose" in sys.argv:
 
 # full path for directory with tests
 TESTS = dirname(abspath(__file__))
+TESTDATA = join(TESTS, 'data')
 def testfile(name):
-  return join(TESTS, 'data', name)
+  return join(TESTDATA, name)
 
 
 # import patch.py from parent directory
@@ -311,7 +312,8 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromfile(join(TESTS, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.diffstat(), output, "Output doesn't match")
 
-class TestPatchSetDetect(unittest.TestCase):
+
+class TestPatchSetDetection(unittest.TestCase):
     def test_svn_detected(self):
         pto = patch.fromfile(join(TESTS, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.type, patch.SVN)
@@ -329,7 +331,7 @@ class TestPatchSetDetect(unittest.TestCase):
         self.assertEqual(pto.type, patch.GIT)
 
     def test_git_changed_detected(self):
-        pto = patch.fromfile(join(TESTS, "data/git-changed-file.diff"))
+        pto = patch.fromfile(testfile("git-changed-file.diff"))
         self.assertEqual(pto.type, patch.GIT)
 
 
@@ -385,6 +387,7 @@ class TestPatchApply(unittest.TestCase):
           p.source = 'nasty/prefix/' + p.source
           p.target = 'nasty/prefix/' + p.target
         self.assert_(pto.apply(strip=2, root=treeroot))
+
 
 class TestHelpers(unittest.TestCase):
     # unittest setting
