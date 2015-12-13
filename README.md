@@ -1,5 +1,7 @@
 Cross-platform **patch** utility to apply unified diffs.
 
+[![Build Status](https://img.shields.io/travis/techtonik/python-patch.svg)](https://travis-ci.org/techtonik/python-patch)
+
 ### How to use?
 
 Download **patch.py** and run it with Python. It is a self-contained module without external dependencies.
