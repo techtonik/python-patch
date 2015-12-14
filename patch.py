@@ -617,12 +617,13 @@ class PatchSet(object):
     #      add git diff with spaced filename
     # TODO http://www.kernel.org/pub/software/scm/git/docs/git-diff.html
 
-    # detect the start of diff header - there might be some comments before
+    # Git patch header len is 2 min
     if len(p.header) > 1:
+      # detect the start of diff header - there might be some comments before
       for idx in reversed(range(len(p.header))):
         if p.header[idx].startswith("diff --git"):
           break
-      if re.match(r'diff --git a/[\w/.]+ b/[\w/.]+', p.header[idx]):
+      if p.header[idx].startswith('diff --git a/'):
         if (idx+1 < len(p.header)
             and re.match(r'index \w{7}..\w{7} \d{6}', p.header[idx+1])):
           if DVCS:
