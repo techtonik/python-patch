@@ -1,0 +1,21 @@
+From fe0fecac607022e8a8017c5209b79e4fda342213 Mon Sep 17 00:00:00 2001
+From: "Dr. Matthias St. Pierre" <Matthias.St.Pierre@ncp-e.com>
+Date: Thu, 10 Dec 2015 13:40:30 +0100
+Subject: [PATCH 2/2] modified hello-world.txt
+
+---
+ hello-world.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/hello-world.txt b/hello-world.txt
+index 3b18e51..dcc4fd9 100644
+--- a/hello-world.txt
++++ b/hello-world.txt
+@@ -1 +1,3 @@
+-hello world
++hello world,
++how are you?
++
+-- 
+2.4.10
+
