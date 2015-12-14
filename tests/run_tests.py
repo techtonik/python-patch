@@ -319,19 +319,33 @@ class TestPatchSetDetection(unittest.TestCase):
         pto = patch.fromfile(join(TESTS, "01uni_multi/01uni_multi.patch"))
         self.assertEqual(pto.type, patch.SVN)
 
-    def test_hg_detected(self):
-        pto = patch.fromfile(join(TESTS, "data/hg-added-file.diff"))
-        self.assertEqual(pto.type, patch.HG)
+# generate tests methods for TestPatchSetDetection - one for each patch file
+def generate_detection_test(filename, patchtype):
+  # saving variable in local scope to prevent test()
+  # from fetching it from global
+  patchtype = difftype
+  def test(self):
+    pto = patch.fromfile(join(TESTDATA, filename))
+    self.assertEqual(pto.type, patchtype)
+  return test
 
-    def test_hg_exported(self):
-        pto = patch.fromfile(join(TESTS, "data/hg-exported.diff"))
-        self.assertEqual(pto.type, patch.HG)
+for filename in os.listdir(TESTDATA):
+  if isdir(join(TESTDATA, filename)):
+    continue
 
-    def test_git_detected(self):
-        for filename in os.listdir(TESTDATA):
-          if filename.startswith('git-'):
-            pto = patch.fromfile(join(TESTDATA, filename))
-            self.assertEqual(pto.type, patch.GIT)
+  difftype = patch.PLAIN
+  if filename.startswith('git-'):
+    difftype = patch.GIT
+  if filename.startswith('hg-'):
+    difftype = patch.HG
+  if filename.startswith('svn-'):
+    difftype = patch.SVN
+
+  name = 'test_'+filename
+  test = generate_detection_test(filename, difftype)
+  setattr(TestPatchSetDetection, name, test)
+  if verbose:
+    print "added test method %s to %s" % (name, 'TestPatchSetDetection')
 
 
 class TestPatchApply(unittest.TestCase):
