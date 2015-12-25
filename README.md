@@ -51,7 +51,7 @@ With pip 6.x.x and later it is possible to use the alternative syntax:
 
 
 ### Other stuff
-
+* [CHANGES](doc/CHANGES.md)
 * [LICENSE](doc/LICENSE)
 * [CREDITS](doc/CREDITS)
 * <a href="https://gratipay.com/techtonik/"><img src='https://img.shields.io/gratipay/techtonik.svg'/></a>
