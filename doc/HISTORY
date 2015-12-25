@@ -1,0 +1,16 @@
+In 2008 there was no reliable Windows tool to apply patches,
+and there was no cross-platform solution that could be safely
+run by web server process.
+
+(UNIX *patch* utility)[http://www.gnu.org/software/patch/] was
+(ported to windows)[http://gnuwin32.sourceforge.net/packages/patch.htm],
+but there were (a couple of bugs)
+[http://www.google.com/search?q=Assertion+failed%3A+hunk%2C+file+patch.c]
+that proved that it can not be run securely in web server process.
+The utility was also hard to tweak without a C compiler, it messed
+badly with LF and CRLF line end differences, and so this project
+was born.
+
+*patch.py* was meant to be a cross-platoform tool with intuitive
+defaults, taking care of the most problems (e.g. line end
+differences) automatically.
