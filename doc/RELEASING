@@ -2,6 +2,12 @@
 
     python ./other/pack.py patch.py
 
+* [ ] Write changelog
+
 * [ ] Upload archive to PyPI (manually for now)
   * [ ] Create new version https://pypi.python.org/pypi?%3Aaction=submit_form&name=patch
   * [ ] Upload .zip for this version
+
+* [ ] Update PyPI description
+  * [ ] Download PKG-INFO
+  * [ ] Edit and upload
