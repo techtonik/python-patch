@@ -34,7 +34,7 @@ module without external dependencies.
 
 You can also run the .zip file.
     
-    python patch-1.14.2.zip diff.patch
+    python patch-1.15.zip diff.patch
 
 ### Installation
 
