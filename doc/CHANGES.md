@@ -1,3 +1,12 @@
+##### 1.15
+
+  - Project moved to GitHub
+  - patch-1.15.zip archive is now executable
+  - improved Git patch detection thanks to @mspncp (#32)
+  - tests/data contains database of all possible patches
+  - tests suite scan now processes tests/data automatically
+  - API changes:
+    + setdebug() initializes logging and enables debug info
 
 ##### 1.14.2
 
