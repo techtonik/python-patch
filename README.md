@@ -1,6 +1,29 @@
-Parse and apply unified diffs.
+Library to parse and apply unified diffs.
 
 [![Build Status](https://img.shields.io/travis/techtonik/python-patch.svg)](https://travis-ci.org/techtonik/python-patch)
+
+### Features
+
+ * Automatic correction of
+   * Linefeeds according to patched file
+   * Diffs broken by stripping trailing whitespace
+   * a/ and b/ prefixes
+ * Single file, which is a command line tool and library
+ * No dependencies outside Python stdlib
+ * Patch format detection (SVN, HG, GIT)
+ * Nice diffstat histogram
+ * Linux / Windows / OX X
+ * Python 2.5+ compatible, 2.6/2.7 tested
+ * Test coverage
+
+Things that don't work out of the box:
+
+ * Python 3
+ * File renaming, creation and removal
+ * Directory tree operations
+ * Version control specific properties
+ * Non-unified diff formats
+
 
 ### Usage
 
