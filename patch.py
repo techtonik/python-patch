@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 """
     Patch utility to apply unified diffs
 
@@ -18,13 +19,32 @@ import copy
 import logging
 import re
 # cStringIO doesn't support unicode in 2.5
-from StringIO import StringIO
-import urllib2
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO # python 3
+try:
+    import urllib2 as urllib_request
+except ImportError:
+    import urllib.request as urllib_request
 
 from os.path import exists, isfile, abspath
 import os
 import posixpath
 import shutil
+import sys
+
+# PEP 3114
+if sys.version_info[0] == 2:
+  compat_next = lambda gen: gen.next()
+else:
+  compat_next = lambda gen: gen.__next__()
+
+# In Python 3 b'0' gives int 30 while b'0' in Python 3
+def compat_ord(c):
+  if isinstance(c, int):
+    return c
+  return ord(c)
 
 
 #------------------------------------------------
@@ -96,18 +116,18 @@ def xisabs(filename):
       Returns True if `filename` is absolute on
       Linux, OS X or Windows.
   """
-  if filename.startswith('/'):     # Linux/Unix
+  if filename.startswith(b'/'):     # Linux/Unix
     return True
-  elif filename.startswith('\\'):  # Windows
+  elif filename.startswith(b'\\'):  # Windows
     return True
-  elif re.match(r'\w:[\\/]', filename): # Windows
+  elif re.match(b'\\w:[\\\\/]', filename): # Windows
     return True
   return False
 
 def xnormpath(path):
   """ Cross-platform version of os.path.normpath """
   # replace escapes and Windows slashes
-  normalized = posixpath.normpath(path).replace('\\', '/')
+  normalized = posixpath.normpath(path).replace(b'\\', b'/')
   # fold the result
   return posixpath.normpath(normalized)
 
@@ -119,11 +139,11 @@ def xstrip(filename):
   """
   while xisabs(filename):
     # strip windows drive with all slashes
-    if re.match(r'\w:[\\/]', filename):
-      filename = re.sub(r'^\w+:[\\/]+', '', filename)
+    if re.match(b'\\w:[\\\\/]', filename):
+      filename = re.sub(b'^\\w+:[\\\\/]+', b'', filename)
     # strip all slashes
-    elif re.match(r'[\\/]', filename):
-      filename = re.sub(r'^[\\/]+', '', filename)
+    elif re.match(b'[\\\\/]', filename):
+      filename = re.sub(b'^[\\\\/]+', b'', filename)
   return filename
 
 #-----------------------------------------------
@@ -158,7 +178,7 @@ def fromurl(url):
       if an error occured. Note that this also
       can throw urlopen() exceptions.
   """
-  ps = PatchSet( urllib2.urlopen(url) )
+  ps = PatchSet( urllib_request.urlopen(url) )
   if ps.errors == 0:
     return ps
   return False
@@ -169,9 +189,9 @@ def fromurl(url):
 def pathstrip(path, n):
   """ Strip n leading components from the given path """
   pathlist = [path]
-  while os.path.dirname(pathlist[0]) != '':
+  while os.path.dirname(pathlist[0]) != b'':
     pathlist[0:1] = os.path.split(pathlist[0])
-  return '/'.join(pathlist[n:])
+  return b'/'.join(pathlist[n:])
 # --- /Utility function ---
 
 
@@ -278,7 +298,7 @@ class PatchSet(object):
           return False
 
         try:
-          self._lineno, self._line = super(wrapumerate, self).next()
+          self._lineno, self._line = compat_next(super(wrapumerate, self))
         except StopIteration:
           self._exhausted = True
           self._line = False
@@ -308,7 +328,7 @@ class PatchSet(object):
     hunkparsed = False # state after successfully parsed hunk
 
     # regexp to match start of hunk, used groups - 1,3,4,6
-    re_hunk_start = re.compile("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@")
+    re_hunk_start = re.compile(b"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@")
     
     self.errors = 0
     # temp buffers for header and filenames info
@@ -327,7 +347,7 @@ class PatchSet(object):
         hunkparsed = False
         if re_hunk_start.match(fe.line):
             hunkhead = True
-        elif fe.line.startswith("--- "):
+        elif fe.line.startswith(b"--- "):
             filenames = True
         else:
             headscan = True
@@ -335,7 +355,7 @@ class PatchSet(object):
 
       # read out header
       if headscan:
-        while not fe.is_empty and not fe.line.startswith("--- "):
+        while not fe.is_empty and not fe.line.startswith(b"--- "):
             header.append(fe.line)
             fe.next()
         if fe.is_empty:
@@ -343,7 +363,7 @@ class PatchSet(object):
               debug("no patch data found")  # error is shown later
               self.errors += 1
             else:
-              info("%d unparsed bytes left at the end of stream" % len(''.join(header)))
+              info("%d unparsed bytes left at the end of stream" % len(b''.join(header)))
               self.warnings += 1
               # TODO check for \No new line at the end.. 
               # TODO test for unparsed bytes
@@ -364,26 +384,26 @@ class PatchSet(object):
         # [x] treat empty lines inside hunks as containing single space
         #     (this happens when diff is saved by copy/pasting to editor
         #      that strips trailing whitespace)
-        if line.strip("\r\n") == "":
+        if line.strip(b"\r\n") == b"":
             debug("expanding empty line in a middle of hunk body")
             self.warnings += 1
-            line = ' ' + line
+            line = b' ' + line
 
         # process line first
-        if re.match(r"^[- \+\\]", line):
+        if re.match(b"^[- \\+\\\\]", line):
             # gather stats about line endings
-            if line.endswith("\r\n"):
+            if line.endswith(b"\r\n"):
               p.hunkends["crlf"] += 1
-            elif line.endswith("\n"):
+            elif line.endswith(b"\n"):
               p.hunkends["lf"] += 1
-            elif line.endswith("\r"):
+            elif line.endswith(b"\r"):
               p.hunkends["cr"] += 1
               
-            if line.startswith("-"):
+            if line.startswith(b"-"):
               hunkactual["linessrc"] += 1
-            elif line.startswith("+"):
+            elif line.startswith(b"+"):
               hunkactual["linestgt"] += 1
-            elif not line.startswith("\\"):
+            elif not line.startswith(b"\\"):
               hunkactual["linessrc"] += 1
               hunkactual["linestgt"] += 1
             hunk.text.append(line)
@@ -432,7 +452,7 @@ class PatchSet(object):
           # switch to hunkhead state
           hunkskip = False
           hunkhead = True
-        elif line.startswith("--- "):
+        elif line.startswith(b"--- "):
           # switch to filenames state
           hunkskip = False
           filenames = True
@@ -440,7 +460,7 @@ class PatchSet(object):
             debug("- %2d hunks for %s" % (len(p.hunks), p.source))
 
       if filenames:
-        if line.startswith("--- "):
+        if line.startswith(b"--- "):
           if srcname != None:
             # XXX testcase
             warning("skipping false patch for %s" % srcname)
@@ -448,7 +468,7 @@ class PatchSet(object):
             # XXX header += srcname
             # double source filename line is encountered
             # attempt to restart from this second line
-          re_filename = "^--- ([^\t]+)"
+          re_filename = b"^--- ([^\t]+)"
           match = re.match(re_filename, line)
           # todo: support spaces in filenames
           if match:
@@ -460,7 +480,7 @@ class PatchSet(object):
             # switch back to headscan state
             filenames = False
             headscan = True
-        elif not line.startswith("+++ "):
+        elif not line.startswith(b"+++ "):
           if srcname != None:
             warning("skipping invalid patch with no target for %s" % srcname)
             self.errors += 1
@@ -487,7 +507,7 @@ class PatchSet(object):
             filenames = False
             headscan = True
           else:
-            re_filename = "^\+\+\+ ([^\t]+)"
+            re_filename = b"^\+\+\+ ([^\t]+)"
             match = re.match(re_filename, line)
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % (lineno+1))
@@ -513,7 +533,7 @@ class PatchSet(object):
               continue
 
       if hunkhead:
-        match = re.match("^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
+        match = re.match(b"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
         if not match:
           if not p.hunks:
             warning("skipping invalid patch with no hunks for file %s" % p.source)
@@ -602,13 +622,13 @@ class PatchSet(object):
     #  - next line is ===... delimiter
     #  - filename is followed by revision number
     # TODO add SVN revision
-    if (len(p.header) > 1 and p.header[-2].startswith("Index: ")
-          and p.header[-1].startswith("="*67)):
+    if (len(p.header) > 1 and p.header[-2].startswith(b"Index: ")
+          and p.header[-1].startswith(b"="*67)):
         return SVN
 
     # common checks for both HG and GIT
-    DVCS = ((p.source.startswith('a/') or p.source == '/dev/null')
-        and (p.target.startswith('b/') or p.target == '/dev/null'))
+    DVCS = ((p.source.startswith(b'a/') or p.source == b'/dev/null')
+        and (p.target.startswith(b'b/') or p.target == b'/dev/null'))
 
     # GIT type check
     #  - header[-2] is like "diff --git a/oldname b/newname"
@@ -621,11 +641,11 @@ class PatchSet(object):
     if len(p.header) > 1:
       # detect the start of diff header - there might be some comments before
       for idx in reversed(range(len(p.header))):
-        if p.header[idx].startswith("diff --git"):
+        if p.header[idx].startswith(b"diff --git"):
           break
-      if p.header[idx].startswith('diff --git a/'):
+      if p.header[idx].startswith(b'diff --git a/'):
         if (idx+1 < len(p.header)
-            and re.match(r'index \w{7}..\w{7} \d{6}', p.header[idx+1])):
+            and re.match(b'index \\w{7}..\\w{7} \\d{6}', p.header[idx+1])):
           if DVCS:
             return GIT
 
@@ -641,12 +661,12 @@ class PatchSet(object):
     # TODO add MQ
     # TODO add revision info
     if len(p.header) > 0:
-      if DVCS and re.match(r'diff -r \w{12} .*', p.header[-1]):
+      if DVCS and re.match(b'diff -r \\w{12} .*', p.header[-1]):
         return HG
-      if DVCS and p.header[-1].startswith('diff --git a/'):
+      if DVCS and p.header[-1].startswith(b'diff --git a/'):
         if len(p.header) == 1:  # native Git patch header len is 2
           return HG
-        elif p.header[0].startswith('# HG changeset patch'):
+        elif p.header[0].startswith(b'# HG changeset patch'):
           return HG
 
     return PLAIN
@@ -674,12 +694,12 @@ class PatchSet(object):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
         if p.source != '/dev/null':
-          if not p.source.startswith("a/"):
+          if not p.source.startswith(b"a/"):
             warning("invalid source filename")
           else:
             p.source = p.source[2:]
         if p.target != '/dev/null':
-          if not p.target.startswith("b/"):
+          if not p.target.startswith(b"b/"):
             warning("invalid target filename")
           else:
             p.target = p.target[2:]
@@ -687,18 +707,18 @@ class PatchSet(object):
       p.source = xnormpath(p.source)
       p.target = xnormpath(p.target)
 
-      sep = '/'  # sep value can be hardcoded, but it looks nice this way
+      sep = b'/'  # sep value can be hardcoded, but it looks nice this way
 
       # references to parent are not allowed
-      if p.source.startswith(".." + sep):
+      if p.source.startswith(b".." + sep):
         warning("error: stripping parent path for source file patch no.%d" % (i+1))
         self.warnings += 1
-        while p.source.startswith(".." + sep):
+        while p.source.startswith(b".." + sep):
           p.source = p.source.partition(sep)[2]
-      if p.target.startswith(".." + sep):
+      if p.target.startswith(b".." + sep):
         warning("error: stripping parent path for target file patch no.%d" % (i+1))
         self.warnings += 1
-        while p.target.startswith(".." + sep):
+        while p.target.startswith(b".." + sep):
           p.target = p.target.partition(sep)[2]
       # absolute paths are not allowed
       if xisabs(p.source) or xisabs(p.target):
@@ -732,10 +752,10 @@ class PatchSet(object):
       i,d = 0,0
       for hunk in patch.hunks:
         for line in hunk.text:
-          if line.startswith('+'):
+          if line.startswith(b'+'):
             i += 1
             delta += len(line)-1
-          elif line.startswith('-'):
+          elif line.startswith(b'-'):
             d += 1
             delta -= len(line)-1
       names.append(patch.target)
@@ -762,10 +782,10 @@ class PatchSet(object):
         # make sure every entry gets at least one + or -
         iwidth = 1 if 0 < iratio < 1 else int(iratio)
         dwidth = 1 if 0 < dratio < 1 else int(dratio)
-        #print iratio, dratio, iwidth, dwidth, histwidth
+        #print(iratio, dratio, iwidth, dwidth, histwidth)
         hist = "+"*int(iwidth) + "-"*int(dwidth)
       # -- /calculating +- histogram --
-      output += (format % (names[i], insert[i] + delete[i], hist))
+      output += (format % (names[i].decode('utf-8'), str(insert[i] + delete[i]), hist))
  
     output += (" %d files changed, %d insertions(+), %d deletions(-), %+d bytes"
                % (len(names), sum(insert), sum(delete), delta))
@@ -781,7 +801,7 @@ class PatchSet(object):
     else:
       # [w] Google Code generates broken patches with its online editor
       debug("broken patch from Google Code, stripping prefixes..")
-      if old.startswith('a/') and new.startswith('b/'):
+      if old.startswith(b'a/') and new.startswith(b'b/'):
         old, new = old[2:], new[2:]
         debug("   %s" % old)
         debug("   %s" % new)
@@ -840,7 +860,7 @@ class PatchSet(object):
       debug("processing %d/%d:\t %s" % (i+1, total, filename))
 
       # validate before patching
-      f2fp = open(filename)
+      f2fp = open(filename, 'rb')
       hunkno = 0
       hunk = p.hunks[hunkno]
       hunkfind = []
@@ -851,8 +871,8 @@ class PatchSet(object):
         if lineno+1 < hunk.startsrc:
           continue
         elif lineno+1 == hunk.startsrc:
-          hunkfind = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " -"]
-          hunkreplace = [x[1:].rstrip("\r\n") for x in hunk.text if x[0] in " +"]
+          hunkfind = [x[1:].rstrip(b"\r\n") for x in hunk.text if x[0] in b" -"]
+          hunkreplace = [x[1:].rstrip(b"\r\n") for x in hunk.text if x[0] in b" +"]
           #pprint(hunkreplace)
           hunklineno = 0
 
@@ -860,13 +880,13 @@ class PatchSet(object):
 
         # check hunks in source file
         if lineno+1 < hunk.startsrc+len(hunkfind)-1:
-          if line.rstrip("\r\n") == hunkfind[hunklineno]:
+          if line.rstrip(b"\r\n") == hunkfind[hunklineno]:
             hunklineno+=1
           else:
             info("file %d/%d:\t %s" % (i+1, total, filename))
             info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno+1))
             info("  expected: %s" % hunkfind[hunklineno])
-            info("  actual  : %s" % line.rstrip("\r\n"))
+            info("  actual  : %s" % line.rstrip(b"\r\n"))
             # not counting this as error, because file may already be patched.
             # check if file is already patched is done after the number of
             # invalid hunks if found
@@ -908,7 +928,7 @@ class PatchSet(object):
           warning("source file is different - %s" % filename)
           errors += 1
       if canpatch:
-        backupname = filename+".orig"
+        backupname = filename+b".orig"
         if exists(backupname):
           warning("can't backup original file to %s - aborting" % backupname)
         else:
@@ -939,10 +959,10 @@ class PatchSet(object):
         h.startsrc, h.starttgt = h.starttgt, h.startsrc
         h.linessrc, h.linestgt = h.linestgt, h.linessrc
         for i,line in enumerate(h.text):
-          if line[0] == '+':
-            h.text[i] = '-' + line[1:]
-          elif line[0] == '-':
-            h.text[i] = '+' +line[1:]
+          if compat_ord(line[0]) == compat_ord(b'+'):
+            h.text[i] = b'-' + line[1:]
+          elif compat_ord(line[0]) == compat_ord(b'-'):
+            h.text[i] = b'+' +line[1:]
 
   def revert(self, strip=0, root=None):
     """ apply patch in reverse order """
@@ -967,7 +987,7 @@ class PatchSet(object):
 
   def _match_file_hunks(self, filepath, hunks):
     matched = True
-    fp = open(abspath(filepath))
+    fp = open(abspath(filepath), 'rb')
 
     class NoMatch(Exception):
       pass
@@ -985,13 +1005,13 @@ class PatchSet(object):
           line = fp.readline()
           lineno += 1
         for hline in h.text:
-          if hline.startswith("-"):
+          if hline.startswith(b"-"):
             continue
           if not len(line):
             debug("check failed - premature eof on hunk: %d" % (hno+1))
             # todo: \ No newline at the end of file
             raise NoMatch
-          if line.rstrip("\r\n") != hline[1:].rstrip("\r\n"):
+          if line.rstrip(b"\r\n") != hline[1:].rstrip(b"\r\n"):
             debug("file is not patched - failed hunk: %d" % (hno+1))
             raise NoMatch
           line = fp.readline()
@@ -1020,7 +1040,7 @@ class PatchSet(object):
 
     srclineno = 1
 
-    lineends = {'\n':0, '\r\n':0, '\r':0}
+    lineends = {b'\n':0, b'\r\n':0, b'\r':0}
     def get_line():
       """
       local utility function - return line from source stream
@@ -1028,12 +1048,12 @@ class PatchSet(object):
       """
       line = instream.readline()
         # 'U' mode works only with text files
-      if line.endswith("\r\n"):
-        lineends["\r\n"] += 1
-      elif line.endswith("\n"):
-        lineends["\n"] += 1
-      elif line.endswith("\r"):
-        lineends["\r"] += 1
+      if line.endswith(b"\r\n"):
+        lineends[b"\r\n"] += 1
+      elif line.endswith(b"\n"):
+        lineends[b"\n"] += 1
+      elif line.endswith(b"\r"):
+        lineends[b"\r"] += 1
       return line
 
     for hno, h in enumerate(hunks):
@@ -1045,19 +1065,19 @@ class PatchSet(object):
 
       for hline in h.text:
         # todo: check \ No newline at the end of file
-        if hline.startswith("-") or hline.startswith("\\"):
+        if hline.startswith(b"-") or hline.startswith(b"\\"):
           get_line()
           srclineno += 1
           continue
         else:
-          if not hline.startswith("+"):
+          if not hline.startswith(b"+"):
             get_line()
             srclineno += 1
           line2write = hline[1:]
           # detect if line ends are consistent in source file
           if sum([bool(lineends[x]) for x in lineends]) == 1:
             newline = [x for x in lineends if lineends[x] != 0][0]
-            yield line2write.rstrip("\r\n")+newline
+            yield line2write.rstrip(b"\r\n")+newline
           else: # newlines are mixed
             yield line2write
      
@@ -1083,13 +1103,13 @@ class PatchSet(object):
   def dump(self):
     for p in self.items:
       for headline in p.header:
-        print headline.rstrip('\n')
-      print '--- ' + p.source
-      print '+++ ' + p.target
+        print(headline.rstrip('\n'))
+      print('--- ' + p.source)
+      print('+++ ' + p.target)
       for h in p.hunks:
-        print '@@ -%s,%s +%s,%s @@' % (h.startsrc, h.linessrc, h.starttgt, h.linestgt)
+        print('@@ -%s,%s +%s,%s @@' % (h.startsrc, h.linessrc, h.starttgt, h.linestgt))
         for line in h.text:
-          print line.rstrip('\n')
+          print(line.rstrip('\n'))
 
 
 def main():
@@ -1145,7 +1165,7 @@ def main():
       patch = fromfile(patchfile)
 
   if options.diffstat:
-    print patch.diffstat()
+    print(patch.diffstat())
     sys.exit(0)
 
   #pprint(patch)
