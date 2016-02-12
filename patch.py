@@ -35,17 +35,14 @@ import posixpath
 import shutil
 import sys
 
+
+PY3K = sys.version_info >= (3, 0)
+
 # PEP 3114
-if sys.version_info[0] == 2:
+if not PY3K:
   compat_next = lambda gen: gen.next()
 else:
   compat_next = lambda gen: gen.__next__()
-
-# In Python 3 b'0' gives int 30 while b'0' in Python 3
-def compat_ord(c):
-  if isinstance(c, int):
-    return c
-  return ord(c)
 
 
 #------------------------------------------------
@@ -960,9 +957,11 @@ class PatchSet(object):
         h.startsrc, h.starttgt = h.starttgt, h.startsrc
         h.linessrc, h.linestgt = h.linestgt, h.linessrc
         for i,line in enumerate(h.text):
-          if compat_ord(line[0]) == compat_ord(b'+'):
+          # need to use line[0:1] here, because line[0]
+          # returns int instead of bytes on Python 3
+          if line[0:1] == b'+':
             h.text[i] = b'-' + line[1:]
-          elif compat_ord(line[0]) == compat_ord(b'-'):
+          elif line[0:1] == b'-':
             h.text[i] = b'+' +line[1:]
 
   def revert(self, strip=0, root=None):
