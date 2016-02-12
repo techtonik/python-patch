@@ -15,6 +15,4 @@ install:
 script:
   # run tests with coverage
   - coverage run tests/run_tests.py
-
-after_success:
   - coverage report -m
