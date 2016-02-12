@@ -1,23 +1,24 @@
 #!/usr/bin/env python
-from __future__ import print_function
 """
     Patch utility to apply unified diffs
 
     Brute-force line-by-line non-recursive parsing 
 
-    Copyright (c) 2008-2015 anatoly techtonik
+    Copyright (c) 2008-2016 anatoly techtonik
     Available under the terms of MIT license
 
     https://github.com/techtonik/python-patch/
 
 """
+from __future__ import print_function
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
-__version__ = "1.15"
+__version__ = "1.16"
 
 import copy
 import logging
 import re
+
 # cStringIO doesn't support unicode in 2.5
 try:
     from StringIO import StringIO

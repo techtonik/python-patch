@@ -1,3 +1,8 @@
+##### 1.16
+
+  - Python 3 support, thanks to Yen Chi Hsuan (@yan12125)
+    (pull request #36)
+
 ##### 1.15
 
   - Project moved to GitHub
