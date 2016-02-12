@@ -8,7 +8,10 @@ python:
 #  - "3.5"
 #  - "3.5-dev" # 3.5 development branch
 #  - "nightly" # currently points to 3.6-dev
-# command to install dependencies
-#install: "pip install -r requirements.txt"
-# command to run tests
-script: python tests/run_tests.py
+
+script:
+  # run tests with coverage
+  - coverage run tests/run_tests.py
+
+after_success:
+  - coverage report -m
