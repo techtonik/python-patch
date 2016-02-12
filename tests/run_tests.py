@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 """
 python-patch test suite
 
@@ -39,6 +40,10 @@ import copy
 from os import listdir
 from os.path import abspath, dirname, exists, join, isdir, isfile
 from tempfile import mkdtemp
+try:
+  getcwdu = os.getcwdu
+except AttributeError:
+  getcwdu = os.getcwd  # python 3, where getcwd always returns a unicode object
 
 verbose = False
 if "-v" in sys.argv or "--verbose" in sys.argv:
@@ -95,9 +100,9 @@ class TestPatchFiles(unittest.TestCase):
           continue
         e1path = join(dir1, e1)
         e2path = join(dir2, e1)
-        self.assert_(exists(e1path))
-        self.assert_(exists(e2path), "%s does not exist" % e2path)
-        self.assert_(isdir(e1path) == isdir(e2path))
+        self.assertTrue(exists(e1path))
+        self.assertTrue(exists(e2path), "%s does not exist" % e2path)
+        self.assertTrue(isdir(e1path) == isdir(e2path))
         if not isdir(e1path):
           self._assert_files_equal(e1path, e2path)
         else:
@@ -144,11 +149,11 @@ class TestPatchFiles(unittest.TestCase):
       # 3.
       # test utility as a whole
       patch_tool = join(dirname(TESTS), "patch.py")
-      save_cwd = os.getcwdu()
+      save_cwd = getcwdu()
       os.chdir(tmpdir)
       if verbose:
         cmd = '%s %s "%s"' % (sys.executable, patch_tool, patch_file)
-        print "\n"+cmd
+        print("\n"+cmd)
       else:
         cmd = '%s %s -q "%s"' % (sys.executable, patch_tool, patch_file)
       ret = os.system(cmd)
@@ -192,14 +197,14 @@ def add_test_methods(cls):
       test = create_closure()
       setattr(cls, methname, test)
       if verbose:
-        print "added test method %s to %s" % (methname, cls)
+        print("added test method %s to %s" % (methname, cls))
 add_test_methods(TestPatchFiles)
 
 # ----------------------------------------------------------------------------
 
 class TestCheckPatched(unittest.TestCase):
     def setUp(self):
-        self.save_cwd = os.getcwdu()
+        self.save_cwd = getcwdu()
         os.chdir(TESTS)
 
     def tearDown(self):
@@ -208,21 +213,21 @@ class TestCheckPatched(unittest.TestCase):
     def test_patched_multipatch(self):
         pto = patch.fromfile("01uni_multi/01uni_multi.patch")
         os.chdir(join(TESTS, "01uni_multi", "[result]"))
-        self.assert_(pto.can_patch("updatedlg.cpp"))
+        self.assertTrue(pto.can_patch(b"updatedlg.cpp"))
 
     def test_can_patch_single_source(self):
         pto2 = patch.fromfile("02uni_newline.patch")
-        self.assert_(pto2.can_patch("02uni_newline.from"))
+        self.assertTrue(pto2.can_patch(b"02uni_newline.from"))
 
     def test_can_patch_fails_on_target_file(self):
         pto3 = patch.fromfile("03trail_fname.patch")
-        self.assertEqual(None, pto3.can_patch("03trail_fname.to"))
-        self.assertEqual(None, pto3.can_patch("not_in_source.also"))
+        self.assertEqual(None, pto3.can_patch(b"03trail_fname.to"))
+        self.assertEqual(None, pto3.can_patch(b"not_in_source.also"))
    
     def test_multiline_false_on_other_file(self):
         pto = patch.fromfile("01uni_multi/01uni_multi.patch")
         os.chdir(join(TESTS, "01uni_multi"))
-        self.assertFalse(pto.can_patch("updatedlg.cpp"))
+        self.assertFalse(pto.can_patch(b"updatedlg.cpp"))
 
     def test_single_false_on_other_file(self):
         pto3 = patch.fromfile("03trail_fname.patch")
@@ -257,18 +262,18 @@ class TestPatchParse(unittest.TestCase):
 
     def test_header_for_second_file_in_svn_diff(self):
         pto = patch.fromfile(join(TESTS, "01uni_multi/01uni_multi.patch"))
-        self.assertEqual(pto.items[1].header[0], 'Index: updatedlg.h\r\n')
-        self.assert_(pto.items[1].header[1].startswith('====='))
+        self.assertEqual(pto.items[1].header[0], b'Index: updatedlg.h\r\n')
+        self.assertTrue(pto.items[1].header[1].startswith(b'====='))
 
     def test_hunk_desc(self):
         pto = patch.fromfile(testfile('git-changed-file.diff'))
-        self.assertEqual(pto.items[0].hunks[0].desc, 'class JSONPluginMgr(object):')
+        self.assertEqual(pto.items[0].hunks[0].desc, b'class JSONPluginMgr(object):')
 
     def test_autofixed_absolute_path(self):
         pto = patch.fromfile(join(TESTS, "data/autofix/absolute-path.diff"))
         self.assertEqual(pto.errors, 0)
         self.assertEqual(pto.warnings, 2)
-        self.assertEqual(pto.items[0].source, "winnt/tests/run_tests.py")
+        self.assertEqual(pto.items[0].source, b"winnt/tests/run_tests.py")
 
     def test_autofixed_parent_path(self):
         # [ ] exception vs return codes for error recovery
@@ -277,7 +282,7 @@ class TestPatchParse(unittest.TestCase):
         pto = patch.fromfile(join(TESTS, "data/autofix/parent-path.diff"))
         self.assertEqual(pto.errors, 0)
         self.assertEqual(pto.warnings, 2)
-        self.assertEqual(pto.items[0].source, "patch.py")
+        self.assertEqual(pto.items[0].source, b"patch.py")
 
     def test_autofixed_stripped_trailing_whitespace(self):
         pto = patch.fromfile(join(TESTS, "data/autofix/stripped-trailing-whitespace.diff"))
@@ -285,19 +290,19 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.warnings, 4)
 
     def test_fail_missing_hunk_line(self):
-        fp = open(join(TESTS, "data/failing/missing-hunk-line.diff"))
+        fp = open(join(TESTS, "data/failing/missing-hunk-line.diff"), 'rb')
         pto = patch.PatchSet()
         self.assertNotEqual(pto.parse(fp), True)
         fp.close()
 
     def test_fail_context_format(self):
-        fp = open(join(TESTS, "data/failing/context-format.diff"))
+        fp = open(join(TESTS, "data/failing/context-format.diff"), 'rb')
         res = patch.PatchSet().parse(fp)
         self.assertFalse(res)
         fp.close()
 
     def test_fail_not_a_patch(self):
-        fp = open(join(TESTS, "data/failing/not-a-patch.log"))
+        fp = open(join(TESTS, "data/failing/not-a-patch.log"), 'rb')
         res = patch.PatchSet().parse(fp)
         self.assertFalse(res)
         fp.close()
@@ -345,12 +350,12 @@ for filename in os.listdir(TESTDATA):
   test = generate_detection_test(filename, difftype)
   setattr(TestPatchSetDetection, name, test)
   if verbose:
-    print "added test method %s to %s" % (name, 'TestPatchSetDetection')
+    print("added test method %s to %s" % (name, 'TestPatchSetDetection'))
 
 
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
-        self.save_cwd = os.getcwdu()
+        self.save_cwd = getcwdu()
         self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
         os.chdir(self.tmpdir)
 
@@ -373,41 +378,47 @@ class TestPatchApply(unittest.TestCase):
         self.tmpcopy(['03trail_fname.patch',
                       '03trail_fname.from'])
         pto = patch.fromfile('03trail_fname.patch')
-        self.assert_(pto.apply())
+        self.assertTrue(pto.apply())
 
     def test_revert(self):
+        def get_file_content(filename):
+            with open(filename, 'rb') as f:
+                content = f.read()
+
+            return content
+
         self.tmpcopy(['03trail_fname.patch',
                       '03trail_fname.from'])
         pto = patch.fromfile('03trail_fname.patch')
-        self.assert_(pto.apply())
-        self.assertNotEqual(open(self.tmpdir + '/03trail_fname.from').read(),
-                            open(TESTS + '/03trail_fname.from').read())
-        self.assert_(pto.revert())
-        self.assertEqual(open(self.tmpdir + '/03trail_fname.from').read(),
-                         open(TESTS + '/03trail_fname.from').read())
+        self.assertTrue(pto.apply())
+        self.assertNotEqual(get_file_content(self.tmpdir + '/03trail_fname.from'),
+                            get_file_content(TESTS + '/03trail_fname.from'))
+        self.assertTrue(pto.revert())
+        self.assertEqual(get_file_content(self.tmpdir + '/03trail_fname.from'),
+                         get_file_content(TESTS + '/03trail_fname.from'))
 
     def test_apply_root(self):
         treeroot = join(self.tmpdir, 'rootparent')
         shutil.copytree(join(TESTS, '06nested'), treeroot)
         pto = patch.fromfile(join(TESTS, '06nested/06nested.patch'))
-        self.assert_(pto.apply(root=treeroot))
+        self.assertTrue(pto.apply(root=treeroot))
 
     def test_apply_strip(self):
         treeroot = join(self.tmpdir, 'rootparent')
         shutil.copytree(join(TESTS, '06nested'), treeroot)
         pto = patch.fromfile(join(TESTS, '06nested/06nested.patch'))
         for p in pto:
-          p.source = 'nasty/prefix/' + p.source
-          p.target = 'nasty/prefix/' + p.target
-        self.assert_(pto.apply(strip=2, root=treeroot))
+          p.source = b'nasty/prefix/' + p.source
+          p.target = b'nasty/prefix/' + p.target
+        self.assertTrue(pto.apply(strip=2, root=treeroot))
 
 
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True
 
-    absolute = ['/', 'c:\\', 'c:/', '\\', '/path', 'c:\\path']
-    relative = ['path', 'path:\\', 'path:/', 'path\\', 'path/', 'path\\path']
+    absolute = [b'/', b'c:\\', b'c:/', b'\\', b'/path', b'c:\\path']
+    relative = [b'path', b'path:\\', b'path:/', b'path\\', b'path/', b'path\\path']
 
     def test_xisabs(self):
         for path in self.absolute:
@@ -416,22 +427,22 @@ class TestHelpers(unittest.TestCase):
             self.assertFalse(patch.xisabs(path), 'Target path: ' + repr(path))
 
     def test_xnormpath(self):
-        path = "../something/..\\..\\file.to.patch"
-        self.assertEqual(patch.xnormpath(path), '../../file.to.patch')
+        path = b"../something/..\\..\\file.to.patch"
+        self.assertEqual(patch.xnormpath(path), b'../../file.to.patch')
 
     def test_xstrip(self):
         for path in self.absolute[:4]:
-            self.assertEqual(patch.xstrip(path), '')
+            self.assertEqual(patch.xstrip(path), b'')
         for path in self.absolute[4:6]:
-            self.assertEqual(patch.xstrip(path), 'path')
+            self.assertEqual(patch.xstrip(path), b'path')
         # test relative paths are not affected
         for path in self.relative:
             self.assertEqual(patch.xstrip(path), path)
 
     def test_pathstrip(self):
-        self.assertEqual(patch.pathstrip('path/to/test/name.diff', 2), 'test/name.diff')
-        self.assertEqual(patch.pathstrip('path/name.diff', 1), 'name.diff')
-        self.assertEqual(patch.pathstrip('path/name.diff', 0), 'path/name.diff')
+        self.assertEqual(patch.pathstrip(b'path/to/test/name.diff', 2), b'test/name.diff')
+        self.assertEqual(patch.pathstrip(b'path/name.diff', 1), b'name.diff')
+        self.assertEqual(patch.pathstrip(b'path/name.diff', 0), b'path/name.diff')
 
 # ----------------------------------------------------------------------------
 
