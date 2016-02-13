@@ -33,18 +33,14 @@ module without external dependencies.
 
 You can also run the .zip file.
     
-    python patch-1.15.zip diff.patch
+    python patch-1.16.zip diff.patch
 
 ### Installation
 
 **patch.py** is self sufficient. You can copy it into your repository
 and use it from here. This setup will always be repeatable. But if
 you need to add `patch` module as a dependency, make sure to use strict
-specifiers to avoid hitting an API break:
-
-    pip install "patch>=1,<2"
-
-With pip 6.x.x and later it is possible to use the alternative syntax:
+specifiers to avoid hitting an API break when version 2 is released:
 
     pip install "patch==1.*"
 
