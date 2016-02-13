@@ -11,3 +11,8 @@
 * [ ] Update PyPI description
   * [ ] Download PKG-INFO
   * [ ] Edit and upload
+
+* [ ] Tag release
+
+    git tag -a
+    git push --follow-tags
