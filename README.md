@@ -4,21 +4,20 @@ Library to parse and apply unified diffs.
 
 ### Features
 
+ * Python 2 and 3 compatible
  * Automatic correction of
    * Linefeeds according to patched file
    * Diffs broken by stripping trailing whitespace
    * a/ and b/ prefixes
- * Single file, which is a command line tool and library
+ * Single file, which is a command line tool and a library
  * No dependencies outside Python stdlib
  * Patch format detection (SVN, HG, GIT)
  * Nice diffstat histogram
- * Linux / Windows / OX X
- * Python 2.5+ compatible, 2.6/2.7 tested
+ * Linux / Windows / OS X
  * Test coverage
 
 Things that don't work out of the box:
 
- * Python 3
  * File renaming, creation and removal
  * Directory tree operations
  * Version control specific properties
