@@ -21,13 +21,13 @@ import re
 
 # cStringIO doesn't support unicode in 2.5
 try:
-    from StringIO import StringIO
+  from StringIO import StringIO
 except ImportError:
-    from io import BytesIO as StringIO # python 3
+  from io import BytesIO as StringIO # python 3
 try:
-    import urllib2 as urllib_request
+  import urllib2 as urllib_request
 except ImportError:
-    import urllib.request as urllib_request
+  import urllib.request as urllib_request
 
 from os.path import exists, isfile, abspath
 import os
@@ -43,6 +43,17 @@ if not PY3K:
   compat_next = lambda gen: gen.next()
 else:
   compat_next = lambda gen: gen.__next__()
+
+def tostr(b):
+  """ Python 3 bytes encoder. Used to print filename in
+      diffstat output. Assumes that filenames are in utf-8.
+  """
+  if not PY3K:
+    return b
+
+  # [ ] figure out how to print non-utf-8 filenames without
+  #     information loss
+  return b.decode('utf-8')    
 
 
 #------------------------------------------------
@@ -783,7 +794,7 @@ class PatchSet(object):
         #print(iratio, dratio, iwidth, dwidth, histwidth)
         hist = "+"*int(iwidth) + "-"*int(dwidth)
       # -- /calculating +- histogram --
-      output += (format % (names[i].decode('utf-8'), str(insert[i] + delete[i]), hist))
+      output += (format % (tostr(names[i]), str(insert[i] + delete[i]), hist))
  
     output += (" %d files changed, %d insertions(+), %d deletions(-), %+d bytes"
                % (len(names), sum(insert), sum(delete), delta))

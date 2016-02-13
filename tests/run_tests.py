@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 """
 python-patch test suite
 
@@ -30,6 +29,7 @@ http://pypi.python.org/pypi/coverage/ and run this file with:
 On Windows it may be more convenient instead of `coverage` call
 `python -m coverage.__main__`
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -383,9 +383,7 @@ class TestPatchApply(unittest.TestCase):
     def test_revert(self):
         def get_file_content(filename):
             with open(filename, 'rb') as f:
-                content = f.read()
-
-            return content
+                return f.read()
 
         self.tmpcopy(['03trail_fname.patch',
                       '03trail_fname.from'])
