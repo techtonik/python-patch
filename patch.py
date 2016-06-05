@@ -477,11 +477,26 @@ class PatchSet(object):
             # XXX header += srcname
             # double source filename line is encountered
             # attempt to restart from this second line
-          re_filename = b"^--- ([^\t]+)"
-          match = re.match(re_filename, line)
+
+            # Files dated at Unix epoch don't exist, e.g.:
+            # '1970-01-01 01:00:00.000000000 +0100'
+            # They include timezone offsets.
+            # .. which can be parsed (if we remove the nanoseconds)
+            # .. by strptime() with:
+            # '%Y-%m-%d %H:%M:%S %z'
+            # .. but unfortunately this relies on the OSes libc
+            # strptime function and %z support is patchy, so we drop
+            # everything from the . onwards and group the year and time
+            # separately.
+          re_filename_date_time = b"^--- ([^\t]+)($|\s([0-9-]+)\s([0-9:]+))"
+          match = re.match(re_filename_date_time, line)
           # todo: support spaces in filenames
           if match:
             srcname = match.group(1).strip()
+            date = match.group(2)
+            time = match.group(3)
+            if (date == b'1970-01-01' or date == b'1969-12-31') and time.split(b':',1)[1] == b'00:00':
+              srcname = b'/dev/null'
           else:
             warning("skipping invalid filename at line %d" % (lineno+1))
             self.errors += 1
@@ -516,8 +531,8 @@ class PatchSet(object):
             filenames = False
             headscan = True
           else:
-            re_filename = b"^\+\+\+ ([^\t]+)"
-            match = re.match(re_filename, line)
+            re_filename_date_time = b"^\+\+\+ ([^\t]+)($|\s([0-9-]+)\s([0-9:]+))"
+            match = re.match(re_filename_date_time, line)
             if not match:
               warning("skipping invalid patch - no target filename at line %d" % (lineno+1))
               self.errors += 1
@@ -526,12 +541,17 @@ class PatchSet(object):
               filenames = False
               headscan = True
             else:
+              tgtname = match.group(1).strip()
+              date = match.group(2)
+              time = match.group(3)
+              if (date == b'1970-01-01' or date == b'1969-12-31') and time.split(b':',1)[1] == b'00:00':
+                  tgtname = b'/dev/null'
               if p: # for the first run p is None
                 self.items.append(p)
               p = Patch()
               p.source = srcname
               srcname = None
-              p.target = match.group(1).strip()
+              p.target = tgtname
               p.header = header
               header = []
               # switch to hunkhead state
@@ -729,16 +749,17 @@ class PatchSet(object):
         while p.target.startswith(b".." + sep):
           p.target = p.target.partition(sep)[2]
       # absolute paths are not allowed
-      if xisabs(p.source) or xisabs(p.target):
+      if (xisabs(p.source) and p.source != b'/dev/null') or \
+         (xisabs(p.target) and p.target != b'/dev/null'):
         warning("error: absolute paths are not allowed - file no.%d" % (i+1))
         self.warnings += 1
-        if xisabs(p.source):
+        if xisabs(p.source) and p.source != b'/dev/null':
           warning("stripping absolute path from source name '%s'" % p.source)
           p.source = xstrip(p.source)
-        if xisabs(p.target):
+        if xisabs(p.target) and p.target != b'/dev/null':
           warning("stripping absolute path from target name '%s'" % p.target)
           p.target = xstrip(p.target)
-    
+
       self.items[i].source = p.source
       self.items[i].target = p.target
 
@@ -806,6 +827,10 @@ class PatchSet(object):
       return old
     elif exists(new):
       return new
+    elif old == b'/dev/null' and sys.platform == 'win32':
+      return 'NUL'
+    elif new == b'/dev/null' and sys.platform == 'win32':
+      return 'NUL'
     else:
       # [w] Google Code generates broken patches with its online editor
       debug("broken patch from Google Code, stripping prefixes..")
@@ -848,8 +873,8 @@ class PatchSet(object):
         debug("stripping %s leading component(s) from:" % strip)
         debug("   %s" % p.source)
         debug("   %s" % p.target)
-        old = pathstrip(p.source, strip)
-        new = pathstrip(p.target, strip)
+        old = p.source if p.source == b'/dev/null' else pathstrip(p.source, strip)
+        new = p.target if p.target == b'/dev/null' else pathstrip(p.target, strip)
       else:
         old, new = p.source, p.target
 
@@ -945,6 +970,11 @@ class PatchSet(object):
           if self.write_hunks(backupname, filename, p.hunks):
             info("successfully patched %d/%d:\t %s" % (i+1, total, filename))
             os.unlink(backupname)
+            if new == b'/dev/null':
+              # check that filename is of size 0 and delete it.
+              if os.path.getsize(filename) > 0:
+                warning("expected patched file to be empty as it's marked as deletion:\t %s" % filename)
+              os.unlink(filename)
           else:
             errors += 1
             warning("error patching file %s" % filename)
