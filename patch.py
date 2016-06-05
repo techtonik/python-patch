@@ -689,25 +689,24 @@ class PatchSet(object):
 
         [x] always use forward slashes to be crossplatform
             (diff/patch were born as a unix utility after all)
-        
+
         return None
     """
     if debugmode:
       debug("normalize filenames")
     for i,p in enumerate(self.items):
       if debugmode:
-        debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    patch type = %s" % p.type)
+        debug("    source = %s" % p.source)
+        debug("    target = %s" % p.target)
       if p.type in (HG, GIT):
-        # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
-        if p.source != '/dev/null':
+        if p.source != b'/dev/null':
           if not p.source.startswith(b"a/"):
             warning("invalid source filename")
           else:
             p.source = p.source[2:]
-        if p.target != '/dev/null':
+        if p.target != b'/dev/null':
           if not p.target.startswith(b"b/"):
             warning("invalid target filename")
           else:
