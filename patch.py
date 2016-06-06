@@ -327,14 +327,31 @@ class PatchSet(object):
         return self._lineno
 
     # define states (possible file regions) that direct parse flow
-    headscan  = True  # start with scanning header
-    filenames = False # lines starting with --- and +++
+    HEADSCAN = 0  # start with scanning header
+    FILENAMES = 1  # lines starting with --- and +++
+    HUNKHEAD = 2  # @@ -R +R @@ sequence
+    HUNKBODY = 3  # lines starting with +, - and space
+    HUNKSKIP = 4  # skipping invalid hunk mode
+    HUNKPARSED = 5  # state after successfully parsed hunk
 
-    hunkhead = False  # @@ -R +R @@ sequence
-    hunkbody = False  #
-    hunkskip = False  # skipping invalid hunk mode
+    class state(object):
+      """Keeps track of the parsing state"""
 
-    hunkparsed = False # state after successfully parsed hunk
+      def __init__(self):
+        self._state = HEADSCAN
+        self.srcname = None
+        self.tgtname = None
+
+      @property
+      def state(self):
+        return self._state
+
+      @state.setter
+      def state(self, value):
+        if value == FILENAMES:
+          self.srcname = None
+          self.tgtname = None
+        self._state = value
 
     # regexp to match start of hunk, used groups - 1,3,4,6
     re_hunk_start = re.compile(b"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@")
@@ -342,28 +359,26 @@ class PatchSet(object):
     self.errors = 0
     # temp buffers for header and filenames info
     header = []
-    srcname = None
-    tgtname = None
 
     # start of main cycle
     # each parsing block already has line available in fe.line
     fe = wrapumerate(stream)
+    st = state()
     while fe.next():
 
       # -- deciders: these only switch state to decide who should process
       # --           line fetched at the start of this cycle
-      if hunkparsed:
-        hunkparsed = False
+      if st.state == HUNKPARSED:
         if re_hunk_start.match(fe.line):
-            hunkhead = True
+            st.state = HUNKHEAD
         elif fe.line.startswith(b"--- "):
-            filenames = True
+            st.state = FILENAMES
         else:
-            headscan = True
+            st.state = HEADSCAN
       # -- ------------------------------------
 
       # read out header
-      if headscan:
+      if st.state == HEADSCAN:
         while not fe.is_empty and not fe.line.startswith(b"--- "):
             header.append(fe.line)
             fe.next()
@@ -380,16 +395,14 @@ class PatchSet(object):
             # this is actually a loop exit
             continue
 
-        headscan = False
-        # switch to filenames state
-        filenames = True
+        st.state = FILENAMES
 
       line = fe.line
       lineno = fe.lineno
 
 
       # hunkskip and hunkbody code skipped until definition of hunkhead is parsed
-      if hunkbody:
+      if st.state == HUNKBODY:
         # [x] treat empty lines inside hunks as containing single space
         #     (this happens when diff is saved by copy/pasting to editor
         #      that strips trailing whitespace)
@@ -423,9 +436,7 @@ class PatchSet(object):
             hunk.invalid = True
             p.hunks.append(hunk)
             self.errors += 1
-            # switch to hunkskip state
-            hunkbody = False
-            hunkskip = True
+            st.state = HUNKSKIP
 
         # check exit conditions
         if hunkactual["linessrc"] > hunk.linessrc or hunkactual["linestgt"] > hunk.linestgt:
@@ -434,15 +445,11 @@ class PatchSet(object):
             hunk.invalid = True
             p.hunks.append(hunk)
             self.errors += 1
-            # switch to hunkskip state
-            hunkbody = False
-            hunkskip = True
+            st.state = HUNKSKIP
         elif hunk.linessrc == hunkactual["linessrc"] and hunk.linestgt == hunkactual["linestgt"]:
             # hunk parsed successfully
             p.hunks.append(hunk)
-            # switch to hunkparsed state
-            hunkbody = False
-            hunkparsed = True
+            st.state = HUNKPARSED
 
             # detect mixed window/unix line ends
             ends = p.hunkends
@@ -456,25 +463,21 @@ class PatchSet(object):
             # fetch next line
             continue
 
-      if hunkskip:
+      if st.state == HUNKSKIP:
         if re_hunk_start.match(line):
-          # switch to hunkhead state
-          hunkskip = False
-          hunkhead = True
+          st.state = HUNKHEAD
         elif line.startswith(b"--- "):
-          # switch to filenames state
-          hunkskip = False
-          filenames = True
+          st.state = FILENAMES
           if debugmode and len(self.items) > 0:
             debug("- %2d hunks for %s" % (len(p.hunks), p.source))
 
-      if filenames:
+      if st.state == FILENAMES:
         if line.startswith(b"--- "):
-          if srcname != None:
+          if st.srcname != None:
             # XXX testcase
-            warning("skipping false patch for %s" % srcname)
-            srcname = None
-            # XXX header += srcname
+            warning("skipping false patch for %s" % st.srcname)
+            st.srcname = None
+            # XXX header += st.srcname
             # double source filename line is encountered
             # attempt to restart from this second line
 
@@ -492,44 +495,39 @@ class PatchSet(object):
           match = re.match(re_filename_date_time, line)
           # todo: support spaces in filenames
           if match:
-            srcname = match.group(1).strip()
+            st.srcname = match.group(1).strip()
             date = match.group(2)
             time = match.group(3)
             if (date == b'1970-01-01' or date == b'1969-12-31') and time.split(b':',1)[1] == b'00:00':
-              srcname = b'/dev/null'
+              st.srcname = b'/dev/null'
           else:
             warning("skipping invalid filename at line %d" % (lineno+1))
             self.errors += 1
             # XXX p.header += line
             # switch back to headscan state
-            filenames = False
-            headscan = True
+            st.state = HEADSCAN
         elif not line.startswith(b"+++ "):
-          if srcname != None:
-            warning("skipping invalid patch with no target for %s" % srcname)
+          if st.srcname != None:
+            warning("skipping invalid patch with no target for %s" % st.srcname)
             self.errors += 1
-            srcname = None
-            # XXX header += srcname
+            st.srcname = None
+            # XXX header += st.srcname
             # XXX header += line
           else:
             # this should be unreachable
             warning("skipping invalid target patch")
-          filenames = False
-          headscan = True
+          st.state = HEADSCAN
         else:
-          if tgtname != None:
+          if st.tgtname != None:
             # XXX seems to be a dead branch  
             warning("skipping invalid patch - double target at line %d" % (lineno+1))
             self.errors += 1
-            srcname = None
-            tgtname = None
-            # XXX header += srcname
-            # XXX header += tgtname
+            # XXX header += st.srcname
+            # XXX header += st.tgtname
             # XXX header += line
             # double target filename line is encountered
             # switch back to headscan state
-            filenames = False
-            headscan = True
+            st.state = HEADSCAN
           else:
             re_filename_date_time = b"^\+\+\+ ([^\t]+)($|\s([0-9-]+)\s([0-9:]+))"
             match = re.match(re_filename_date_time, line)
@@ -538,45 +536,37 @@ class PatchSet(object):
               self.errors += 1
               srcname = None
               # switch back to headscan state
-              filenames = False
-              headscan = True
+              st.state = HEADSCAN
             else:
-              tgtname = match.group(1).strip()
+              st.tgtname = match.group(1).strip()
               date = match.group(2)
               time = match.group(3)
               if (date == b'1970-01-01' or date == b'1969-12-31') and time.split(b':',1)[1] == b'00:00':
-                  tgtname = b'/dev/null'
+                  st.tgtname = b'/dev/null'
               if p: # for the first run p is None
                 self.items.append(p)
               p = Patch()
-              p.source = srcname
-              srcname = None
-              p.target = tgtname
+              p.source = st.srcname
+              p.target = st.tgtname
               p.header = header
               header = []
-              # switch to hunkhead state
-              filenames = False
-              hunkhead = True
+              st.state = HUNKHEAD
               nexthunkno = 0
               p.hunkends = lineends.copy()
               continue
 
-      if hunkhead:
+      if st.state == HUNKHEAD:
         match = re.match(b"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
         if not match:
           if not p.hunks:
             warning("skipping invalid patch with no hunks for file %s" % p.source)
             self.errors += 1
             # XXX review switch
-            # switch to headscan state
-            hunkhead = False
-            headscan = True
+            st.state = HEADSCAN
             continue
           else:
             # TODO review condition case
-            # switch to headscan state
-            hunkhead = False
-            headscan = True
+            st.state = HEADSCAN
         else:
           hunk = Hunk()
           hunk.startsrc = int(match.group(1))
@@ -591,9 +581,7 @@ class PatchSet(object):
 
           hunkactual["linessrc"] = hunkactual["linestgt"] = 0
 
-          # switch to hunkbody state
-          hunkhead = False
-          hunkbody = True
+          st.state = HUNKBODY
           nexthunkno += 1
           continue
 
@@ -602,10 +590,10 @@ class PatchSet(object):
     if p:
       self.items.append(p)
 
-    if not hunkparsed:
-      if hunkskip:
+    if st.state != HUNKPARSED:
+      if st.state == HUNKSKIP:
         warning("warning: finished with errors, some hunks may be invalid")
-      elif headscan:
+      elif st.state == HEADSCAN:
         if len(self.items) == 0:
           warning("error: no patch data found!")
           return False
