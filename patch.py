@@ -466,10 +466,14 @@ class PatchSet(object):
       if st.state == HUNKSKIP:
         if re_hunk_start.match(line):
           st.state = HUNKHEAD
-        elif line.startswith(b"--- "):
-          st.state = FILENAMES
+        elif line.startswith(b"--- ") or line.startswith(b"diff"):
+          if line.startswith(b"--- "):
+            st.state = FILENAMES
+          else:
+            st.state = HEADSCAN
           if debugmode and len(self.items) > 0:
             debug("- %2d hunks for %s" % (len(p.hunks), p.source))
+
 
       if st.state == FILENAMES:
         if line.startswith(b"--- "):
