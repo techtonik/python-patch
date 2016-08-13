@@ -40,23 +40,33 @@ class MiniJinja(object):
         self.path = templates + '/'
         self.tag  = re.compile('{{ *(?P<tag>\w+) *}}')
 
-    def render(self, template, vardict=None, **kwargs):
+    def render(self, tplfile, vardict=None, **kwargs):
         """returns unicode str"""
+        tpltext = open(self.path + tplfile).read()
+        return self.render_string(tpltext, vardict, **kwargs)
+
+    def render_string(self, tpltext, vardict=None, **kwargs):
         data = vardict or {}
         data.update(kwargs)
 
         def lookup(match):
             return data[match.group('tag')]
 
-        tpl = open(self.path + template).read()
         if not self.PY3K:
-            return unicode(self.tag.sub(lookup, tpl))
+            return unicode(self.tag.sub(lookup, tpltext))
         else:
-            return self.tag.sub(lookup, tpl)
+            return self.tag.sub(lookup, tpltext)
 
 # ---
 
 BASE = os.path.abspath(os.path.dirname(__file__))
+
+MAINTPL = """\
+import sys
+
+import {{ module }}
+sys.exit({{ module }}.main())
+"""
 
 if __name__ == '__main__':
   if not sys.argv[1:]:
@@ -74,7 +84,7 @@ if __name__ == '__main__':
   zf = zipadd(packname, modpath, os.path.basename(modpath))
   print("[*] Making %s executable" % (packname))
   # http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
-  text = MiniJinja(BASE).render('pack.mainpy.tpl', module=modname)
+  text = MiniJinja(BASE).render_string(MAINTPL, module=modname)
   zf.writestr('__main__.py', text)
   print("[*] Making %s installable" % (packname))
   text2 = MiniJinja(BASE).render('pack.setuppy.tpl', module=modname, version=version)
