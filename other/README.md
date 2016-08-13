@@ -1,0 +1,1 @@
+See ../doc/RELEASING for pack.py instructions.
