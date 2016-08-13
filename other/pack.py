@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Wrap Python module into executable .zip file
+Wrap Python module into executable .zip package
 
 Public domain work by:
   anatoly techtonik <techtonik@gmail.com>
