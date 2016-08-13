@@ -7,7 +7,7 @@ setup(
     url='https://github.com/techtonik/python-patch/',
 
     description='Patch utility to apply unified diffs',
-    license='MIT',
+    license='{{ license }}',
 
     py_modules=['{{ module }}'],
 

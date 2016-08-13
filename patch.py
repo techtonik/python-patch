@@ -14,6 +14,7 @@ from __future__ import print_function
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
 __version__ = "1.16"
+__license__ = "MIT"
 
 import copy
 import logging

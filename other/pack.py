@@ -8,6 +8,7 @@ importing it.
 
   * [x] name, version
   * [x] author
+  * [x] license
   * [ ] url
   * [ ] description (first line of module docstring)
 
@@ -85,7 +86,8 @@ if __name__ == '__main__':
   tplvars = dict(
     module = os.path.basename(modpath)[:-3], # also strip extension
     version = get_field(modpath, '__version__'),
-    author = get_field(modpath, '__author__')
+    author = get_field(modpath, '__author__'),
+    license = get_field(modpath, '__license__')
   )
 
   if tplvars['version'] == None:
