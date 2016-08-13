@@ -15,7 +15,8 @@ def get_version(path):
     line = line.decode('cp437')
     if '__version__' in line:
       # __version__ = "0.9"
-      return line.split('"')[1]
+      delim = '\"' if '\"' in line else '\''
+      return line.split(delim)[1]
 
 def zipadd(archive, filename, newname):
   '''Add filename to archive. `newname` is required. Otherwise
