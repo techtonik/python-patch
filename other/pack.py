@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 """
-Wrap Python module into executable .zip package
+Wrap Python module into executable .zip package.
+
+Extracts required meta-data (author|maintainer, name, version,
+url) and optional fields (description) from module without
+importing it.
+
+  * [x] name, version
+  * [x] author
+  * [ ] url
+  * [ ] description (first line of module docstring)
 
 Public domain work by:
   anatoly techtonik <techtonik@gmail.com>
@@ -8,12 +17,12 @@ Public domain work by:
 import os
 import sys
 
-def get_version(path):
-  '''Read version info from a file without importing it'''
+def get_field(path, name='__version__'):
+  '''Read named string from module without importing it'''
   for line in open(path, 'rb'):
     # Decode to unicode for PY2/PY3 in a fail-safe way
     line = line.decode('cp437')
-    if '__version__' in line:
+    if name in line:
       # __version__ = "0.9"
       delim = '\"' if '\"' in line else '\''
       return line.split(delim)[1]
@@ -73,21 +82,27 @@ if __name__ == '__main__':
     sys.exit("usage: pack.py <module.py>")
 
   modpath = sys.argv[1]
-  modname = os.path.basename(modpath)[:-3] # also strip extension
-  version  = get_version(modpath)
-  if version == None:
+  tplvars = dict(
+    module = os.path.basename(modpath)[:-3], # also strip extension
+    version = get_field(modpath, '__version__'),
+    author = get_field(modpath, '__author__')
+  )
+
+  if tplvars['version'] == None:
     sys.exit("error: no __version__ specifier found in %s" % modpath)
-  packname = modname + "-" + version + ".zip"
+  if tplvars['author'] == None:
+    sys.exit("error: no __author__ specifier found in %s" % modpath)
+  packname = tplvars['module'] + "-" + tplvars['version'] + ".zip"
   print("[*] Packing %s into %s" % (modpath, packname))
   if os.path.exists(packname):
     os.remove(packname)
   zf = zipadd(packname, modpath, os.path.basename(modpath))
   print("[*] Making %s executable" % (packname))
   # http://techtonik.rainforce.org/2015/01/shipping-python-tools-in-executable-zip.html
-  text = MiniJinja(BASE).render_string(MAINTPL, module=modname)
+  text = MiniJinja(BASE).render_string(MAINTPL, **tplvars)
   zf.writestr('__main__.py', text)
   print("[*] Making %s installable" % (packname))
-  text2 = MiniJinja(BASE).render('pack.setuppy.tpl', module=modname, version=version)
+  text2 = MiniJinja(BASE).render('pack.setuppy.tpl', **tplvars)
   zf.writestr('setup.py', text2)
   print("[*] Making %s uploadable to PyPI" % (packname))
   zf.writestr('PKG-INFO', '')
