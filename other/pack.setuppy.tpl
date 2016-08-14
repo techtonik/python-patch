@@ -4,7 +4,7 @@ setup(
     name='{{ module }}',
     version='{{ version }}',
     author='{{ author }}',
-    url='https://github.com/techtonik/python-patch/',
+    url='{{ url }}',
 
     description='{{ description }}',
     license='{{ license }}',

@@ -7,14 +7,13 @@
     Copyright (c) 2008-2016 anatoly techtonik
     Available under the terms of MIT license
 
-    https://github.com/techtonik/python-patch/
-
 """
 from __future__ import print_function
 
 __author__ = "anatoly techtonik <techtonik@gmail.com>"
 __version__ = "1.16"
 __license__ = "MIT"
+__url__ = "https://github.com/techtonik/python-patch"
 
 import copy
 import logging

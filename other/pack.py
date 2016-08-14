@@ -102,6 +102,7 @@ if __name__ == '__main__':
     version = get_field(modpath, '__version__'),
     author = get_field(modpath, '__author__'),
     license = get_field(modpath, '__license__'),
+    url = get_field(modpath, '__url__'),
     description = get_description(modpath)
   )
 
