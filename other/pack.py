@@ -28,6 +28,20 @@ def get_field(path, name='__version__'):
       delim = '\"' if '\"' in line else '\''
       return line.split(delim)[1]
 
+def get_description(path):
+  '''Return first non-empty line from module docstring'''
+  mf = open(path, 'rb')
+  for i, line in enumerate(mf):
+    if i > 10:
+      # stop looking after 10 lines
+      break
+    line = line.decode('utf-8').strip()
+    if '"""' in line or "'''" in line:
+      while line.strip('\n\t\r \'\"') == '':
+        line = mf.next()
+        line = line.decode('utf-8').strip()
+      return line
+
 def zipadd(archive, filename, newname):
   '''Add filename to archive. `newname` is required. Otherwise
      zipfile may create unsafe entries, such as "../patch.py".
@@ -87,7 +101,8 @@ if __name__ == '__main__':
     module = os.path.basename(modpath)[:-3], # also strip extension
     version = get_field(modpath, '__version__'),
     author = get_field(modpath, '__author__'),
-    license = get_field(modpath, '__license__')
+    license = get_field(modpath, '__license__'),
+    description = get_description(modpath)
   )
 
   if tplvars['version'] == None:

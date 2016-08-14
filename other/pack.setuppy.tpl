@@ -6,7 +6,7 @@ setup(
     author='{{ author }}',
     url='https://github.com/techtonik/python-patch/',
 
-    description='Patch utility to apply unified diffs',
+    description='{{ description }}',
     license='{{ license }}',
 
     py_modules=['{{ module }}'],
