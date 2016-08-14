@@ -9,8 +9,8 @@ importing it.
   * [x] name, version
   * [x] author
   * [x] license
-  * [ ] url
-  * [ ] description (first line of module docstring)
+  * [x] url
+  * [x] description (first line of module docstring)
 
 Public domain work by:
   anatoly techtonik <techtonik@gmail.com>
@@ -92,6 +92,27 @@ import {{ module }}
 sys.exit({{ module }}.main())
 """
 
+SETUPTPL = """\
+from distutils.core import setup
+
+setup(
+    name='{{ module }}',
+    version='{{ version }}',
+    author='{{ author }}',
+    url='{{ url }}',
+
+    description='{{ description }}',
+    license='{{ license }}',
+
+    py_modules=['{{ module }}'],
+
+    classifiers=[
+        'Classifier: Programming Language :: Python :: 2',
+        'Classifier: Programming Language :: Python :: 3',
+    ],
+)
+"""
+
 if __name__ == '__main__':
   if not sys.argv[1:]:
     sys.exit("usage: pack.py <module.py>")
@@ -120,7 +141,7 @@ if __name__ == '__main__':
   text = MiniJinja(BASE).render_string(MAINTPL, **tplvars)
   zf.writestr('__main__.py', text)
   print("[*] Making %s installable" % (packname))
-  text2 = MiniJinja(BASE).render('pack.setuppy.tpl', **tplvars)
+  text2 = MiniJinja(BASE).render_string(SETUPTPL, **tplvars)
   zf.writestr('setup.py', text2)
   print("[*] Making %s uploadable to PyPI" % (packname))
   zf.writestr('PKG-INFO', '')
