@@ -38,7 +38,7 @@ def get_description(path):
     line = line.decode('utf-8').strip()
     if '"""' in line or "'''" in line:
       while line.strip('\n\t\r \'\"') == '':
-        line = mf.next()
+        line = next(mf)
         line = line.decode('utf-8').strip()
       return line
 
