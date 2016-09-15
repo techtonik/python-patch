@@ -13,6 +13,7 @@ patchset evolution
 2. copy file
 2. copy and rename
 2. move and rename
+2. remove file
 
 3. know file attributes
 3. know file mime-type
