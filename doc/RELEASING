@@ -1,6 +1,7 @@
 * [ ] Pack .zip archive
 
-    python ./other/pack.py patch.py
+    pip install pypack
+    python -m pypack patch.py
 
 * [ ] Write changelog
 
