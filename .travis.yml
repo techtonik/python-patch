@@ -10,11 +10,8 @@ python:
 
 install:
   - pip install coverage
-  - pip install pypack
 
 script:
   # run tests with coverage
   - coverage run tests/run_tests.py
   - coverage report -m
-  # test distribution packaging
-  - python -m pypack patch.py
