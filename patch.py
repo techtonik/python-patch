@@ -940,6 +940,7 @@ class PatchSet(object):
         backupname = filename+b".orig"
         if exists(backupname):
           warning("can't backup original file to %s - aborting" % backupname)
+          errors += 1
         else:
           import shutil
           shutil.move(filename, backupname)
