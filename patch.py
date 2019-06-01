@@ -401,17 +401,20 @@ class PatchSet(object):
         # process line first
         if re.match(b"^[- \\+\\\\]", line):
             # gather stats about line endings
+            rc_count = line.strip(b"\r\n").count('\r')
             if line.endswith(b"\r\n"):
               p.hunkends["crlf"] += 1
             elif line.endswith(b"\n"):
               p.hunkends["lf"] += 1
             elif line.endswith(b"\r"):
               p.hunkends["cr"] += 1
+              p.hunkends["cr"] += rc_count
               
             if line.startswith(b"-"):
               hunkactual["linessrc"] += 1
             elif line.startswith(b"+"):
               hunkactual["linestgt"] += 1
+              hunkactual["linestgt"] += rc_count
             elif not line.startswith(b"\\"):
               hunkactual["linessrc"] += 1
               hunkactual["linestgt"] += 1
