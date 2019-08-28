@@ -1,6 +1,6 @@
 Library to parse and apply unified diffs.
 
-[![Build Status](https://img.shields.io/travis/techtonik/python-patch/master)](https://travis-ci.org/techtonik/python-patch/branches)
+[![Build Status](https://img.shields.io/travis/techtonik/python-patch/master)](https://travis-ci.org/techtonik/python-patch/branches) [![PyPI](https://img.shields.io/pypi/v/patch)](https://pypi.python.org/pypi/patch)
 
 ### Features
 
