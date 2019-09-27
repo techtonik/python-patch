@@ -991,6 +991,7 @@ class PatchSet(object):
         backupname = filenamen+b".orig"
         if exists(backupname):
           warning("can't backup original file to %s - aborting" % backupname)
+          errors += 1
         else:
           shutil.move(filenamen, backupname)
           if self.write_hunks(backupname if filenameo == filenamen else filenameo, filenamen, p.hunks):
