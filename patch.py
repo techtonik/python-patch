@@ -697,8 +697,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    source = " + str(p.source, encoding="utf-8"))
+        debug("    target = " + str(p.target, encoding="utf-8"))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
@@ -892,6 +892,7 @@ class PatchSet(object):
           if line.rstrip(b"\r\n") == hunkfind[hunklineno]:
             hunklineno+=1
           else:
+            errors += 1
             info("file %d/%d:\t %s" % (i+1, total, filename))
             info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno+1))
             info("  expected: %s" % hunkfind[hunklineno])
