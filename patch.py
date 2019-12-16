@@ -132,6 +132,7 @@ def xisabs(filename):
   elif re.match(b'\\w:[\\\\/]', filename): # Windows
     return True
   return False
+  
 
 def xnormpath(path):
   """ Cross-platform version of os.path.normpath """
@@ -697,8 +698,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + str(p.source, encoding="utf-8"))
-        debug("    target = " + str(p.target, encoding="utf-8"))
+        debug("    source = " + p.source.decode(encoding="utf-8"))
+        debug("    target = " + p.target.decode(encoding="utf-8"))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
@@ -730,16 +731,24 @@ class PatchSet(object):
         while p.target.startswith(b".." + sep):
           p.target = p.target.partition(sep)[2]
       # absolute paths are not allowed
-      if xisabs(p.source) or xisabs(p.target):
-        warning("error: absolute paths are not allowed - file no.%d" % (i+1))
-        self.warnings += 1
-        if xisabs(p.source):
-          warning("stripping absolute path from source name '%s'" % p.source)
-          p.source = xstrip(p.source)
-        if xisabs(p.target):
-          warning("stripping absolute path from target name '%s'" % p.target)
-          p.target = xstrip(p.target)
-    
+
+      allowedPaths = {b"/dev/null"}
+      if xisabs(p.source):
+        if p.source not in allowedPaths:
+          warning("error: absolute source paths are not allowed - file no.%d" % (i+1))
+          self.warnings += 1
+          if xisabs(p.source):
+            warning("stripping absolute path from source name '%s'" % p.source)
+            p.source = xstrip(p.source)
+
+      if xisabs(p.target):
+        if p.target not in allowedPaths:
+          warning("error: absolute target paths are not allowed - file no.%d" % (i+1))
+          self.warnings += 1
+          if xisabs(p.target):
+            warning("stripping absolute path from source name '%s'" % p.target)
+            p.source = xstrip(p.target)
+
       self.items[i].source = p.source
       self.items[i].target = p.target
 
@@ -855,21 +864,26 @@ class PatchSet(object):
         old, new = p.source, p.target
 
       filename = self.findfile(old, new)
+      isDevNull = filename in {b"/dev/null"}
 
       if not filename:
           warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
           errors += 1
           continue
       if not isfile(filename):
-        warning("not a file - %s" % filename)
-        errors += 1
-        continue
+        if not isDevNull:
+          warning("not a file - %s" % filename)
+          errors += 1
+          continue
 
       # [ ] check absolute paths security here
       debug("processing %d/%d:\t %s" % (i+1, total, filename))
 
       # validate before patching
-      f2fp = open(filename, 'rb')
+      if not isDevNull:
+        f2fp = open(filename, 'rb')
+      else:
+        f2fp = ()
       hunkno = 0
       hunk = p.hunks[hunkno]
       hunkfind = []
@@ -925,13 +939,14 @@ class PatchSet(object):
               canpatch = True
               break
       else:
-        if hunkno < len(p.hunks):
+        if not isDevNull and hunkno < len(p.hunks):
           warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
           errors += 1
 
-      f2fp.close()
+      if not isinstance(f2fp, tuple): # techtonic, I am not going to do your job instead of you. It is YOUR responsibility to use context managers instead of this shit
+        f2fp.close()
 
-      if validhunks < len(p.hunks):
+      if not isDevNull and validhunks < len(p.hunks):
         if self._match_file_hunks(filename, p.hunks):
           warning("already patched  %s" % filename)
         else:
