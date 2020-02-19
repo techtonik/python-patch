@@ -169,7 +169,7 @@ class TestPatchFiles(unittest.TestCase):
         # recursive comparison
         self._assert_dirs_equal(join(basepath, "[result]"),
                                 tmpdir,
-                                ignore=["%s.patch" % testname, ".svn", "[result]"])
+                                ignore=["%s.patch" % testname, ".svn", ".gitkeep", "[result]"])
 
 
       shutil.rmtree(tmpdir)
@@ -409,6 +409,20 @@ class TestPatchApply(unittest.TestCase):
           p.source = b'nasty/prefix/' + p.source
           p.target = b'nasty/prefix/' + p.target
         self.assertTrue(pto.apply(strip=2, root=treeroot))
+
+    def test_create_file(self):
+        treeroot = join(self.tmpdir, 'rootparent')
+        os.makedirs(treeroot)
+        pto = patch.fromfile(join(TESTS, '08create/08create.patch'))
+        pto.apply(strip=0, root=treeroot)
+        self.assertTrue(os.path.exists(os.path.join(treeroot, 'created')))
+
+    def test_delete_file(self):
+        treeroot = join(self.tmpdir, 'rootparent')
+        shutil.copytree(join(TESTS, '09delete'), treeroot)
+        pto = patch.fromfile(join(TESTS, '09delete/09delete.patch'))
+        pto.apply(strip=0, root=treeroot)
+        self.assertFalse(os.path.exists(os.path.join(treeroot, 'deleted')))
 
 
 class TestHelpers(unittest.TestCase):
