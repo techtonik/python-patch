@@ -800,7 +800,6 @@ class PatchSet(object):
                % (len(names), sum(insert), sum(delete), delta))
     return output
 
-
   def findfile(self, old, new):
     """ return name of file to be patched or None """
     if exists(old):
@@ -820,6 +819,10 @@ class PatchSet(object):
           return new
       return None
 
+  def _strip_prefix(self, filename):
+    if filename.startswith(b'a/') or filename.startswith(b'b/'):
+        return filename[2:]
+    return filename
 
   def apply(self, strip=0, root=None):
     """ Apply parsed patch, optionally stripping leading components
@@ -857,9 +860,22 @@ class PatchSet(object):
       filename = self.findfile(old, new)
 
       if not filename:
-          warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
-          errors += 1
-          continue
+          if "dev/null" in old:
+              # this is a file creation
+              filename = self._strip_prefix(new)
+              # I wish there would be something more clean to get the full contents
+              new_file = "".join(s[1:] for s in p.hunks[0].text)
+              with open(filename, "wb") as f:
+                  f.write(new_file)
+              continue
+          elif "dev/null" in new:
+              # this is a file removal
+              os.remove(self._strip_prefix(old))
+              continue
+          else:
+              warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
+              errors += 1
+              continue
       if not isfile(filename):
         warning("not a file - %s" % filename)
         errors += 1
