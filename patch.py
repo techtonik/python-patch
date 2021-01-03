@@ -132,6 +132,7 @@ def xisabs(filename):
   elif re.match(b'\\w:[\\\\/]', filename): # Windows
     return True
   return False
+  
 
 def xnormpath(path):
   """ Cross-platform version of os.path.normpath """
@@ -697,8 +698,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    source = " + p.source.decode(encoding="utf-8"))
+        debug("    target = " + p.target.decode(encoding="utf-8"))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
@@ -730,16 +731,24 @@ class PatchSet(object):
         while p.target.startswith(b".." + sep):
           p.target = p.target.partition(sep)[2]
       # absolute paths are not allowed
-      if xisabs(p.source) or xisabs(p.target):
-        warning("error: absolute paths are not allowed - file no.%d" % (i+1))
-        self.warnings += 1
-        if xisabs(p.source):
-          warning("stripping absolute path from source name '%s'" % p.source)
-          p.source = xstrip(p.source)
-        if xisabs(p.target):
-          warning("stripping absolute path from target name '%s'" % p.target)
-          p.target = xstrip(p.target)
-    
+
+      allowedPaths = {b"/dev/null"}
+      if xisabs(p.source):
+        if p.source not in allowedPaths:
+          warning("error: absolute source paths are not allowed - file no.%d" % (i+1))
+          self.warnings += 1
+          if xisabs(p.source):
+            warning("stripping absolute path from source name '%s'" % p.source)
+            p.source = xstrip(p.source)
+
+      if xisabs(p.target):
+        if p.target not in allowedPaths:
+          warning("error: absolute target paths are not allowed - file no.%d" % (i+1))
+          self.warnings += 1
+          if xisabs(p.target):
+            warning("stripping absolute path from source name '%s'" % p.target)
+            p.source = xstrip(p.target)
+
       self.items[i].source = p.source
       self.items[i].target = p.target
 
@@ -803,22 +812,30 @@ class PatchSet(object):
 
   def findfile(self, old, new):
     """ return name of file to be patched or None """
-    if exists(old):
-      return old
-    elif exists(new):
-      return new
+    if exists(old) and exists(new):
+      return old, new
     else:
       # [w] Google Code generates broken patches with its online editor
       debug("broken patch from Google Code, stripping prefixes..")
-      if old.startswith(b'a/') and new.startswith(b'b/'):
-        old, new = old[2:], new[2:]
+      oldPrefixed = old.startswith(b'a/')
+      newPrefixed = new.startswith(b'b/')
+      oldIsDevNull = False
+      newIsDevNull = False
+      if not oldPrefixed:
+        if old in {b"/dev/null"}:
+          oldIsDevNull = True
+      if not newPrefixed:
+        if new in {b"/dev/null"}:
+          newIsDevNull = True
+      if (oldPrefixed or oldIsDevNull) and (newPrefixed or newIsDevNull):
+        if oldPrefixed:
+          old = old[2:]
+        if newPrefixed:
+          new = new[2:]
         debug("   %s" % old)
         debug("   %s" % new)
-        if exists(old):
-          return old
-        elif exists(new):
-          return new
-      return None
+        return old, new
+      return None, None
 
 
   def apply(self, strip=0, root=None):
@@ -854,28 +871,33 @@ class PatchSet(object):
       else:
         old, new = p.source, p.target
 
-      filename = self.findfile(old, new)
+      resolvedOld, resolvedNew = self.findfile(old, new)
+      isDevNull = resolvedOld in {b"/dev/null"}
 
-      if not filename:
+      if not resolvedOld:
           warning("source/target file does not exist:\n  --- %s\n  +++ %s" % (old, new))
           errors += 1
           continue
-      if not isfile(filename):
-        warning("not a file - %s" % filename)
-        errors += 1
-        continue
+      if not isfile(resolvedOld):
+        if not isDevNull:
+          warning("not a file - %s" % resolvedOld)
+          errors += 1
+          continue
 
       # [ ] check absolute paths security here
-      debug("processing %d/%d:\t %s" % (i+1, total, filename))
+      debug("processing %d/%d:\t %s -> %s" % (i+1, total, resolvedOld, resolvedNew))
 
       # validate before patching
-      f2fp = open(filename, 'rb')
+      if not isDevNull:
+        f2fp = open(resolvedOld, 'rb')
+      else:
+        f2fp = ()
       hunkno = 0
       hunk = p.hunks[hunkno]
       hunkfind = []
       hunkreplace = []
       validhunks = 0
-      canpatch = False
+      canpatch = isDevNull
       for lineno, line in enumerate(f2fp):
         if lineno+1 < hunk.startsrc:
           continue
@@ -892,7 +914,8 @@ class PatchSet(object):
           if line.rstrip(b"\r\n") == hunkfind[hunklineno]:
             hunklineno+=1
           else:
-            info("file %d/%d:\t %s" % (i+1, total, filename))
+            errors += 1
+            info("file %d/%d:\t %s" % (i+1, total, resolvedOld))
             info(" hunk no.%d doesn't match source file at line %d" % (hunkno+1, lineno+1))
             info("  expected: %s" % hunkfind[hunklineno])
             info("  actual  : %s" % line.rstrip(b"\r\n"))
@@ -913,7 +936,7 @@ class PatchSet(object):
 
         # check if processed line is the last line
         if lineno+1 == hunk.startsrc+len(hunkfind)-1:
-          debug(" hunk no.%d for file %s  -- is ready to be patched" % (hunkno+1, filename))
+          debug(" hunk no.%d for file %s  -- is ready to be patched" % (hunkno+1, resolvedOld))
           hunkno+=1
           validhunks+=1
           if hunkno < len(p.hunks):
@@ -924,35 +947,49 @@ class PatchSet(object):
               canpatch = True
               break
       else:
-        if hunkno < len(p.hunks):
-          warning("premature end of source file %s at hunk %d" % (filename, hunkno+1))
-          errors += 1
-
-      f2fp.close()
-
-      if validhunks < len(p.hunks):
-        if self._match_file_hunks(filename, p.hunks):
-          warning("already patched  %s" % filename)
+        if not isDevNull:
+          if hunkno < len(p.hunks):
+            warning("premature end of source file %s at hunk %d" % (resolvedOld, hunkno+1))
+            errors += 1
         else:
-          warning("source file is different - %s" % filename)
+          pass
+
+      if not isinstance(f2fp, tuple): # techtonic, I am not going to do your job instead of you. It is YOUR responsibility to use context managers instead of this shit
+        f2fp.close()
+
+      if not isDevNull and validhunks < len(p.hunks):
+        if self._match_file_hunks(resolvedOld, p.hunks):
+          warning("already patched  %s" % resolvedOld)
+        else:
+          warning("source file is different - %s" % resolvedOld)
           errors += 1
       if canpatch:
-        backupname = filename+b".orig"
+        backupname = resolvedNew+b".orig"
         if exists(backupname):
           warning("can't backup original file to %s - aborting" % backupname)
         else:
           import shutil
-          shutil.move(filename, backupname)
-          if self.write_hunks(backupname, filename, p.hunks):
-            info("successfully patched %d/%d:\t %s" % (i+1, total, filename))
-            os.unlink(backupname)
+          resNewExists = exists(resolvedNew)
+          if resNewExists == isDevNull:
+            errors += 1
+            warning("error: requested file creation but it already exists: " + str(resolvedNew))
+            continue
+          if not isDevNull:
+            shutil.move(resolvedNew, backupname)
+          else:
+            backupname = None
+          
+          if self.write_hunks(backupname, resolvedNew, p.hunks):
+            info("successfully patched %d/%d:\t %s" % (i+1, total, resolvedNew))
+            if backupname:
+              os.unlink(backupname)
           else:
             errors += 1
-            warning("error patching file %s" % filename)
-            shutil.copy(filename, filename+".invalid")
-            warning("invalid version is saved to %s" % filename+".invalid")
+            warning("error patching file %s" % new)
+            shutil.copy(new, new+".invalid")
+            warning("invalid version is saved to %s" % new+".invalid")
             # todo: proper rejects
-            shutil.move(backupname, filename)
+            shutil.move(backupname, new)
 
     if root:
       os.chdir(prevdir)
@@ -1097,7 +1134,10 @@ class PatchSet(object):
 
 
   def write_hunks(self, srcname, tgtname, hunks):
-    src = open(srcname, "rb")
+    if srcname:
+      src = open(srcname, "rb")
+    else:
+      src = ()
     tgt = open(tgtname, "wb")
 
     debug("processing target file %s" % tgtname)
@@ -1105,9 +1145,11 @@ class PatchSet(object):
     tgt.writelines(self.patch_stream(src, hunks))
 
     tgt.close()
-    src.close()
+    if srcname:
+      src.close()
     # [ ] TODO: add test for permission copy
-    shutil.copymode(srcname, tgtname)
+    if srcname:
+      shutil.copymode(srcname, tgtname)
     return True
 
 
