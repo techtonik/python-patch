@@ -697,8 +697,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    source = " + tostr(p.source))
+        debug("    target = " + tostr(p.target))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
