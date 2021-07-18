@@ -62,6 +62,8 @@ def tostr(b):
 
 logger = logging.getLogger(__name__)
 
+logger.handlers.clear() # really needed? maybe for use as library...
+
 debug = logger.debug
 info = logger.info
 warning = logger.warning
@@ -697,8 +699,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    source = " + tostr(p.source))
+        debug("    target = " + tostr(p.target))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
@@ -1157,6 +1159,7 @@ def main():
   loglevel = verbosity_levels[options.verbosity]
   logformat = "%(message)s"
   logger.setLevel(loglevel)
+  logger.addHandler(streamhandler)
   streamhandler.setFormatter(logging.Formatter(logformat))
 
   if options.debugmode:
