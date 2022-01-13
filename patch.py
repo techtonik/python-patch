@@ -93,11 +93,6 @@ def setdebug():
   logformat = "%(levelname)8s %(message)s"
   logger.setLevel(loglevel)
 
-  if streamhandler not in logger.handlers:
-    # when used as a library, streamhandler is not added
-    # by default
-    logger.addHandler(streamhandler)
-
   streamhandler.setFormatter(logging.Formatter(logformat))
 
 
@@ -1165,6 +1160,12 @@ def main():
 
   if options.debugmode:
     setdebug()  # this sets global debugmode variable
+
+  if streamhandler not in logger.handlers:
+    # when used as a library, streamhandler is not added
+    # by default
+    logger.addHandler(streamhandler)
+
 
   if readstdin:
     patch = PatchSet(sys.stdin)
