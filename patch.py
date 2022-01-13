@@ -93,11 +93,6 @@ def setdebug():
   logformat = "%(levelname)8s %(message)s"
   logger.setLevel(loglevel)
 
-  if streamhandler not in logger.handlers:
-    # when used as a library, streamhandler is not added
-    # by default
-    logger.addHandler(streamhandler)
-
   streamhandler.setFormatter(logging.Formatter(logformat))
 
 
@@ -545,8 +540,12 @@ class PatchSet(object):
         match = re.match(br"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
         if not match:
           if not p.hunks:
-            warning("skipping invalid patch with no hunks for file %s" % p.source)
-            self.errors += 1
+            if p.source == b'.':
+              warning("SVN patch file detected, skipping changes for '.'")
+            else:
+              warning("skipping invalid patch with no hunks for file %s" % p.source)
+              self.errors += 1
+
             # XXX review switch
             # switch to headscan state
             hunkhead = False
@@ -697,8 +696,8 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = " + p.type)
-        debug("    source = " + p.source)
-        debug("    target = " + p.target)
+        debug("    source = " + tostr(p.source))
+        debug("    target = " + tostr(p.target))
       if p.type in (HG, GIT):
         # TODO: figure out how to deal with /dev/null entries
         debug("stripping a/ and b/ prefixes")
@@ -1161,6 +1160,12 @@ def main():
 
   if options.debugmode:
     setdebug()  # this sets global debugmode variable
+
+  if streamhandler not in logger.handlers:
+    # when used as a library, streamhandler is not added
+    # by default
+    logger.addHandler(streamhandler)
+
 
   if readstdin:
     patch = PatchSet(sys.stdin)
