@@ -545,8 +545,12 @@ class PatchSet(object):
         match = re.match(br"^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@(.*)", line)
         if not match:
           if not p.hunks:
-            warning("skipping invalid patch with no hunks for file %s" % p.source)
-            self.errors += 1
+            if p.source == b'.':
+              warning("SVN patch file detected, skipping changes for '.'")
+            else:
+              warning("skipping invalid patch with no hunks for file %s" % p.source)
+              self.errors += 1
+
             # XXX review switch
             # switch to headscan state
             hunkhead = False
