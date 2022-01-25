@@ -44,6 +44,11 @@ if not PY3K:
 else:
   compat_next = lambda gen: gen.__next__()
 
+if PY3K:
+  compat_stdin = sys.stdin.buffer
+else:
+  compat_stdin = sys.stdin
+    
 def tostr(b):
   """ Python 3 bytes encoder. Used to print filename in
       diffstat output. Assumes that filenames are in utf-8.
@@ -1163,7 +1168,7 @@ def main():
     setdebug()  # this sets global debugmode variable
 
   if readstdin:
-    patch = PatchSet(sys.stdin)
+    patch = PatchSet(compat_stdin)
   else:
     patchfile = args[0]
     urltest = patchfile.split(':')[0]
