@@ -164,9 +164,8 @@ def fromfile(filename):
   """
   patchset = PatchSet()
   debug("reading %s" % filename)
-  fp = open(filename, "rb")
-  res = patchset.parse(fp)
-  fp.close()
+  with open(filename, "rb") as fp:
+    res = patchset.parse(fp)
   if res == True:
     return patchset
   return False

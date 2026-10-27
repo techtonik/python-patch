@@ -411,6 +411,36 @@ class TestPatchApply(unittest.TestCase):
         self.assertTrue(pto.apply(strip=2, root=treeroot))
 
 
+class TestFromFile(unittest.TestCase):
+    def test_parse_exception_closes_file(self):
+        streams = []
+        original_parse = patch.PatchSet.parse
+        error = OSError('cannot read patch')
+
+        def fail_parse(patchset, stream):
+            streams.append(stream)
+            raise error
+
+        patch.PatchSet.parse = fail_parse
+        try:
+            with self.assertRaises(OSError) as raised:
+                patch.fromfile(join(TESTS, '03trail_fname.patch'))
+            self.assertIs(raised.exception, error)
+            self.assertEqual(len(streams), 1)
+            self.assertTrue(streams[0].closed)
+        finally:
+            patch.PatchSet.parse = original_parse
+            for stream in streams:
+                stream.close()
+
+    def test_valid_file_returns_patchset(self):
+        self.assertIsInstance(patch.fromfile(join(TESTS, '03trail_fname.patch')),
+                              patch.PatchSet)
+
+    def test_invalid_file_returns_false(self):
+        self.assertIs(patch.fromfile(join(TESTS, '03trail_fname.from')), False)
+
+
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True
